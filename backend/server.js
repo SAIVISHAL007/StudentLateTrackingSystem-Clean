@@ -3,20 +3,45 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import studentRoutes from "./routes/studentRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
 const app = express();
 
-// CORS configuration
+// CORS configuration for production
+// Allow frontend from environment variable (Vercel domain) or localhost for development
+const allowedOrigins = [
+  'http://localhost:3000', // Local development
+  'http://localhost:5173', // Vite dev server
+  process.env.FRONTEND_URL, // Production frontend URL (Vercel)
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null // Vercel preview deployments
+].filter(Boolean); // Remove null/undefined values
+
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS blocked request from: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
+// Increase payload limit for base64 images
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 
 // Use MONGODB_URI for production deployment
@@ -62,6 +87,33 @@ process.on('SIGINT', async () => {
         console.error('❌ Error during shutdown:', err);
         process.exit(1);
     }
+});
+
+// Handle nodemon restart signal (SIGUSR2) to close DB cleanly before reload
+process.once('SIGUSR2', async () => {
+  console.log('\n🔄 Nodemon restart detected (SIGUSR2) - closing MongoDB connection...');
+  try {
+    await mongoose.connection.close();
+    console.log('✅ MongoDB connection closed before restart');
+  } catch (err) {
+    console.error('❌ Error closing MongoDB during restart:', err);
+  } finally {
+    // Re-send SIGUSR2 to let nodemon proceed with restart
+    process.kill(process.pid, 'SIGUSR2');
+  }
+});
+
+// Handle SIGTERM (deployment platforms / process managers)
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 Received SIGTERM - shutting down gracefully...');
+  try {
+    await mongoose.connection.close();
+    console.log('✅ MongoDB connection closed');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error during SIGTERM shutdown:', err);
+    process.exit(1);
+  }
 });
 
 app.get("/", async (req, res) => {

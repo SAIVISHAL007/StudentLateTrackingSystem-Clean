@@ -2,16 +2,21 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import { formatDate } from "../utils/dateUtils";
 import { downloadCSV, downloadTextReport, formatLateRecordsForExport, getTimestamp } from "../utils/exportUtils";
+import { exportLateRecordsToExcel } from "../utils/excelExport";
 
 function Record() {
   const [selectedPeriod, setSelectedPeriod] = useState("weekly");
   const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [selectedSection, setSelectedSection] = useState("all");
   const [recordData, setRecordData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchRecords(selectedPeriod);
     setSelectedYear("all"); // Reset year filter when period changes
+    setSelectedBranch("all");
+    setSelectedSection("all");
   }, [selectedPeriod]);
 
   const fetchRecords = async (period) => {
@@ -66,10 +71,15 @@ function Record() {
   };
 
   const getFilteredStudents = (students) => {
-    if (selectedYear === "all") {
-      return students;
-    }
-    return students.filter(student => student.year.toString() === selectedYear);
+    if (!students || !Array.isArray(students)) return [];
+    
+    return students.filter(student => {
+      if (!student) return false;
+      const matchesYear = selectedYear === "all" || student.year?.toString() === selectedYear;
+      const matchesBranch = selectedBranch === "all" || student.branch?.toUpperCase() === selectedBranch.toUpperCase();
+      const matchesSection = selectedSection === "all" || student.section?.toUpperCase() === selectedSection.toUpperCase();
+      return matchesYear && matchesBranch && matchesSection;
+    });
   };
 
   const getYearOptions = () => [
@@ -80,20 +90,36 @@ function Record() {
     { value: "4", label: "4th Year", icon: "🔴" }
   ];
 
-  const handleExportCSV = () => {
+  const handleExportExcel = () => {
     if (!recordData || !recordData.students || recordData.students.length === 0) {
       alert("⚠️ No data to export");
       return;
     }
     
     const filteredStudents = getFilteredStudents(recordData.students);
-    const exportData = formatLateRecordsForExport(filteredStudents, selectedPeriod);
-    const timestamp = getTimestamp();
-    const yearFilter = selectedYear === "all" ? "all_years" : `year_${selectedYear}`;
-    const success = downloadCSV(exportData, `late_records_${selectedPeriod}_${yearFilter}_${timestamp}`);
+    
+    if (filteredStudents.length === 0) {
+      alert("⚠️ No students match your filters");
+      return;
+    }
+    
+    const filters = {
+      year: selectedYear !== "all" ? `Year ${selectedYear}` : "All Years",
+      branch: selectedBranch !== "all" ? selectedBranch : "All Branches",
+      section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections"
+    };
+    
+    const periodInfo = {
+      period: getPeriodTitle(selectedPeriod),
+      startDate: recordData.startDate,
+      endDate: recordData.endDate
+    };
+    
+    const filename = `late_records_${selectedPeriod}`;
+    const success = exportLateRecordsToExcel(filteredStudents, filename, filters, periodInfo);
     
     if (success) {
-      alert("✅ CSV export successful!");
+      alert(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
     } else {
       alert("❌ Export failed. Please try again.");
     }
@@ -106,7 +132,10 @@ function Record() {
     }
     
     const filteredStudents = getFilteredStudents(recordData.students);
+    console.log('🔍 Filtered students for export:', filteredStudents);
+    console.log('🔍 Sample student:', filteredStudents[0]);
     const exportData = formatLateRecordsForExport(filteredStudents, selectedPeriod);
+    console.log('🔍 Export data:', exportData);
     const timestamp = getTimestamp();
     const yearFilter = selectedYear === "all" ? "All Years" : `Year ${selectedYear}`;
     const title = `Late Records Report - ${getPeriodTitle(selectedPeriod)} (${yearFilter})`;
@@ -262,78 +291,120 @@ function Record() {
 
   return (
     <div style={{
-      backgroundColor: "#ffffff",
-      padding: "2rem",
-      borderRadius: "12px",
-      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-      border: "1px solid #e9ecef"
+      backgroundColor: "rgba(255, 255, 255, 0.98)",
+      backdropFilter: "blur(20px)",
+      padding: "2.5rem",
+      borderRadius: "24px",
+      boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+      border: "1px solid rgba(255, 255, 255, 0.5)",
+      animation: "scaleIn 0.5s ease-out"
     }}>
       {/* Header Section */}
       <div style={{
-        marginBottom: "2rem",
+        marginBottom: "2.5rem",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         flexWrap: "wrap",
-        gap: "1rem"
+        gap: "1.5rem"
       }}>
-        <div style={{ textAlign: "left" }}>
-          <h2 style={{
-            color: "#343a40",
-            fontSize: "1.8rem",
-            fontWeight: "700",
-            marginBottom: "0.5rem",
-            margin: 0
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{
+            width: "70px",
+            height: "70px",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: "18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "2.5rem",
+            boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
+            animation: "float 3s ease-in-out infinite"
           }}>
-            📋 Student Late Records
-          </h2>
-          <p style={{
-            color: "#6c757d",
-            fontSize: "1rem",
-            margin: "0"
-          }}>
-            View attendance records by time period and year
-          </p>
+            📊
+          </div>
+          <div>
+            <h2 style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontSize: "2rem",
+              fontWeight: "800",
+              margin: "0 0 0.25rem 0",
+              letterSpacing: "-0.5px"
+            }}>
+              Student Late Records
+            </h2>
+            <p style={{
+              color: "#64748b",
+              fontSize: "1.05rem",
+              fontWeight: "500",
+              margin: "0"
+            }}>
+              View late tracking records by time period and filters
+            </p>
+          </div>
         </div>
         
         {/* Export Buttons */}
         {recordData && recordData.students && recordData.students.length > 0 && (
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
             <button
-              onClick={handleExportCSV}
+              onClick={handleExportExcel}
               style={{
-                padding: "8px 12px",
-                backgroundColor: "#28a745",
+                padding: "10px 18px",
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                 color: "#ffffff",
                 border: "none",
-                borderRadius: "6px",
-                fontSize: "0.85rem",
+                borderRadius: "12px",
+                fontSize: "0.9rem",
                 cursor: "pointer",
-                fontWeight: "500",
-                transition: "background-color 0.2s"
+                fontWeight: "600",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = "#218838"}
-              onMouseOut={(e) => e.target.style.backgroundColor = "#28a745"}
+              onMouseOver={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.4)";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
+              }}
             >
-              📊 Export CSV
+              📈 Export Excel
             </button>
             <button
               onClick={handleExportReport}
               style={{
-                padding: "8px 12px",
-                backgroundColor: "#007bff",
+                padding: "10px 18px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 color: "#ffffff",
                 border: "none",
-                borderRadius: "6px",
-                fontSize: "0.85rem",
+                borderRadius: "12px",
+                fontSize: "0.9rem",
                 cursor: "pointer",
-                fontWeight: "500",
-                transition: "background-color 0.2s"
+                fontWeight: "600",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = "#0056b3"}
-              onMouseOut={(e) => e.target.style.backgroundColor = "#007bff"}
+              onMouseOver={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+              }}
             >
-              📄 Export Report
+              📄 Export TXT
             </button>
           </div>
         )}
@@ -343,8 +414,8 @@ function Record() {
       <div style={{
         display: "flex",
         justifyContent: "center",
-        gap: "1rem",
-        marginBottom: "1.5rem",
+        gap: "1.25rem",
+        marginBottom: "2rem",
         flexWrap: "wrap"
       }}>
         {[
@@ -356,24 +427,41 @@ function Record() {
             key={period.key}
             onClick={() => setSelectedPeriod(period.key)}
             style={{
-              padding: "12px 20px",
-              border: selectedPeriod === period.key ? "2px solid #007bff" : "2px solid #e9ecef",
-              borderRadius: "8px",
-              backgroundColor: selectedPeriod === period.key ? "#007bff" : "#ffffff",
-              color: selectedPeriod === period.key ? "white" : "#495057",
+              padding: "16px 28px",
+              border: "2px solid transparent",
+              borderRadius: "16px",
+              background: selectedPeriod === period.key 
+                ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                : "rgba(102, 126, 234, 0.08)",
+              color: selectedPeriod === period.key ? "white" : "#667eea",
               cursor: "pointer",
-              fontSize: "0.9rem",
-              fontWeight: "500",
-              transition: "all 0.2s ease",
+              fontSize: "0.95rem",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
               textAlign: "center",
-              minWidth: "120px"
+              minWidth: "150px",
+              boxShadow: selectedPeriod === period.key 
+                ? "0 8px 20px rgba(102, 126, 234, 0.35)"
+                : "none"
+            }}
+            onMouseOver={(e) => {
+              if (selectedPeriod !== period.key) {
+                e.target.style.background = "rgba(102, 126, 234, 0.15)";
+                e.target.style.transform = "translateY(-2px)";
+              }
+            }}
+            onMouseOut={(e) => {
+              if (selectedPeriod !== period.key) {
+                e.target.style.background = "rgba(102, 126, 234, 0.08)";
+                e.target.style.transform = "translateY(0)";
+              }
             }}
           >
-            <div>{period.label}</div>
+            <div style={{ fontSize: "1.1rem", marginBottom: "0.25rem" }}>{period.label}</div>
             <div style={{
-              fontSize: "0.7rem",
-              opacity: "0.8",
-              marginTop: "0.2rem"
+              fontSize: "0.75rem",
+              opacity: selectedPeriod === period.key ? "0.9" : "0.7",
+              fontWeight: "500"
             }}>
               {period.desc}
             </div>
@@ -386,7 +474,7 @@ function Record() {
         display: "flex",
         justifyContent: "center",
         gap: "0.5rem",
-        marginBottom: "2rem",
+        marginBottom: "1rem",
         flexWrap: "wrap"
       }}>
         <span style={{
@@ -423,6 +511,107 @@ function Record() {
         ))}
       </div>
 
+      {/* Branch and Section Filters */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: "1rem",
+        marginBottom: "2rem",
+        flexWrap: "wrap",
+        alignItems: "center"
+      }}>
+        {/* Branch Filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <label style={{
+            fontSize: "0.9rem",
+            color: "#495057",
+            fontWeight: "500"
+          }}>
+            🏢 Branch:
+          </label>
+          <select
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            style={{
+              padding: "6px 12px",
+              border: "2px solid #dee2e6",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              backgroundColor: "#ffffff",
+              cursor: "pointer",
+              outline: "none"
+            }}
+          >
+            <option value="all">All Branches</option>
+            <option value="CSE">CSE</option>
+            <option value="CSM">CSM</option>
+            <option value="CSD">CSD</option>
+            <option value="CSC">CSC</option>
+            <option value="ECE">ECE</option>
+            <option value="EEE">EEE</option>
+            <option value="MECH">MECH</option>
+            <option value="CIVIL">CIVIL</option>
+            <option value="IT">IT</option>
+          </select>
+        </div>
+
+        {/* Section Filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <label style={{
+            fontSize: "0.9rem",
+            color: "#495057",
+            fontWeight: "500"
+          }}>
+            📋 Section:
+          </label>
+          <select
+            value={selectedSection}
+            onChange={(e) => setSelectedSection(e.target.value)}
+            style={{
+              padding: "6px 12px",
+              border: "2px solid #dee2e6",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              backgroundColor: "#ffffff",
+              cursor: "pointer",
+              outline: "none"
+            }}
+          >
+            <option value="all">All Sections</option>
+            <option value="A">Section A</option>
+            <option value="B">Section B</option>
+            <option value="C">Section C</option>
+            <option value="D">Section D</option>
+          </select>
+        </div>
+
+        {/* Clear Filters Button */}
+        {(selectedYear !== "all" || selectedBranch !== "all" || selectedSection !== "all") && (
+          <button
+            onClick={() => {
+              setSelectedYear("all");
+              setSelectedBranch("all");
+              setSelectedSection("all");
+            }}
+            style={{
+              padding: "6px 12px",
+              border: "none",
+              borderRadius: "8px",
+              backgroundColor: "#dc3545",
+              color: "white",
+              cursor: "pointer",
+              fontSize: "0.8rem",
+              fontWeight: "500",
+              transition: "background-color 0.2s"
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = "#c82333"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "#dc3545"}
+          >
+            ❌ Clear Filters
+          </button>
+        )}
+      </div>
+
       {/* Loading State */}
       {loading && (
         <div style={{
@@ -440,24 +629,28 @@ function Record() {
         <>
           {/* Summary Header */}
           <div style={{
-            backgroundColor: "#f8f9fa",
-            padding: "1.5rem",
-            borderRadius: "8px",
-            marginBottom: "2rem",
-            border: "1px solid #dee2e6"
+            background: "linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)",
+            padding: "2rem",
+            borderRadius: "20px",
+            marginBottom: "2.5rem",
+            border: "2px solid #bfdbfe",
+            boxShadow: "0 8px 20px rgba(102, 126, 234, 0.1)"
           }}>
             <h3 style={{
-              color: "#495057",
-              fontSize: "1.4rem",
-              fontWeight: "600",
-              marginBottom: "1rem"
+              color: "#1e40af",
+              fontSize: "1.5rem",
+              fontWeight: "700",
+              marginBottom: "1.25rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
             }}>
               {getPeriodTitle(selectedPeriod)} 
               {selectedYear !== "all" && (
                 <span style={{ 
-                  fontSize: "1rem", 
-                  color: "#6c757d",
-                  fontWeight: "normal"
+                  fontSize: "1.1rem", 
+                  color: "#3b82f6",
+                  fontWeight: "600"
                 }}>
                   {" "}- {getYearOptions().find(y => y.value === selectedYear)?.icon} {getYearOptions().find(y => y.value === selectedYear)?.label}
                 </span>
@@ -465,18 +658,39 @@ function Record() {
             </h3>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "1rem",
-              fontSize: "0.9rem"
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "1.25rem",
+              fontSize: "0.95rem"
             }}>
-              <div>
-                <strong>Period:</strong> {formatDate(recordData.startDate)} - {formatDate(recordData.endDate)}
+              <div style={{
+                padding: "1rem",
+                background: "rgba(255, 255, 255, 0.7)",
+                borderRadius: "12px",
+                fontWeight: "500",
+                color: "#1e3a8a"
+              }}>
+                <div style={{ fontSize: "0.85rem", opacity: "0.8", marginBottom: "0.25rem" }}>Period</div>
+                <div style={{ fontWeight: "700" }}>{formatDate(recordData.startDate)} - {formatDate(recordData.endDate)}</div>
               </div>
-              <div>
-                <strong>Filtered Students:</strong> {getFilteredStudents(recordData.students).length}
+              <div style={{
+                padding: "1rem",
+                background: "rgba(255, 255, 255, 0.7)",
+                borderRadius: "12px",
+                fontWeight: "500",
+                color: "#1e3a8a"
+              }}>
+                <div style={{ fontSize: "0.85rem", opacity: "0.8", marginBottom: "0.25rem" }}>Students</div>
+                <div style={{ fontWeight: "700" }}>{getFilteredStudents(recordData.students).length}</div>
               </div>
-              <div>
-                <strong>Late Instances:</strong> {getFilteredStudents(recordData.students).reduce((sum, s) => sum + s.lateCountInPeriod, 0)}
+              <div style={{
+                padding: "1rem",
+                background: "rgba(255, 255, 255, 0.7)",
+                borderRadius: "12px",
+                fontWeight: "500",
+                color: "#1e3a8a"
+              }}>
+                <div style={{ fontSize: "0.85rem", opacity: "0.8", marginBottom: "0.25rem" }}>Late Instances</div>
+                <div style={{ fontWeight: "700" }}>{getFilteredStudents(recordData.students).reduce((sum, s) => sum + s.lateCountInPeriod, 0)}</div>
               </div>
             </div>
           </div>
@@ -561,10 +775,21 @@ function Record() {
                             fontSize: "1rem",
                             fontWeight: "600",
                             color: "#343a40",
-                            marginBottom: "0.5rem"
+                            marginBottom: "0.25rem"
                           }}>
                             {student.rollNo} - {student.name}
                           </div>
+                          {(student.branch || student.section) && (
+                            <div style={{
+                              fontSize: "0.75rem",
+                              color: "#6c757d",
+                              marginBottom: "0.5rem"
+                            }}>
+                              {student.branch && `🏢 ${student.branch}`}
+                              {student.branch && student.section && ' • '}
+                              {student.section && `📋 Sec ${student.section}`}
+                            </div>
+                          )}
                           <div style={{
                             display: "flex",
                             gap: "1rem",

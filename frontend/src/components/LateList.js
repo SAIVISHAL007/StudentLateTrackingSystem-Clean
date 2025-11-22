@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { formatDate, isToday } from "../utils/dateUtils";
-import { downloadCSV, downloadTextReport, formatStudentDataForExport, getTimestamp } from "../utils/exportUtils";
+import { downloadTextReport, formatStudentDataForExport, getTimestamp } from "../utils/exportUtils";
+import { exportTodayLateToExcel } from "../utils/excelExport";
 
 function LateList() {
   const [students, setStudents] = useState([]);
@@ -10,6 +11,8 @@ function LateList() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [selectedSection, setSelectedSection] = useState("all");
 
   useEffect(() => {
     const fetchLateStudents = async () => {
@@ -64,30 +67,34 @@ function LateList() {
       .slice(0, limit);
   };
 
-  const handleExportCSV = () => {
-    if (students.length === 0) {
+  const handleExportExcel = () => {
+    if (filteredStudents.length === 0) {
       alert("⚠️ No data to export");
       return;
     }
     
-    const exportData = formatStudentDataForExport(students);
-    const timestamp = getTimestamp();
-    const success = downloadCSV(exportData, `late_students_today_${timestamp}`);
+    const filters = {
+      year: selectedYear !== "all" ? `Year ${selectedYear}` : "All Years",
+      branch: selectedBranch !== "all" ? selectedBranch : "All Branches",
+      section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections"
+    };
+    
+    const success = exportTodayLateToExcel(filteredStudents, filters);
     
     if (success) {
-      alert("✅ CSV export successful!");
+      alert(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
     } else {
       alert("❌ Export failed. Please try again.");
     }
   };
 
   const handleExportReport = () => {
-    if (students.length === 0) {
+    if (filteredStudents.length === 0) {
       alert("⚠️ No data to export");
       return;
     }
     
-    const exportData = formatStudentDataForExport(students);
+    const exportData = formatStudentDataForExport(filteredStudents);
     const timestamp = getTimestamp();
     const title = `Late Students Report - ${new Date().toDateString()}`;
     const success = downloadTextReport(exportData, `late_students_report_${timestamp}`, title);
@@ -99,7 +106,7 @@ function LateList() {
     }
   };
 
-  // Filter students based on search term and year
+  // Filter students based on search term, year, branch, and section
   const filteredStudents = students.filter(student => {
     // Search filter
     const matchesSearch = searchTerm === "" || 
@@ -110,68 +117,115 @@ function LateList() {
     const matchesYear = selectedYear === "all" || 
       student.year?.toString() === selectedYear;
     
-    return matchesSearch && matchesYear;
+    // Branch filter
+    const matchesBranch = selectedBranch === "all" || 
+      student.branch?.toUpperCase() === selectedBranch.toUpperCase();
+    
+    // Section filter
+    const matchesSection = selectedSection === "all" || 
+      student.section?.toUpperCase() === selectedSection.toUpperCase();
+    
+    return matchesSearch && matchesYear && matchesBranch && matchesSection;
   });
 
   return (
     <div style={{
-      backgroundColor: "#ffffff",
-      padding: "2rem",
-      borderRadius: "12px",
-      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-      border: "1px solid #e9ecef"
+      backgroundColor: "rgba(255, 255, 255, 0.98)",
+      backdropFilter: "blur(20px)",
+      padding: "2.5rem",
+      borderRadius: "24px",
+      boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+      border: "1px solid rgba(255, 255, 255, 0.5)",
+      animation: "scaleIn 0.5s ease-out"
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <h2 style={{
-          color: "#343a40",
-          fontSize: "1.5rem",
-          fontWeight: "600",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.5rem",
-          margin: 0
-        }}>
-          📋 Late Students Today
-        </h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{
+            width: "60px",
+            height: "60px",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "2rem",
+            boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
+            animation: "float 3s ease-in-out infinite"
+          }}>
+            📋
+          </div>
+          <h2 style={{
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            fontSize: "1.75rem",
+            fontWeight: "800",
+            margin: 0,
+            letterSpacing: "-0.5px"
+          }}>
+            Late Students Today
+          </h2>
+        </div>
         
         {/* Export Buttons */}
         {students.length > 0 && (
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
             <button
-              onClick={handleExportCSV}
+              onClick={handleExportExcel}
               style={{
-                padding: "8px 12px",
-                backgroundColor: "#28a745",
+                padding: "10px 18px",
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                 color: "#ffffff",
                 border: "none",
-                borderRadius: "6px",
-                fontSize: "0.85rem",
+                borderRadius: "12px",
+                fontSize: "0.9rem",
                 cursor: "pointer",
-                fontWeight: "500",
-                transition: "background-color 0.2s"
+                fontWeight: "600",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = "#218838"}
-              onMouseOut={(e) => e.target.style.backgroundColor = "#28a745"}
+              onMouseOver={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.4)";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
+              }}
             >
-              📊 Export CSV
+              📈 Export Excel
             </button>
             <button
               onClick={handleExportReport}
               style={{
-                padding: "8px 12px",
-                backgroundColor: "#007bff",
+                padding: "10px 18px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 color: "#ffffff",
                 border: "none",
-                borderRadius: "6px",
-                fontSize: "0.85rem",
+                borderRadius: "12px",
+                fontSize: "0.9rem",
                 cursor: "pointer",
-                fontWeight: "500",
-                transition: "background-color 0.2s"
+                fontWeight: "600",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = "#0056b3"}
-              onMouseOut={(e) => e.target.style.backgroundColor = "#007bff"}
+              onMouseOver={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+              }}
             >
-              📄 Export Report
+              📄 TXT Table
             </button>
           </div>
         )}
@@ -182,12 +236,13 @@ function LateList() {
         <div style={{
           display: "flex",
           gap: "1rem",
-          marginBottom: "1.5rem",
+          marginBottom: "2rem",
           flexWrap: "wrap",
-          alignItems: "center"
+          alignItems: "center",
+          animation: "fadeIn 0.6s ease-out"
         }}>
           {/* Search Input */}
-          <div style={{ flex: 1, minWidth: "200px" }}>
+          <div style={{ flex: 1, minWidth: "250px" }}>
             <input
               type="text"
               placeholder="🔍 Search by roll number or name..."
@@ -195,15 +250,23 @@ function LateList() {
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 width: "100%",
-                padding: "10px 12px",
-                border: "2px solid #dee2e6",
-                borderRadius: "8px",
-                fontSize: "0.9rem",
+                padding: "12px 16px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "12px",
+                fontSize: "0.95rem",
                 outline: "none",
-                transition: "border-color 0.2s"
+                transition: "all 0.3s ease",
+                background: "white",
+                boxSizing: "border-box"
               }}
-              onFocus={(e) => e.target.style.borderColor = "#007bff"}
-              onBlur={(e) => e.target.style.borderColor = "#dee2e6"}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#667eea";
+                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
+              }}
             />
           </div>
 
@@ -213,13 +276,23 @@ function LateList() {
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
               style={{
-                padding: "10px 12px",
-                border: "2px solid #dee2e6",
-                borderRadius: "8px",
-                fontSize: "0.9rem",
-                backgroundColor: "#ffffff",
+                padding: "12px 16px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "12px",
+                fontSize: "0.95rem",
+                backgroundColor: "white",
                 cursor: "pointer",
-                outline: "none"
+                outline: "none",
+                transition: "all 0.3s ease",
+                fontWeight: "500"
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#667eea";
+                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
               }}
             >
               <option value="all">🎓 All Years</option>
@@ -230,11 +303,86 @@ function LateList() {
             </select>
           </div>
 
+          {/* Branch Filter */}
+          <div>
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              style={{
+                padding: "12px 16px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "12px",
+                fontSize: "0.95rem",
+                backgroundColor: "white",
+                cursor: "pointer",
+                outline: "none",
+                transition: "all 0.3s ease",
+                fontWeight: "500"
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#667eea";
+                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
+              }}
+            >
+              <option value="all">🏢 All Branches</option>
+              <option value="CSE">CSE</option>
+              <option value="CSM">CSM</option>
+              <option value="CSD">CSD</option>
+              <option value="CSC">CSC</option>
+              <option value="ECE">ECE</option>
+              <option value="EEE">EEE</option>
+              <option value="MECH">MECH</option>
+              <option value="CIVIL">CIVIL</option>
+              <option value="IT">IT</option>
+            </select>
+          </div>
+
+          {/* Section Filter */}
+          <div>
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              style={{
+                padding: "12px 16px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "12px",
+                fontSize: "0.95rem",
+                backgroundColor: "white",
+                cursor: "pointer",
+                outline: "none",
+                transition: "all 0.3s ease",
+                fontWeight: "500"
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#667eea";
+                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
+              }}
+            >
+              <option value="all">📋 All Sections</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+            </select>
+          </div>
+
           {/* Results Counter */}
           <div style={{
-            color: "#6c757d",
+            padding: "12px 20px",
+            background: "linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)",
+            borderRadius: "12px",
             fontSize: "0.9rem",
-            fontWeight: "500"
+            fontWeight: "600",
+            color: "#1e40af",
+            border: "2px solid #bfdbfe"
           }}>
             {filteredStudents.length === students.length 
               ? `${students.length} students`
@@ -247,15 +395,17 @@ function LateList() {
       {loading ? (
         <div style={{
           textAlign: "center",
-          padding: "3rem 1rem",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          border: "2px dashed #dee2e6"
+          padding: "4rem 2rem",
+          background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+          borderRadius: "20px",
+          border: "2px dashed #d1d5db",
+          animation: "pulse 2s ease-in-out infinite"
         }}>
-          <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
+          <div style={{ fontSize: "3rem", marginBottom: "1.5rem", animation: "spin 2s linear infinite" }}>⏳</div>
           <p style={{
-            color: "#6c757d",
-            fontSize: "1.1rem",
+            color: "#6b7280",
+            fontSize: "1.2rem",
+            fontWeight: "600",
             margin: "0"
           }}>
             Loading late students...
@@ -264,15 +414,17 @@ function LateList() {
       ) : error ? (
         <div style={{
           textAlign: "center",
-          padding: "3rem 1rem",
-          backgroundColor: "#f8d7da",
-          borderRadius: "8px",
-          border: "2px solid #f5c6cb"
+          padding: "4rem 2rem",
+          background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+          borderRadius: "20px",
+          border: "2px solid #fca5a5",
+          animation: "scaleIn 0.5s ease-out"
         }}>
-          <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>❌</div>
+          <div style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>❌</div>
           <p style={{
-            color: "#721c24",
-            fontSize: "1.1rem",
+            color: "#991b1b",
+            fontSize: "1.2rem",
+            fontWeight: "600",
             margin: "0"
           }}>
             {error}
@@ -281,93 +433,135 @@ function LateList() {
       ) : students.length === 0 ? (
         <div style={{
           textAlign: "center",
-          padding: "3rem 1rem",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          border: "2px dashed #dee2e6"
+          padding: "4rem 2rem",
+          background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
+          borderRadius: "20px",
+          border: "2px dashed #6ee7b7",
+          animation: "scaleIn 0.5s ease-out"
         }}>
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🎉</div>
+          <div style={{ fontSize: "4rem", marginBottom: "1.5rem", animation: "float 3s ease-in-out infinite" }}>🎉</div>
           <p style={{
-            color: "#28a745",
-            fontSize: "1.2rem",
-            fontWeight: "500",
-            margin: "0"
+            color: "#065f46",
+            fontSize: "1.5rem",
+            fontWeight: "700",
+            margin: "0 0 0.5rem 0"
           }}>
             No students were late today!
           </p>
           <p style={{
-            color: "#6c757d",
-            fontSize: "0.9rem",
-            margin: "0.5rem 0 0 0"
+            color: "#047857",
+            fontSize: "1rem",
+            fontWeight: "500",
+            margin: "0"
           }}>
-            Great attendance record!
+            Great attendance record! 🌟
           </p>
         </div>
       ) : filteredStudents.length === 0 ? (
         <div style={{
           textAlign: "center",
-          padding: "3rem 1rem",
-          backgroundColor: "#fff3cd",
-          borderRadius: "8px",
-          border: "2px dashed #ffeaa7"
+          padding: "4rem 2rem",
+          background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+          borderRadius: "20px",
+          border: "2px dashed #fbbf24",
+          animation: "scaleIn 0.5s ease-out"
         }}>
-          <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
+          <div style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>🔍</div>
           <p style={{
-            color: "#856404",
-            fontSize: "1.1rem",
-            fontWeight: "500",
-            margin: "0"
+            color: "#78350f",
+            fontSize: "1.2rem",
+            fontWeight: "600",
+            margin: "0 0 0.75rem 0"
           }}>
             No students match your search criteria
           </p>
           <p style={{
-            color: "#6c757d",
-            fontSize: "0.9rem",
-            margin: "0.5rem 0 0 0"
+            color: "#92400e",
+            fontSize: "0.95rem",
+            fontWeight: "500",
+            margin: "0"
           }}>
-            Try adjusting your search term or year filter
+            Try adjusting your filters or search term
           </p>
         </div>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
-          {filteredStudents.map(s => (
+          {filteredStudents.map((s, index) => (
             <li key={s._id} style={{
-              marginBottom: "1rem",
-              padding: "1.5rem",
-              border: "1px solid #dee2e6",
-              borderRadius: "12px",
-              backgroundColor: "#ffffff",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
-              transition: "all 0.2s ease"
-            }}>
+              marginBottom: "1.25rem",
+              padding: "2rem",
+              border: "2px solid rgba(102, 126, 234, 0.1)",
+              borderRadius: "20px",
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              boxShadow: "0 8px 20px rgba(0, 0, 0, 0.08)",
+              transition: "all 0.3s ease",
+              animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
+              position: "relative",
+              overflow: "hidden"
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 12px 30px rgba(102, 126, 234, 0.15)";
+              e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.1)";
+            }}
+            >
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 cursor: "pointer"
               }} onClick={() => toggleExpanded(s._id)}>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{
-                    fontSize: "1.1rem",
-                    fontWeight: "600",
-                    color: "#343a40",
-                    marginBottom: "0.5rem"
+                    fontSize: "1.25rem",
+                    fontWeight: "700",
+                    color: "#1e293b",
+                    marginBottom: "0.5rem",
+                    letterSpacing: "-0.3px"
                   }}>
                     {s.rollNo} - {s.name}
                   </div>
+                  {(s.branch || s.section || s.year) && (
+                    <div style={{
+                      fontSize: "0.9rem",
+                      color: "#64748b",
+                      marginBottom: "0.75rem",
+                      fontWeight: "500"
+                    }}>
+                      {s.branch && `🏢 ${s.branch}`}
+                      {s.branch && s.section && ' • '}
+                      {s.section && `📋 Section ${s.section}`}
+                      {s.year && ` • 🎓 Year ${s.year}`}
+                      {s.semester && ` • 📚 Sem ${s.semester}`}
+                    </div>
+                  )}
                   <div style={{
                     display: "flex",
-                    gap: "0.5rem",
+                    gap: "0.75rem",
                     alignItems: "center",
                     flexWrap: "wrap"
                   }}>
                     <span style={{
-                      padding: "4px 12px",
-                      borderRadius: "20px",
-                      fontSize: "0.8rem",
-                      fontWeight: "500",
-                      backgroundColor: s.lateDays > 10 ? "#dc3545" : s.lateDays > 7 ? "#fd7e14" : "#28a745",
-                      color: "white"
+                      padding: "6px 16px",
+                      borderRadius: "12px",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      background: s.lateDays > 10 
+                        ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)" 
+                        : s.lateDays > 7 
+                        ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" 
+                        : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                      color: "white",
+                      boxShadow: s.lateDays > 10 
+                        ? "0 4px 12px rgba(220, 38, 38, 0.3)" 
+                        : s.lateDays > 7 
+                        ? "0 4px 12px rgba(245, 158, 11, 0.3)" 
+                        : "0 4px 12px rgba(16, 185, 129, 0.3)"
                     }}>
                       {s.lateDays}/10 late days
                     </span>
@@ -375,12 +569,13 @@ function LateList() {
                     {/* Status indicators */}
                     {s.status === 'approaching_limit' && (
                       <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "0.8rem",
-                        fontWeight: "500",
-                        backgroundColor: "#ffc107",
-                        color: "#212529"
+                        padding: "6px 16px",
+                        borderRadius: "12px",
+                        fontSize: "0.85rem",
+                        fontWeight: "600",
+                        background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                        color: "#78350f",
+                        boxShadow: "0 4px 12px rgba(251, 191, 36, 0.3)"
                       }}>
                         ⚠️ Approaching Limit
                       </span>
@@ -388,12 +583,13 @@ function LateList() {
                     
                     {s.status === 'grace_period' && (
                       <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "0.8rem",
-                        fontWeight: "500",
-                        backgroundColor: "#fd7e14",
-                        color: "white"
+                        padding: "6px 16px",
+                        borderRadius: "12px",
+                        fontSize: "0.85rem",
+                        fontWeight: "600",
+                        background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                        color: "white",
+                        boxShadow: "0 4px 12px rgba(249, 115, 22, 0.3)"
                       }}>
                         🔶 Grace Period ({s.gracePeriodUsed}/4)
                       </span>
@@ -401,12 +597,13 @@ function LateList() {
                     
                     {s.status === 'fined' && (
                       <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "0.8rem",
-                        fontWeight: "500",
-                        backgroundColor: "#dc3545",
-                        color: "white"
+                        padding: "6px 16px",
+                        borderRadius: "12px",
+                        fontSize: "0.85rem",
+                        fontWeight: "600",
+                        background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+                        color: "white",
+                        boxShadow: "0 4px 12px rgba(220, 38, 38, 0.3)"
                       }}>
                         💸 Being Fined
                       </span>
@@ -414,80 +611,114 @@ function LateList() {
                     
                     {s.fines > 0 && (
                       <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "0.8rem",
-                        fontWeight: "500",
-                        backgroundColor: "#e74c3c",
-                        color: "white"
+                        padding: "6px 16px",
+                        borderRadius: "12px",
+                        fontSize: "0.85rem",
+                        fontWeight: "600",
+                        background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                        color: "white",
+                        boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)"
                       }}>
                         ₹{s.fines} Total Fines
                       </span>
                     )}
                   </div>
                 </div>
-                <button style={{
-                  backgroundColor: expandedStudent === s._id ? "#007bff" : "#f8f9fa",
-                  color: expandedStudent === s._id ? "white" : "#007bff",
-                  border: "2px solid #007bff",
-                  padding: "8px 16px",
-                  borderRadius: "20px",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  fontWeight: "500",
-                  transition: "all 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem"
-                }}>
-                  <span>{expandedStudent === s._id ? "▼" : "▶"}</span>
-                  View Dates
+                <button 
+                  style={{
+                    background: expandedStudent === s._id 
+                      ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
+                      : "rgba(102, 126, 234, 0.1)",
+                    color: expandedStudent === s._id ? "white" : "#667eea",
+                    border: "2px solid #667eea",
+                    padding: "10px 20px",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    transition: "all 0.3s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    boxShadow: expandedStudent === s._id 
+                      ? "0 4px 12px rgba(102, 126, 234, 0.3)" 
+                      : "none"
+                  }}
+                  onMouseOver={(e) => {
+                    if (expandedStudent !== s._id) {
+                      e.target.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+                      e.target.style.color = "white";
+                      e.target.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (expandedStudent !== s._id) {
+                      e.target.style.background = "rgba(102, 126, 234, 0.1)";
+                      e.target.style.color = "#667eea";
+                      e.target.style.boxShadow = "none";
+                    }
+                  }}
+                >
+                  <span style={{ fontSize: "1rem" }}>{expandedStudent === s._id ? "▼" : "▶"}</span>
+                  View Details
                 </button>
               </div>
 
               {expandedStudent === s._id && (
                 <div style={{ 
-                  marginTop: "1.5rem", 
-                  paddingTop: "1.5rem", 
-                  borderTop: "1px solid #e9ecef",
-                  animation: "fadeIn 0.3s ease"
+                  marginTop: "2rem", 
+                  paddingTop: "2rem", 
+                  borderTop: "2px solid rgba(102, 126, 234, 0.15)",
+                  animation: "fadeIn 0.4s ease-out"
                 }}>
                   <h4 style={{
                     margin: "0 0 1rem 0",
-                    fontSize: "1rem",
-                    color: "#495057",
-                    fontWeight: "600"
+                    fontSize: "1.1rem",
+                    color: "#334155",
+                    fontWeight: "700",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
                   }}>
-                    📅 Today's Late Entries:
+                    <span style={{ fontSize: "1.5rem" }}>📅</span>
+                    Today's Late Entries:
                   </h4>
                   {getLateDatesForToday(s.lateLogs).length > 0 ? (
                     <ul style={{
-                      margin: "0 0 1.5rem 0",
-                      padding: "1rem",
-                      backgroundColor: "#fff5f5",
-                      borderRadius: "8px",
-                      border: "1px solid #fecaca",
-                      listStyle: "none"
+                      margin: "0 0 2rem 0",
+                      padding: "1.25rem",
+                      background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+                      borderRadius: "16px",
+                      border: "2px solid #fca5a5",
+                      listStyle: "none",
+                      boxShadow: "0 4px 12px rgba(220, 38, 38, 0.15)"
                     }}>
                       {getLateDatesForToday(s.lateLogs).map((log, index) => (
                         <li key={index} style={{
-                          color: "#dc3545",
-                          fontWeight: "500",
-                          padding: "0.25rem 0"
+                          color: "#991b1b",
+                          fontWeight: "600",
+                          padding: "0.5rem 0",
+                          fontSize: "0.95rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem"
                         }}>
-                          🔴 {formatDate(log.date)} (Today)
+                          <span style={{ fontSize: "1.2rem" }}>🔴</span>
+                          {formatDate(log.date)} (Today)
                         </li>
                       ))}
                     </ul>
                   ) : (
                     <p style={{
-                      margin: "0 0 1.5rem 0",
-                      padding: "1rem",
-                      backgroundColor: "#f8f9fa",
-                      borderRadius: "8px",
-                      color: "#6c757d",
-                      fontSize: "0.9rem",
-                      fontStyle: "italic"
+                      margin: "0 0 2rem 0",
+                      padding: "1.25rem",
+                      background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+                      borderRadius: "16px",
+                      color: "#6b7280",
+                      fontSize: "0.95rem",
+                      fontStyle: "italic",
+                      fontWeight: "500",
+                      border: "2px solid #d1d5db"
                     }}>
                       No entries for today
                     </p>
@@ -495,48 +726,59 @@ function LateList() {
 
                   <h4 style={{
                     margin: "0 0 1rem 0",
-                    fontSize: "1rem",
-                    color: "#495057",
-                    fontWeight: "600"
+                    fontSize: "1.1rem",
+                    color: "#334155",
+                    fontWeight: "700",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
                   }}>
-                    📝 Recent Late History:
+                    <span style={{ fontSize: "1.5rem" }}>📝</span>
+                    Recent Late History:
                   </h4>
                   <ul style={{
-                    margin: "0 0 1rem 0",
-                    padding: "1rem",
-                    backgroundColor: "#f8f9fa",
-                    borderRadius: "8px",
+                    margin: "0 0 1.5rem 0",
+                    padding: "1.25rem",
+                    background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+                    borderRadius: "16px",
                     listStyle: "none",
-                    maxHeight: "150px",
-                    overflowY: "auto"
+                    maxHeight: "200px",
+                    overflowY: "auto",
+                    border: "2px solid #e2e8f0",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)"
                   }}>
                     {getRecentLateDates(s.lateLogs).map((log, index) => (
                       <li key={index} style={{
-                        color: isToday(log.date) ? "#dc3545" : "#6c757d",
-                        fontSize: "0.85rem",
-                        padding: "0.25rem 0",
-                        fontWeight: isToday(log.date) ? "500" : "normal"
+                        color: isToday(log.date) ? "#991b1b" : "#64748b",
+                        fontSize: "0.9rem",
+                        padding: "0.5rem 0",
+                        fontWeight: isToday(log.date) ? "600" : "500",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem"
                       }}>
-                        {isToday(log.date) ? "🔴" : "⭕"} {formatDate(log.date)}
-                        {isToday(log.date) && " (Today)"}
+                        <span style={{ fontSize: "1.1rem" }}>{isToday(log.date) ? "🔴" : "⭕"}</span>
+                        {formatDate(log.date)}
+                        {isToday(log.date) && <span style={{ color: "#dc2626", fontWeight: "700" }}>(Today)</span>}
                       </li>
                     ))}
                   </ul>
                   
                   {s.fines > 0 && (
                     <div style={{ 
-                      marginTop: "1rem", 
-                      padding: "1rem", 
-                      backgroundColor: "#fff8e1",
-                      border: "1px solid #ffcc02",
-                      borderRadius: "8px",
+                      marginTop: "1.5rem", 
+                      padding: "1.25rem", 
+                      background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+                      border: "2px solid #fbbf24",
+                      borderRadius: "16px",
                       display: "flex",
                       alignItems: "center",
-                      gap: "0.5rem"
+                      gap: "0.75rem",
+                      boxShadow: "0 4px 12px rgba(251, 191, 36, 0.3)"
                     }}>
-                      <span style={{ fontSize: "1.5rem" }}>💰</span>
-                      <strong style={{ color: "#f57c00", fontSize: "1.1rem" }}>
-                        Total Fines: ${s.fines}
+                      <span style={{ fontSize: "2rem" }}>💰</span>
+                      <strong style={{ color: "#78350f", fontSize: "1.2rem", fontWeight: "700" }}>
+                        Total Fines: ₹{s.fines}
                       </strong>
                     </div>
                   )}

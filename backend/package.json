@@ -9,7 +9,13 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "check-health": "curl http://localhost:5000/health"
   },
-  "keywords": ["student", "attendance", "tracking", "mongodb", "express"],
+  "keywords": [
+    "student",
+    "attendance",
+    "tracking",
+    "mongodb",
+    "express"
+  ],
   "author": "Chelluri Sai Vishal",
   "license": "MIT",
   "type": "module",
@@ -17,12 +23,17 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
-    "mongoose": "^8.18.2"
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.2",
+    "nodemailer": "^6.9.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/node": "^24.10.1",
     "nodemon": "^3.1.10"
   }
 }

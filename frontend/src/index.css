@@ -1,47 +1,92 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8f9fa;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
   line-height: 1.6;
+  color: #2d3748;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
 }
 
-/* Global button styles */
+/* Modern Button Styles */
 button {
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
 }
 
 button:active {
   transform: translateY(0);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Input focus styles */
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none !important;
+}
+
+/* Modern Input Styles */
+input, select, textarea {
+  font-family: inherit;
+  transition: all 0.3s ease;
+  border: 2px solid #e2e8f0;
+  background: white;
+  box-sizing: border-box;
+}
+
+/* Prevent browser autocomplete from changing input styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #2d3748 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: none;
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  transform: translateY(-1px);
 }
 
-/* Smooth animations */
+input::placeholder {
+  color: #a0aec0;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -49,62 +94,194 @@ select:focus {
   }
 }
 
-/* Custom scrollbar */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.4s ease-out;
+}
+
+/* Glassmorphism Effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f1f5f9;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 10px;
+  border: 2px solid #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: linear-gradient(135deg, #5568d3 0%, #6a4190 100%);
 }
 
-/* Responsive design */
+/* Card Hover Effects */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Badge Styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
   .container {
     padding: 1rem !important;
   }
   
   h1 {
-    font-size: 2rem !important;
+    font-size: 1.75rem !important;
+  }
+  
+  h2 {
+    font-size: 1.5rem !important;
   }
   
   .card {
     margin: 0.5rem !important;
   }
 
-  /* Hide sidebar on mobile or make it overlay */
-  .sidebar {
-    position: fixed !important;
-    z-index: 1001 !important;
+  button {
+    font-size: 0.9rem;
+    padding: 10px 16px;
   }
-  
-  .main-content {
-    margin-left: 0 !important;
-  }
+}
 
-  /* Mobile sidebar backdrop */
-  .sidebar-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    display: none;
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
   }
   
-  .sidebar-backdrop.show {
-    display: block;
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+    padding: 3px 8px;
   }
 }

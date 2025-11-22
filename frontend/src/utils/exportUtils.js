@@ -60,27 +60,57 @@ export const generateTextReport = (data, title = "Report") => {
   let report = `${title}\n`;
   report += `Generated on: ${new Date().toLocaleString()}\n`;
   report += `Total Records: ${data.length}\n`;
-  report += '='.repeat(50) + '\n\n';
+  report += '='.repeat(120) + '\n\n';
   
-  // Add data rows
-  data.forEach((item, index) => {
-    report += `Record ${index + 1}:\n`;
-    Object.entries(item).forEach(([key, value]) => {
-      const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-      
-      let formattedValue = value;
-      if (Array.isArray(value)) {
-        formattedValue = `${value.length} items`;
-      } else if (typeof value === 'object' && value !== null) {
-        formattedValue = JSON.stringify(value);
-      } else if (value === null || value === undefined) {
-        formattedValue = 'N/A';
-      }
-      
-      report += `  ${formattedKey}: ${formattedValue}\n`;
+  // Get column headers from the first data item
+  if (data.length > 0) {
+    const headers = Object.keys(data[0]);
+    
+    // Calculate column widths (max of header length or max data length in that column)
+    const columnWidths = headers.map(header => {
+      const maxDataLength = Math.max(
+        ...data.map(item => {
+          const value = item[header];
+          if (value === null || value === undefined) return 3; // "N/A" length
+          if (Array.isArray(value)) return String(value.length).length;
+          if (typeof value === 'object') return 10; // Reasonable default for objects
+          return String(value).length;
+        })
+      );
+      return Math.max(header.length, maxDataLength, 8); // Minimum width of 8
     });
-    report += '\n';
-  });
+    
+    // Create header row
+    const headerRow = headers.map((header, i) => header.padEnd(columnWidths[i])).join(' | ');
+    report += headerRow + '\n';
+    
+    // Create separator row
+    const separator = columnWidths.map(width => '-'.repeat(width)).join('-+-');
+    report += separator + '\n';
+    
+    // Add data rows
+    data.forEach(item => {
+      const row = headers.map((header, i) => {
+        let value = item[header];
+        
+        // Format value
+        if (value === null || value === undefined) {
+          value = 'N/A';
+        } else if (Array.isArray(value)) {
+          value = value.length;
+        } else if (typeof value === 'object') {
+          value = JSON.stringify(value);
+        }
+        
+        return String(value).padEnd(columnWidths[i]);
+      }).join(' | ');
+      
+      report += row + '\n';
+    });
+  }
+  
+  report += '\n' + '='.repeat(120) + '\n';
+  report += `End of Report\n`;
   
   return report;
 };
@@ -113,12 +143,14 @@ export const formatStudentDataForExport = (students) => {
     'Roll Number': student.rollNo,
     'Name': student.name,
     'Year': student.year,
-    'Late Days': student.lateDays,
+    'Semester': student.semester || 'N/A',
+    'Branch': student.branch || 'N/A',
+    'Section': student.section || 'N/A',
+    'Late Days (Total)': student.lateDays,
+    'Excuse Days Used': student.excuseDaysUsed || 0,
     'Status': student.status,
-    'Fines (₹)': student.fines,
-    'Grace Period Used': student.gracePeriodUsed,
-    'Limit Exceeded': student.limitExceeded ? 'Yes' : 'No',
-    'In Grace Period': student.isInGracePeriod ? 'Yes' : 'No',
+    'Total Fines (₹)': student.fines,
+    'Alert Faculty': student.alertFaculty ? 'Yes' : 'No',
     'Total Late Records': student.lateLogs ? student.lateLogs.length : 0
   }));
 };
@@ -133,11 +165,16 @@ export const formatLateRecordsForExport = (records, period = '') => {
           'Roll Number': student.rollNo,
           'Name': student.name,
           'Year': student.year,
+          'Semester': student.semester || 'N/A',
+          'Branch': student.branch || 'N/A',
+          'Section': student.section || 'N/A',
           'Late Date': new Date(log.date).toLocaleDateString(),
           'Late Time': new Date(log.date).toLocaleTimeString(),
-          'Current Late Days': student.lateDays,
-          'Current Fines (₹)': student.fines,
-          'Status': student.status
+          'Late Days (Total)': student.lateDays,
+          'Excuse Days Used': student.excuseDaysUsed || 0,
+          'Total Fines (₹)': student.fines,
+          'Status': student.status,
+          'Alert': student.alertFaculty ? 'Yes' : 'No'
         });
       });
     }

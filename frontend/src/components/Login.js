@@ -1,44 +1,58 @@
 import React, { useState } from "react";
+import API from "../services/api";
 
 function Login({ onLogin }) {
   const [credentials, setCredentials] = useState({
-    username: "",
+    email: "",
     password: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const FACULTY_CREDENTIALS = {
-    "faculty": "pass123",
-    "admin": "admin123",
-    "teacher": "teacher123"
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    if (!credentials.username.trim() || !credentials.password.trim()) {
-      setError("Please enter both username and password");
+    if (!credentials.email.trim() || !credentials.password.trim()) {
+      setError("Please enter both email and password");
       setLoading(false);
       return;
     }
 
-    if (FACULTY_CREDENTIALS[credentials.username.toLowerCase()] === credentials.password) {
-      sessionStorage.setItem("facultyAuth", JSON.stringify({
-        username: credentials.username,
+    try {
+      // Call the new backend API
+      const response = await API.post("/auth/login", {
+        email: credentials.email,
+        password: credentials.password
+      });
+
+      // Store JWT token and faculty info
+      localStorage.setItem("jwt_token", response.data.token);
+      localStorage.setItem("facultyAuth", JSON.stringify({
+        ...response.data.faculty,
         loginTime: new Date().toISOString(),
         isAuthenticated: true
       }));
+
+      setLoading(false);
+      onLogin(response.data.faculty.name);
+    } catch (err) {
+      console.error("Login error:", err);
       
-      // Prevent browser password manager interference
-      setTimeout(() => {
-        setLoading(false);
-        onLogin(credentials.username);
-      }, 100);
-    } else {
-      setError("❌ Invalid username or password");
+      let errorMessage = "Login failed. Please try again.";
+      
+      if (err.code === 'ECONNABORTED') {
+        errorMessage = "Connection timeout. Please check if backend is running on port 5000.";
+      } else if (err.code === 'ERR_NETWORK') {
+        errorMessage = "Cannot connect to server. Make sure backend is running: cd backend && npm start";
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(`❌ ${errorMessage}`);
       setLoading(false);
     }
   };
@@ -55,79 +69,152 @@ function Login({ onLogin }) {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: "#f8f9fa",
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "1rem"
+      padding: "2rem",
+      position: "relative",
+      overflow: "hidden"
     }}>
+      {/* Animated Background Elements */}
       <div style={{
-        backgroundColor: "#ffffff",
-        padding: "3rem",
-        borderRadius: "12px",
-        boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
-        border: "1px solid #e9ecef",
+        position: "absolute",
         width: "100%",
-        maxWidth: "400px"
+        height: "100%",
+        opacity: 0.1
       }}>
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h1 style={{
-            color: "#343a40",
-            fontSize: "2rem",
-            fontWeight: "700",
-            marginBottom: "0.5rem"
+        <div style={{
+          position: "absolute",
+          top: "10%",
+          left: "10%",
+          width: "300px",
+          height: "300px",
+          borderRadius: "50%",
+          background: "white",
+          animation: "float 6s ease-in-out infinite"
+        }} />
+        <div style={{
+          position: "absolute",
+          bottom: "10%",
+          right: "10%",
+          width: "200px",
+          height: "200px",
+          borderRadius: "50%",
+          background: "white",
+          animation: "float 8s ease-in-out infinite"
+        }} />
+      </div>
+
+      <div style={{
+        backgroundColor: "rgba(255, 255, 255, 0.98)",
+        backdropFilter: "blur(20px)",
+        padding: "3rem",
+        borderRadius: "24px",
+        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+        border: "1px solid rgba(255, 255, 255, 0.5)",
+        width: "100%",
+        maxWidth: "480px",
+        animation: "scaleIn 0.5s ease-out",
+        position: "relative",
+        zIndex: 1
+      }}>
+        {/* Logo/Header Section */}
+        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+          <div style={{
+            width: "80px",
+            height: "80px",
+            margin: "0 auto 1.5rem",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: "20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "3rem",
+            boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
+            animation: "float 3s ease-in-out infinite"
           }}>
-            🎓 Faculty Login
+            🎓
+          </div>
+          <h1 style={{
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            fontSize: "2.25rem",
+            fontWeight: "800",
+            marginBottom: "0.5rem",
+            letterSpacing: "-0.5px"
+          }}>
+            Faculty Login
           </h1>
           <p style={{
-            color: "#6c757d",
-            fontSize: "1rem",
-            margin: "0"
+            color: "#64748b",
+            fontSize: "1.05rem",
+            margin: "0",
+            fontWeight: "500"
           }}>
-            Student Late Tracking System
+            ANITS Student Late Tracking System
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} autoComplete="off">
-          <div style={{ marginBottom: "1.5rem" }}>
+        <form onSubmit={handleSubmit} autoComplete="off" style={{ width: "100%", display: "block" }}>
+          <div style={{ marginBottom: "1.75rem", width: "100%", display: "block", boxSizing: "border-box" }}>
             <label style={{
               display: "block",
-              marginBottom: "0.5rem",
-              color: "#495057",
-              fontWeight: "500"
+              marginBottom: "0.75rem",
+              color: "#334155",
+              fontWeight: "600",
+              fontSize: "0.95rem",
+              letterSpacing: "0.3px"
             }}>
-              Username
+              Email Address
             </label>
             <input
               type="text"
-              name="username"
-              value={credentials.username}
+              name="email"
+              value={credentials.email}
               onChange={handleInputChange}
-              placeholder="Enter faculty username"
+              placeholder="faculty@anits.edu.in"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck="false"
               style={{
                 width: "100%",
-                padding: "12px 16px",
-                border: "2px solid #dee2e6",
-                borderRadius: "8px",
+                minWidth: "100%",
+                maxWidth: "100%",
+                padding: "14px 18px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "12px",
                 fontSize: "1rem",
-                transition: "border-color 0.2s",
-                outline: "none"
+                transition: "all 0.3s ease",
+                outline: "none",
+                background: "white",
+                boxSizing: "border-box",
+                display: "block",
+                fontFamily: "inherit",
+                color: "#2d3748"
               }}
-              onFocus={(e) => e.target.style.borderColor = "#007bff"}
-              onBlur={(e) => e.target.style.borderColor = "#dee2e6"}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#667eea";
+                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
+              }}
             />
           </div>
 
-          <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "1.75rem", width: "100%", display: "block", boxSizing: "border-box" }}>
             <label style={{
               display: "block",
-              marginBottom: "0.5rem",
-              color: "#495057",
-              fontWeight: "500"
+              marginBottom: "0.75rem",
+              color: "#334155",
+              fontWeight: "600",
+              fontSize: "0.95rem",
+              letterSpacing: "0.3px"
             }}>
               Password
             </label>
@@ -136,84 +223,196 @@ function Login({ onLogin }) {
               name="password"
               value={credentials.password}
               onChange={handleInputChange}
-              placeholder="Enter password"
+              placeholder="Enter your password"
               autoComplete="new-password"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck="false"
               style={{
                 width: "100%",
-                padding: "12px 16px",
-                border: "2px solid #dee2e6",
-                borderRadius: "8px",
+                minWidth: "100%",
+                maxWidth: "100%",
+                padding: "14px 18px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "12px",
                 fontSize: "1rem",
-                transition: "border-color 0.2s",
-                outline: "none"
+                transition: "all 0.3s ease",
+                outline: "none",
+                background: "white",
+                boxSizing: "border-box",
+                display: "block",
+                fontFamily: "inherit",
+                color: "#2d3748"
               }}
-              onFocus={(e) => e.target.style.borderColor = "#007bff"}
-              onBlur={(e) => e.target.style.borderColor = "#dee2e6"}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#667eea";
+                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
+              }}
             />
           </div>
 
           {error && (
             <div style={{
-              backgroundColor: "#f8d7da",
-              color: "#721c24",
-              padding: "12px 16px",
-              borderRadius: "6px",
-              border: "1px solid #f5c6cb",
-              marginBottom: "1.5rem",
-              fontSize: "0.9rem"
+              background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+              color: "#991b1b",
+              padding: "14px 18px",
+              borderRadius: "12px",
+              border: "2px solid #fca5a5",
+              marginBottom: "1.75rem",
+              fontSize: "0.95rem",
+              fontWeight: "500",
+              animation: "slideInRight 0.4s ease-out"
             }}>
               {error}
             </div>
           )}
+          
           <button
             type="submit"
             disabled={loading}
             style={{
               width: "100%",
-              padding: "12px 16px",
-              backgroundColor: loading ? "#6c757d" : "#007bff",
+              padding: "16px 20px",
+              background: loading
+                ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
+                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               color: "#ffffff",
               border: "none",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              fontWeight: "600",
+              borderRadius: "12px",
+              fontSize: "1.05rem",
+              fontWeight: "700",
               cursor: loading ? "not-allowed" : "pointer",
-              transition: "background-color 0.2s",
-              opacity: loading ? 0.8 : 1
+              transition: "all 0.3s ease",
+              boxShadow: loading
+                ? "0 4px 15px rgba(100, 116, 139, 0.3)"
+                : "0 4px 15px rgba(102, 126, 234, 0.4)",
+              letterSpacing: "0.5px",
+              position: "relative",
+              overflow: "hidden"
             }}
             onMouseOver={(e) => {
-              if (!loading) e.target.style.backgroundColor = "#0056b3";
+              if (!loading) {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.5)";
+              }
             }}
             onMouseOut={(e) => {
-              if (!loading) e.target.style.backgroundColor = "#007bff";
+              if (!loading) {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.4)";
+              }
             }}
           >
-            {loading ? "🔄 Logging in..." : "🔑 Login"}
+            {loading ? (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                <span className="spinner" style={{
+                  width: "20px",
+                  height: "20px",
+                  border: "3px solid rgba(255, 255, 255, 0.3)",
+                  borderTopColor: "white",
+                  borderRadius: "50%",
+                  display: "inline-block"
+                }} />
+                Logging in...
+              </span>
+            ) : (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                🔑 Login to Dashboard
+              </span>
+            )}
           </button>
+
+          {/* Auxiliary Info */}
+          <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: ".75rem" }}>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'forgot-password' } }))}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#4338ca",
+                fontSize: ".85rem",
+                cursor: "pointer",
+                fontWeight: 600,
+                textDecoration: "underline",
+                alignSelf: 'flex-start'
+              }}
+            >
+              Forgot Password?
+            </button>
+            <div style={{
+              background: "linear-gradient(135deg,#f0f9ff,#e0f2fe)",
+              border: "1px solid #bae6fd",
+              padding: "12px 16px",
+              borderRadius: "12px",
+              fontSize: ".7rem",
+              color: "#0c4a6e",
+              lineHeight: 1.6,
+              fontWeight: 500
+            }}>
+              New faculty accounts are created only by the <strong>Admin Office</strong>.<br />
+              Please contact your department admin to request an account or password assistance.
+            </div>
+          </div>
         </form>
 
+        {/* Test Credentials Card */}
         <div style={{
           marginTop: "2rem",
-          padding: "1rem",
-          backgroundColor: "#e7f3ff",
-          borderRadius: "6px",
-          border: "1px solid #b3d7ff"
+          padding: "1.25rem",
+          background: "linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)",
+          borderRadius: "16px",
+          border: "2px solid #bfdbfe",
+          animation: "fadeIn 0.6s ease-out 0.3s both"
         }}>
           <h4 style={{ 
-            color: "#004085", 
-            fontSize: "0.9rem", 
-            marginBottom: "0.5rem",
-            fontWeight: "600"
+            color: "#1e40af", 
+            fontSize: "0.95rem", 
+            marginBottom: "0.75rem",
+            fontWeight: "700",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem"
           }}>
-            🔐 Demo Credentials:
+            <span style={{ fontSize: "1.25rem" }}>🔐</span>
+            Test Credentials
           </h4>
-          <div style={{ fontSize: "0.8rem", color: "#004085" }}>
-            <div><strong>faculty</strong> / pass123</div>
-            <div><strong>admin</strong> / admin123</div>
-            <div><strong>teacher</strong> / teacher123</div>
+          <div style={{ fontSize: "0.85rem", color: "#1e3a8a", lineHeight: "1.8" }}>
+            <div style={{ 
+              padding: "0.5rem",
+              background: "rgba(255, 255, 255, 0.6)",
+              borderRadius: "8px",
+              marginBottom: "0.5rem",
+              fontWeight: "600"
+            }}>
+              <strong>admin.admin@anits.edu.in</strong> / Admin@123
+            </div>
+            <div style={{ 
+              padding: "0.5rem",
+              background: "rgba(255, 255, 255, 0.6)",
+              borderRadius: "8px",
+              marginBottom: "0.75rem",
+              fontWeight: "600"
+            }}>
+              <strong>sevapradeep.csm@anits.edu.in</strong> / Faculty@123
+            </div>
+            <div style={{ 
+              marginTop: "0.75rem",
+              fontStyle: "italic",
+              fontSize: "0.8rem",
+              color: "#3730a3"
+            }}>
+              💡 Run <code style={{
+                background: "rgba(99, 102, 241, 0.15)",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                fontFamily: "monospace"
+              }}>node seed-faculty.js</code> in backend to create accounts
+            </div>
           </div>
         </div>
       </div>

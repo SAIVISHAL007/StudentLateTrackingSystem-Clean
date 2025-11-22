@@ -2,10 +2,15 @@ import React, { useState, useEffect } from "react";
 import StudentForm from "./components/StudentForm";
 import LateList from "./components/LateList";
 import Record from "./components/Record";
+import Analytics from "./components/Analytics";
 import AdminManagement from "./components/AdminManagement";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Login from "./components/Login";
+import ForgotPassword from "./components/ForgotPassword";
+import FacultyRegister from "./components/FacultyRegister";
+import FacultyDirectory from "./components/FacultyDirectory";
+import Toast from "./components/Toast";
 import { isAuthenticated } from "./utils/auth";
 
 function App() {
@@ -20,6 +25,8 @@ function App() {
   const handleLogin = (username) => {
     setAuthenticated(true);
     console.log(`✅ Faculty ${username} logged in successfully`);
+    console.log('JWT Token:', localStorage.getItem('jwt_token') ? 'Present' : 'Missing');
+    console.log('Auth Data:', localStorage.getItem('facultyAuth'));
   };
 
   const handleLogout = () => {
@@ -30,7 +37,18 @@ function App() {
 
   // Check authentication status on app load
   useEffect(() => {
-    setAuthenticated(isAuthenticated());
+    // Check if we have the new JWT token system
+    const hasJWT = localStorage.getItem('jwt_token');
+    const oldAuth = sessionStorage.getItem('facultyAuth');
+    
+    // If old session storage exists but no JWT, clear it (migration)
+    if (oldAuth && !hasJWT) {
+      console.log('Clearing old authentication data...');
+      sessionStorage.removeItem('facultyAuth');
+      setAuthenticated(false);
+    } else {
+      setAuthenticated(isAuthenticated());
+    }
   }, []);
 
   // Listen for sidebar toggle events
@@ -39,9 +57,16 @@ function App() {
       setSidebarCollapsed(event.detail.collapsed);
     };
 
+    const handleNavigate = (event) => {
+      const { page } = event.detail || {};
+      if (page) setCurrentPage(page);
+    };
+
     window.addEventListener('sidebarToggle', handleSidebarToggle);
+    window.addEventListener('navigate', handleNavigate);
     return () => {
       window.removeEventListener('sidebarToggle', handleSidebarToggle);
+      window.removeEventListener('navigate', handleNavigate);
     };
   }, []);
 
@@ -131,6 +156,14 @@ function App() {
           </div>
         );
 
+      case "analytics":
+        return <Analytics />;
+      case "forgot-password":
+        return <ForgotPassword onNavigate={setCurrentPage} />;
+      case "register-faculty":
+        return <FacultyRegister onNavigate={setCurrentPage} />;
+      case "faculty-directory":
+        return <FacultyDirectory onNavigate={setCurrentPage} />;
       case "admin":
         return (
           <div>
@@ -170,11 +203,13 @@ function App() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      backgroundColor: "#f8f9fa",
-      display: "flex"
-    }}>
+    <>
+      <Toast />
+      <div style={{
+        minHeight: "100vh",
+        backgroundColor: "#f8f9fa",
+        display: "flex"
+      }}>
       {/* Sidebar */}
       <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
       
@@ -207,6 +242,7 @@ function App() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
