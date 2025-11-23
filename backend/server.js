@@ -265,7 +265,12 @@ app.get("/health", async (req, res) => {
   }
 });
 
-// Note: Static file serving will be handled by Railway automatically
+// For Vercel serverless deployment, export the app
+// For local development, start the server
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+}
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// Export for Vercel serverless
+export default app;
