@@ -1,10 +1,9 @@
 import axios from "axios";
 
-// Prefer an explicit backend URL in production via REACT_APP_API_URL.
-// If not provided, fall back to `/api` (useful for monorepo deploys).
-const configuredBase = process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.trim()
-  ? process.env.REACT_APP_API_URL.replace(/\/$/, '')
-  : (process.env.NODE_ENV === 'production' ? "/api" : "http://localhost:5000/api");
+// Hardcoded backend URL for production deployment
+const configuredBase = process.env.NODE_ENV === 'production'
+  ? "https://backend-amber-three-76.vercel.app/api"
+  : "http://localhost:5000/api";
 
 const API = axios.create({
   baseURL: configuredBase,
