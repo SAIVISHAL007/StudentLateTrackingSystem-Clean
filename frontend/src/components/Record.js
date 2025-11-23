@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { formatDate } from "../utils/dateUtils";
-import { downloadCSV, downloadTextReport, formatLateRecordsForExport, getTimestamp } from "../utils/exportUtils";
+import { downloadTextReport, formatLateRecordsForExport, getTimestamp } from "../utils/exportUtils";
 import { exportLateRecordsToExcel } from "../utils/excelExport";
 
 function Record() {

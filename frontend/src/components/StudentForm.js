@@ -237,7 +237,7 @@ function StudentForm() {
             </div>
             <button onClick={async () => {
               setSyncing(true);
-              const loadingToast = toast.loading('Syncing queued items...');
+              toast.loading('Syncing queued items...');
               const result = await flushQueue(API);
               setSyncing(false);
               setQueueCount(getQueue().length);

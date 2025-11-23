@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 import { toast } from "./Toast";
 
@@ -18,21 +18,7 @@ function Analytics() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastFetch, setLastFetch] = useState(new Date());
 
-  useEffect(() => {
-    fetchAnalytics();
-    
-    // Auto-refresh every 30 seconds
-    let interval;
-    if (autoRefresh) {
-      interval = setInterval(fetchAnalytics, 30000);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [autoRefresh]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       // Fetch today's late count
       const todayRes = await API.get("/students/late-today");
@@ -86,7 +72,21 @@ function Analytics() {
       toast.error(errorMsg);
       setLoading(false);
     }
-  };
+  }, [todayCount, loading]);
+
+  useEffect(() => {
+    fetchAnalytics();
+    
+    // Auto-refresh every 30 seconds
+    let interval;
+    if (autoRefresh) {
+      interval = setInterval(fetchAnalytics, 30000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoRefresh, fetchAnalytics]);
 
   const calculateDepartmentStats = (students) => {
     const deptMap = {};
