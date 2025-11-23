@@ -9,24 +9,24 @@ dotenv.config();
 
 const app = express();
 
-// CORS configuration - allow frontend domain
-const allowedOrigins = [
-  'https://frontend-bice-six-7xa3qoyuae.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5173'
-];
-
+// CORS configuration - allow all Vercel deployments and localhost
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps or Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Allow all for now
-    }
+    
+    // Allow all localhost for development
+    if (origin.includes('localhost')) return callback(null, true);
+    
+    // Allow all Vercel deployments (production and preview)
+    if (origin.includes('.vercel.app')) return callback(null, true);
+    
+    // Allow specific domains if needed
+    callback(null, true);
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Increase payload limit for base64 images
