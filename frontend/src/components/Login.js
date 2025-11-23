@@ -390,12 +390,7 @@ function Login({ onLogin }) {
               fontSize: "0.8rem",
               color: "#3730a3"
             }}>
-              💡 Run <code style={{
-                background: "rgba(99, 102, 241, 0.15)",
-                padding: "2px 6px",
-                borderRadius: "4px",
-                fontFamily: "monospace"
-              }}>node seed-faculty.js</code> in backend to create accounts
+
             </div>
           </div>
         </div>
