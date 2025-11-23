@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { formatDate } from "../utils/dateUtils";
-import { downloadCSV, downloadTextReport, formatLateRecordsForExport, getTimestamp } from "../utils/exportUtils";
-import { exportLateRecordsToExcel } from "../utils/excelExport";
+import { exportToExcel } from "../utils/advancedExport";
+import { useToast } from "./ToastProvider";
 
 function Record() {
+  const toast = useToast();
   const [selectedPeriod, setSelectedPeriod] = useState("weekly");
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedBranch, setSelectedBranch] = useState("all");
@@ -92,59 +93,49 @@ function Record() {
 
   const handleExportExcel = () => {
     if (!recordData || !recordData.students || recordData.students.length === 0) {
-      alert("⚠️ No data to export");
+      toast.showToast("No data to export", "warning");
       return;
     }
     
     const filteredStudents = getFilteredStudents(recordData.students);
     
     if (filteredStudents.length === 0) {
-      alert("⚠️ No students match your filters");
+      toast.showToast("No students match your filters", "warning");
       return;
     }
     
-    const filters = {
-      year: selectedYear !== "all" ? `Year ${selectedYear}` : "All Years",
-      branch: selectedBranch !== "all" ? selectedBranch : "All Branches",
-      section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections"
-    };
-    
-    const periodInfo = {
-      period: getPeriodTitle(selectedPeriod),
-      startDate: recordData.startDate,
-      endDate: recordData.endDate
-    };
-    
-    const filename = `late_records_${selectedPeriod}`;
-    const success = exportLateRecordsToExcel(filteredStudents, filename, filters, periodInfo);
-    
-    if (success) {
-      alert(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
-    } else {
-      alert("❌ Export failed. Please try again.");
-    }
-  };
-
-  const handleExportReport = () => {
-    if (!recordData || !recordData.students || recordData.students.length === 0) {
-      alert("⚠️ No data to export");
-      return;
-    }
-    
-    const filteredStudents = getFilteredStudents(recordData.students);
-    console.log('🔍 Filtered students for export:', filteredStudents);
-    console.log('🔍 Sample student:', filteredStudents[0]);
-    const exportData = formatLateRecordsForExport(filteredStudents, selectedPeriod);
-    console.log('🔍 Export data:', exportData);
-    const timestamp = getTimestamp();
-    const yearFilter = selectedYear === "all" ? "All Years" : `Year ${selectedYear}`;
-    const title = `Late Records Report - ${getPeriodTitle(selectedPeriod)} (${yearFilter})`;
-    const success = downloadTextReport(exportData, `late_records_report_${selectedPeriod}_${timestamp}`, title);
-    
-    if (success) {
-      alert("✅ Report export successful!");
-    } else {
-      alert("❌ Export failed. Please try again.");
+    try {
+      // Transform data for advanced export
+      const exportData = filteredStudents.map(student => ({
+        rollNo: student.rollNo,
+        name: student.name,
+        year: student.year,
+        branch: student.branch || 'N/A',
+        section: student.section || 'N/A',
+        lateDays: student.lateDays,
+        lateCountInPeriod: student.lateCountInPeriod,
+        status: student.status,
+        fines: student.fines || 0,
+        email: student.email,
+        lateLogs: student.lateLogs
+      }));
+      
+      const options = {
+        title: `${getPeriodTitle(selectedPeriod)} - ${formatDate(recordData.startDate)} to ${formatDate(recordData.endDate)}`,
+        filters: {
+          year: selectedYear !== "all" ? `Year ${selectedYear}` : "All Years",
+          branch: selectedBranch !== "all" ? selectedBranch : "All Branches",
+          section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections"
+        }
+      };
+      
+      const filename = `late_records_${selectedPeriod}_${new Date().toISOString().split('T')[0]}`;
+      exportToExcel(exportData, filename, options);
+      
+      toast.showToast(`Excel exported successfully! (${filteredStudents.length} students)`, "success");
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.showToast("Export failed. Please try again.", "error");
     }
   };
 
@@ -376,35 +367,7 @@ function Record() {
                 e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
               }}
             >
-              📈 Export Excel
-            </button>
-            <button
-              onClick={handleExportReport}
-              style={{
-                padding: "10px 18px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "12px",
-                fontSize: "0.9rem",
-                cursor: "pointer",
-                fontWeight: "600",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem"
-              }}
-              onMouseOver={(e) => {
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
-              }}
-            >
-              📄 Export TXT
+              📊 Export Excel
             </button>
           </div>
         )}

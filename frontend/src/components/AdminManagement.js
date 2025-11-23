@@ -1,7 +1,9 @@
 import React, {useState,useEffect } from "react";
 import API from "../services/api";
+import { useToast } from "./ToastProvider";
 
 function AdminManagement() {
+  const toast = useToast();
   const [stats,setStats]=useState(null);
   const [loading,setLoading]=useState(false);
   const [rollNoToDelete,setRollNoToDelete]=useState("");
@@ -94,7 +96,7 @@ function AdminManagement() {
         });
       }
       
-      alert(resultMsg);
+      toast.showToast(`Semester promotion completed! ${promoted} students promoted.`, "success");
       fetchSystemStats();
     }catch (err){
       console.error('Semester promotion error:',err);
@@ -137,7 +139,7 @@ function AdminManagement() {
       const reset=res.data.studentsReset;
       const total=res.data.totalStudents;
 
-      alert(`✅ ${message}\n📊 Reset: ${reset}/${total} students`);
+      toast.showToast(`${message} - Reset: ${reset}/${total} students`, "success");
       fetchSystemStats();
     } catch (err){
       console.error('Data reset error:', err);
@@ -159,7 +161,7 @@ function AdminManagement() {
         errorMessage=`❌ Network Error: ${err.message}`;
       }
       
-      alert(errorMessage);
+      toast.showToast(errorMessage.replace(/[❌⚠️🔌💡📚]/g, '').trim(), "error");
     } finally {
       setLoading(false);
     }
@@ -170,17 +172,17 @@ function AdminManagement() {
     const userInput = window.prompt(`🚨 CRITICAL WARNING: This will permanently delete ALL students from the database!\n\nThis action CANNOT be undone!\n\nType "${confirmText}" to confirm:`);
     
     if (userInput !== confirmText) {
-      alert("Deletion cancelled.");
+      toast.showToast("Deletion cancelled", "info");
       return;
     }
 
     setLoading(true);
     try {
       const res = await API.delete("/students/delete-all-students");
-      alert(`✅ ${res.data.message}`);
+      toast.showToast(res.data.message, "success");
       fetchSystemStats();
     } catch (err) {
-      alert(`❌ Error: ${err.response?.data?.error || "Failed to delete all students"}`);
+      toast.showToast(err.response?.data?.error || "Failed to delete all students", "error");
     } finally {
       setLoading(false);
     }
@@ -326,7 +328,7 @@ function AdminManagement() {
   const handleExportLateRecords = () => {
     const filtered = getFilteredRecords();
     if (filtered.length === 0) {
-      alert("⚠️ No records to export");
+      toast.showToast("No records to export", "warning");
       return;
     }
     
@@ -351,21 +353,21 @@ function AdminManagement() {
     a.download = `late_records_${periodFilter}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    alert(`✅ Exported ${filtered.length} records to CSV`);
+    toast.showToast(`Exported ${filtered.length} records to CSV`, "success");
   };
 
   const handleBulkRemoveLateRecords = async () => {
     // Validation
     if (selectedLateRecords.length === 0) {
-      alert("❌ Please select at least one record to remove");
+      toast.showToast("Please select at least one record to remove", "warning");
       return;
     }
     if (!lateRemovalForm.reason.trim() || lateRemovalForm.reason.trim().length < 10) {
-      alert("❌ Please provide a detailed reason (minimum 10 characters)");
+      toast.showToast("Please provide a detailed reason (minimum 10 characters)", "warning");
       return;
     }
     if (!lateRemovalForm.authorizedBy.trim()) {
-      alert("❌ Please specify who authorized this removal");
+      toast.showToast("Please specify who authorized this removal", "warning");
       return;
     }
     
@@ -406,7 +408,8 @@ function AdminManagement() {
         }
       }
       resultMsg += `\n\n💰 Total fine reduction: ₹${fineReductionTotal}`;
-      alert(resultMsg);
+      const cleanMsg = resultMsg.replace(/[✅❌📝💰]/g, '').trim();
+      toast.showToast(cleanMsg, success === total ? "success" : "warning");
       
       setSelectedLateRecords([]);
       setLateRemovalForm({ reason: "", authorizedBy: "" });
@@ -414,7 +417,7 @@ function AdminManagement() {
       fetchSystemStats();
     } catch (err) {
       setRemovalProgress({ current: 0, total: 0, status: "" });
-      alert(`❌ Bulk removal failed: ${err.response?.data?.error || err.message}`);
+      toast.showToast(`Bulk removal failed: ${err.response?.data?.error || err.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -427,7 +430,7 @@ function AdminManagement() {
       setStudentsWithFines(res.data.students || []);
       setShowFinesList(true);
     } catch (err) {
-      alert(`❌ Error: ${err.response?.data?.error || "Failed to fetch students with fines"}`);
+      toast.showToast(err.response?.data?.error || "Failed to fetch students with fines", "error");
       setStudentsWithFines([]);
     } finally {
       setLoading(false);
@@ -446,7 +449,7 @@ function AdminManagement() {
 
   const handleClearFines = async () => {
     if (selectedStudents.length === 0) {
-      alert("⚠️ Please select at least one student");
+      toast.showToast("Please select at least one student", "warning");
       return;
     }
 
@@ -473,7 +476,8 @@ function AdminManagement() {
       }
     }
 
-    alert(`✅ Fines cleared for ${successCount} student(s)${failCount > 0 ? `\n❌ Failed: ${failCount}` : ''}`);
+    const msg = `Fines cleared for ${successCount} student(s)${failCount > 0 ? ` | Failed: ${failCount}` : ''}`;
+    toast.showToast(msg, failCount > 0 ? "warning" : "success");
     
     setSelectedStudents([]);
     setShowFinesList(false);

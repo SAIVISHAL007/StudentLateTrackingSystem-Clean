@@ -4,10 +4,19 @@ import cors from "cors";
 import dotenv from "dotenv";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { requestLogger } from "./middleware/logger.js";
+import { apiLimiter } from "./middleware/rateLimiter.js";
 
 dotenv.config();
 
 const app = express();
+
+// Request logging (before routes)
+app.use(requestLogger);
+
+// Global rate limiter
+app.use('/api', apiLimiter);
 
 // CORS configuration for production
 // Allow frontend from environment variable (Vercel domain) or localhost for development
@@ -48,6 +57,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
+
+// Error handler (must be after routes)
+app.use(errorHandler);
 
 // Use MONGODB_URI for production deployment
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/studentLateTracking';

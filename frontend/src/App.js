@@ -11,9 +11,18 @@ import ForgotPassword from "./components/ForgotPassword";
 import FacultyRegister from "./components/FacultyRegister";
 import FacultyDirectory from "./components/FacultyDirectory";
 import Toast from "./components/Toast";
+import { ToastProvider } from "./components/ToastProvider";
 import { isAuthenticated } from "./utils/auth";
 
 function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
+  );
+}
+
+function AppContent() {
   const [currentPage, setCurrentPage] = useState("mark-late");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);

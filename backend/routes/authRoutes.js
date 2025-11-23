@@ -2,6 +2,15 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import Faculty from "../models/faculty.js";
 import AuditLog from "../models/auditLog.js";
+import { asyncHandler, AppError } from "../middleware/errorHandler.js";
+import { authLimiter } from "../middleware/rateLimiter.js";
+import { logger } from "../middleware/logger.js";
+import { 
+  validate, 
+  loginSchema, 
+  registerFacultySchema, 
+  forgotPasswordSchema 
+} from "../validators/index.js";
 
 const router = express.Router();
 
@@ -174,32 +183,28 @@ router.patch('/faculty/:id', authMiddleware, async (req, res) => {
 });
 
 // Login faculty
-router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ 
-        error: "Email and password are required" 
-      });
-    }
-    
-    // Find faculty by email
-    const faculty = await Faculty.findOne({ email: email.toLowerCase() });
-    if (!faculty) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-    
-    // Check if account is active
-    if (!faculty.isActive) {
-      return res.status(403).json({ error: "Account is deactivated. Contact administrator." });
-    }
-    
-    // Verify password
-    const isPasswordValid = await faculty.comparePassword(password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
+router.post("/login", authLimiter, validate(loginSchema), asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  
+  // Find faculty by email
+  const faculty = await Faculty.findOne({ email: email.toLowerCase() });
+  if (!faculty) {
+    logger.warn('Login failed: Faculty not found', { email, correlationId: req.correlationId });
+    throw new AppError("Invalid email or password", 401, 'INVALID_CREDENTIALS');
+  }
+  
+  // Check if account is active
+  if (!faculty.isActive) {
+    logger.warn('Login failed: Account deactivated', { email, correlationId: req.correlationId });
+    throw new AppError("Account is deactivated. Contact administrator.", 403, 'ACCOUNT_DEACTIVATED');
+  }
+  
+  // Verify password
+  const isPasswordValid = await faculty.comparePassword(password);
+  if (!isPasswordValid) {
+    logger.warn('Login failed: Invalid password', { email, correlationId: req.correlationId });
+    throw new AppError("Invalid email or password", 401, 'INVALID_CREDENTIALS');
+  }
     
     // Update last login and login history
     faculty.lastLogin = new Date();
@@ -214,53 +219,54 @@ router.post("/login", async (req, res) => {
       faculty.loginHistory = faculty.loginHistory.slice(-10);
     }
     
-    await faculty.save();
-    
-    // Create audit log
-    await AuditLog.create({
-      action: 'FACULTY_LOGIN',
-      performedBy: {
-        facultyId: faculty._id,
-        facultyName: faculty.name,
-        facultyEmail: faculty.email
-      },
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
-    
-    // Generate JWT token
-    // MULTI-SESSION SUPPORT: Each login creates a new independent token
-    // Multiple devices/browsers can be logged in simultaneously
-    // No token invalidation on new login - all sessions remain active until expiry
-    const token = jwt.sign(
-      { 
-        facultyId: faculty._id, 
-        email: faculty.email, 
-        role: faculty.role,
-        loginTime: Date.now() // Unique identifier for each session
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-    
-    res.json({
-      message: "Login successful",
-      token,
-      faculty: {
-        id: faculty._id,
-        name: faculty.name,
-        email: faculty.email,
-        branch: faculty.branch,
-        role: faculty.role,
-        lastLogin: faculty.lastLogin
-      }
-    });
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: "Login failed", details: error.message });
-  }
-});
+  await faculty.save();
+  
+  // Create audit log
+  await AuditLog.create({
+    action: 'FACULTY_LOGIN',
+    performedBy: {
+      facultyId: faculty._id,
+      facultyName: faculty.name,
+      facultyEmail: faculty.email
+    },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+  
+  // Generate JWT token
+  // MULTI-SESSION SUPPORT: Each login creates a new independent token
+  // Multiple devices/browsers can be logged in simultaneously
+  // No token invalidation on new login - all sessions remain active until expiry
+  const token = jwt.sign(
+    { 
+      facultyId: faculty._id, 
+      email: faculty.email, 
+      role: faculty.role,
+      loginTime: Date.now() // Unique identifier for each session
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+  
+  logger.info('Login successful', { 
+    email, 
+    facultyId: faculty._id, 
+    correlationId: req.correlationId 
+  });
+  
+  res.json({
+    message: "Login successful",
+    token,
+    faculty: {
+      id: faculty._id,
+      name: faculty.name,
+      email: faculty.email,
+      branch: faculty.branch,
+      role: faculty.role,
+      lastLogin: faculty.lastLogin
+    }
+  });
+}));
 
 // Request password reset OTP
 router.post("/forgot-password", async (req, res) => {
