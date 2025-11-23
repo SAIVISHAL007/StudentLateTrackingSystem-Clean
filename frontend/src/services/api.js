@@ -1,9 +1,13 @@
 import axios from "axios";
 
-const API = axios.create({ 
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? "/api"
-    : "http://localhost:5000/api",
+// Prefer an explicit backend URL in production via REACT_APP_API_URL.
+// If not provided, fall back to `/api` (useful for monorepo deploys).
+const configuredBase = process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.trim()
+  ? process.env.REACT_APP_API_URL.replace(/\/$/, '')
+  : (process.env.NODE_ENV === 'production' ? "/api" : "http://localhost:5000/api");
+
+const API = axios.create({
+  baseURL: configuredBase,
   timeout: 10000 // 10 second timeout
 });
 
