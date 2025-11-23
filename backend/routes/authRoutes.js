@@ -2,7 +2,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import Faculty from "../models/faculty.js";
 import AuditLog from "../models/auditLog.js";
-import { sendOTPEmail } from "../utils/emailService.js";
+// Removed OTP email service; manual admin resets only.
 
 const router = express.Router();
 
@@ -126,7 +126,7 @@ router.patch('/faculty/:id', authMiddleware, async (req, res) => {
     if (!['admin','superadmin'].includes(req.faculty.role)) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    const { name, branch, role, isActive } = req.body;
+    const { name, branch, role, isActive, email } = req.body;
     const faculty = await Faculty.findById(req.params.id);
     if (!faculty) return res.status(404).json({ error: 'Faculty not found' });
 
@@ -135,6 +135,13 @@ router.patch('/faculty/:id', authMiddleware, async (req, res) => {
     if (branch) updates.branch = branch.toUpperCase();
     if (role && ['faculty','admin','superadmin'].includes(role)) updates.role = role;
     if (typeof isActive === 'boolean') updates.isActive = isActive;
+    if (email && email.toLowerCase() !== faculty.email) {
+      const existing = await Faculty.findOne({ email: email.toLowerCase() });
+      if (existing) {
+        return res.status(409).json({ error: 'Another faculty already uses this email' });
+      }
+      updates.email = email.toLowerCase();
+    }
 
     Object.assign(faculty, updates);
     await faculty.save();
@@ -255,119 +262,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Request password reset OTP
-router.post("/forgot-password", async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
-    
-    // Find faculty
-    const faculty = await Faculty.findOne({ email: email.toLowerCase() });
-    if (!faculty) {
-      // Don't reveal if email exists or not for security
-      return res.json({ 
-        message: "If an account with that email exists, an OTP has been sent." 
-      });
-    }
-    
-    // Generate OTP
-    const otp = faculty.generatePasswordResetOTP();
-    await faculty.save();
-    
-    // Send OTP via email
-    try {
-      await sendOTPEmail(faculty.email, faculty.name, otp);
-      
-      // Create audit log
-      await AuditLog.create({
-        action: 'PASSWORD_RESET_REQUEST',
-        performedBy: {
-          facultyId: faculty._id,
-          facultyName: faculty.name,
-          facultyEmail: faculty.email
-        },
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
-      });
-      
-      res.json({ 
-        message: "OTP sent to your email. Valid for 10 minutes.",
-        email: faculty.email
-      });
-    } catch (emailError) {
-      console.error('Email sending error:', emailError);
-      res.status(500).json({ 
-        error: "Failed to send OTP email. Please contact administrator.",
-        details: "Email service configuration may be incorrect"
-      });
-    }
-    
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({ error: "Failed to process request", details: error.message });
-  }
-});
-
-// Verify OTP and reset password
-router.post("/reset-password", async (req, res) => {
-  try {
-    const { email, otp, newPassword } = req.body;
-    
-    if (!email || !otp || !newPassword) {
-      return res.status(400).json({ 
-        error: "Email, OTP, and new password are required" 
-      });
-    }
-    
-    if (newPassword.length < 6) {
-      return res.status(400).json({ 
-        error: "Password must be at least 6 characters long" 
-      });
-    }
-    
-    // Find faculty
-    const faculty = await Faculty.findOne({ email: email.toLowerCase() });
-    if (!faculty) {
-      return res.status(404).json({ error: "Faculty not found" });
-    }
-    
-    // Verify OTP
-    if (!faculty.verifyPasswordResetOTP(otp)) {
-      return res.status(400).json({ 
-        error: "Invalid or expired OTP. Please request a new one." 
-      });
-    }
-    
-    // Update password
-    faculty.password = newPassword;
-    faculty.passwordResetOTP = undefined;
-    faculty.passwordResetExpires = undefined;
-    await faculty.save();
-    
-    // Create audit log
-    await AuditLog.create({
-      action: 'PASSWORD_RESET_SUCCESS',
-      performedBy: {
-        facultyId: faculty._id,
-        facultyName: faculty.name,
-        facultyEmail: faculty.email
-      },
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
-    
-    res.json({ 
-      message: "Password reset successful. You can now login with your new password." 
-    });
-    
-  } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({ error: "Failed to reset password", details: error.message });
-  }
-});
+// Removed OTP-based forgot/reset password endpoints; password resets are performed by admin/superadmin only.
 
 // Get current faculty profile
 router.get("/profile", authMiddleware, async (req, res) => {

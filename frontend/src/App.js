@@ -7,7 +7,6 @@ import AdminManagement from "./components/AdminManagement";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Login from "./components/Login";
-import ForgotPassword from "./components/ForgotPassword";
 import FacultyRegister from "./components/FacultyRegister";
 import FacultyDirectory from "./components/FacultyDirectory";
 import Toast from "./components/Toast";
@@ -158,8 +157,6 @@ function App() {
 
       case "analytics":
         return <Analytics />;
-      case "forgot-password":
-        return <ForgotPassword onNavigate={setCurrentPage} />;
       case "register-faculty":
         return <FacultyRegister onNavigate={setCurrentPage} />;
       case "faculty-directory":

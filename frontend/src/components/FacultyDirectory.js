@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import API from '../services/api';
 import FacultyRegister from './FacultyRegister';
 import { toast } from './Toast';
@@ -11,10 +11,10 @@ function FacultyDirectory({ onNavigate }) {
   const [roleFilter, setRoleFilter] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', branch: '', role: '', isActive: true, newPassword: '' });
+  const [editForm, setEditForm] = useState({ name: '', branch: '', role: '', isActive: true, email: '', newPassword: '' });
   const [saving, setSaving] = useState(false);
 
-  const fetchFaculties = async () => {
+  const fetchFaculties = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const token = localStorage.getItem('jwt_token');
@@ -26,13 +26,13 @@ function FacultyDirectory({ onNavigate }) {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load faculty');
     } finally { setLoading(false); }
-  };
+  }, [search, roleFilter]);
 
-  useEffect(() => { fetchFaculties(); }, [search, roleFilter]);
+  useEffect(() => { fetchFaculties(); }, [fetchFaculties]);
 
   const openEdit = (faculty) => {
     setSelected(faculty);
-    setEditForm({ name: faculty.name, branch: faculty.branch, role: faculty.role, isActive: faculty.isActive, newPassword: '' });
+    setEditForm({ name: faculty.name, branch: faculty.branch, role: faculty.role, isActive: faculty.isActive, email: faculty.email, newPassword: '' });
   };
 
   const updateField = (e) => {
@@ -43,14 +43,15 @@ function FacultyDirectory({ onNavigate }) {
   const saveChanges = async () => {
     if (!selected) return;
     setSaving(true); setError('');
-    const loadingToast = toast.loading('Updating faculty details...');
+    toast.loading('Updating faculty details...');
     try {
       const token = localStorage.getItem('jwt_token');
       await API.patch(`/auth/faculty/${selected.id || selected._id}`, {
         name: editForm.name,
         branch: editForm.branch,
         role: editForm.role,
-        isActive: editForm.isActive
+        isActive: editForm.isActive,
+        email: editForm.email
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       // Forced password reset if provided
@@ -62,7 +63,7 @@ function FacultyDirectory({ onNavigate }) {
       }
 
       setSelected(null);
-      setEditForm({ name: '', branch: '', role: '', isActive: true, newPassword: '' });
+      setEditForm({ name: '', branch: '', role: '', isActive: true, email: '', newPassword: '' });
       fetchFaculties();
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Failed to update faculty';
@@ -131,6 +132,10 @@ function FacultyDirectory({ onNavigate }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
               <label style={{ fontSize: '.65rem', fontWeight: 600 }}>Name</label>
               <input name='name' value={editForm.name} onChange={updateField} style={{ padding: '10px 14px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+              <label style={{ fontSize: '.65rem', fontWeight: 600 }}>Email</label>
+              <input name='email' value={editForm.email} onChange={updateField} placeholder='name.branch@anits.edu.in' style={{ padding: '10px 14px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }} />
             </div>
             <div style={{ display: 'flex', gap: '.75rem' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '.5rem' }}>

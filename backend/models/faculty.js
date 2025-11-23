@@ -46,8 +46,7 @@ const facultySchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  passwordResetOTP: String,
-  passwordResetExpires: Date,
+  // Removed passwordResetOTP/passwordResetExpires (OTP workflow deprecated)
   lastLogin: Date,
   loginHistory: [{
     timestamp: { type: Date, default: Date.now },
@@ -82,27 +81,6 @@ facultySchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to generate OTP
-facultySchema.methods.generatePasswordResetOTP = function() {
-  // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  this.passwordResetOTP = otp;
-  // OTP expires in 10 minutes
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
-  return otp;
-};
-
-// Method to verify OTP
-facultySchema.methods.verifyPasswordResetOTP = function(otp) {
-  if (!this.passwordResetOTP || !this.passwordResetExpires) {
-    return false;
-  }
-  
-  if (Date.now() > this.passwordResetExpires) {
-    return false; // OTP expired
-  }
-  
-  return this.passwordResetOTP === otp;
-};
+// Removed OTP helper methods.
 
 export default mongoose.model("Faculty", facultySchema);

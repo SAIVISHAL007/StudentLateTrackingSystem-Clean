@@ -328,22 +328,6 @@ function Login({ onLogin }) {
 
           {/* Auxiliary Info */}
           <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: ".75rem" }}>
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'forgot-password' } }))}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#4338ca",
-                fontSize: ".85rem",
-                cursor: "pointer",
-                fontWeight: 600,
-                textDecoration: "underline",
-                alignSelf: 'flex-start'
-              }}
-            >
-              Forgot Password?
-            </button>
             <div style={{
               background: "linear-gradient(135deg,#f0f9ff,#e0f2fe)",
               border: "1px solid #bae6fd",
@@ -354,8 +338,8 @@ function Login({ onLogin }) {
               lineHeight: 1.6,
               fontWeight: 500
             }}>
-              New faculty accounts are created only by the <strong>Admin Office</strong>.<br />
-              Please contact your department admin to request an account or password assistance.
+              New faculty accounts and password resets are handled only by the <strong>Admin Office / Superadmin</strong>.<br />
+              If you need access or forgot your password, contact the system administrator.
             </div>
           </div>
         </form>
@@ -398,7 +382,7 @@ function Login({ onLogin }) {
               marginBottom: "0.75rem",
               fontWeight: "600"
             }}>
-              <strong>sevapradeep.csm@anits.edu.in</strong> / Faculty@123
+              <strong>name.branch@anits.edu.in</strong> / [type your password]
             </div>
             <div style={{ 
               marginTop: "0.75rem",

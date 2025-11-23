@@ -7,13 +7,11 @@ const API = axios.create({
   timeout: 10000 // 10 second timeout
 });
 
-// Add JWT token to all requests (except auth routes)
+// Add JWT token to all requests (skip only public auth endpoints: login/register)
 API.interceptors.request.use(
   (config) => {
-    // Don't add token to login/register/forgot-password requests
-    const isAuthRoute = config.url?.includes('/auth/');
-    
-    if (!isAuthRoute) {
+    const skipAuth = ['/auth/login','/auth/register'].some(path => config.url?.includes(path));
+    if (!skipAuth) {
       const token = localStorage.getItem('jwt_token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -30,11 +28,8 @@ API.interceptors.request.use(
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Only handle 401 for non-auth routes
-    const isAuthRoute = error.config?.url?.includes('/auth/');
-    
-    if (error.response?.status === 401 && !isAuthRoute) {
-      // Token expired or invalid - clear auth and reload
+    const skipAuth = ['/auth/login','/auth/register'].some(path => error.config?.url?.includes(path));
+    if (error.response?.status === 401 && !skipAuth) {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('facultyAuth');
       window.location.href = '/';
