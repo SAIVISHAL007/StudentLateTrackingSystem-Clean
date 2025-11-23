@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { formatDate, isToday } from "../utils/dateUtils";
-import { exportToExcel } from "../utils/advancedExport";
-import { useToast } from "./ToastProvider";
-import BarcodeScanner from "./BarcodeScanner";
+import { downloadTextReport, formatStudentDataForExport, getTimestamp } from "../utils/exportUtils";
+import { exportTodayLateToExcel } from "../utils/excelExport";
 
 function LateList() {
-  const toast = useToast();
   const [students, setStudents] = useState([]);
   const [expandedStudent, setExpandedStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +13,6 @@ function LateList() {
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [selectedSection, setSelectedSection] = useState("all");
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   useEffect(() => {
     const fetchLateStudents = async () => {
@@ -70,48 +67,42 @@ function LateList() {
       .slice(0, limit);
   };
 
-  const handleBarcodeDetected = (barcode) => {
-    setSearchTerm(barcode);
-    setShowBarcodeScanner(false);
-    toast.showToast(`Barcode scanned: ${barcode}`, "success");
-  };
-
   const handleExportExcel = () => {
     if (filteredStudents.length === 0) {
-      toast.showToast("No data to export", "warning");
+      alert("⚠️ No data to export");
       return;
     }
     
-    try {
-      const exportData = filteredStudents.map(student => ({
-        rollNo: student.rollNo,
-        name: student.name,
-        year: student.year,
-        branch: student.branch || 'N/A',
-        section: student.section || 'N/A',
-        lateDays: student.lateDays,
-        status: student.status,
-        fines: student.fines || 0,
-        email: student.email,
-        lateLogs: student.lateLogs
-      }));
-      
-      const options = {
-        title: `Late Students - ${new Date().toDateString()}`,
-        filters: {
-          year: selectedYear !== "all" ? `Year ${selectedYear}` : "All Years",
-          branch: selectedBranch !== "all" ? selectedBranch : "All Branches",
-          section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections"
-        }
-      };
-      
-      const filename = `late_students_today_${new Date().toISOString().split('T')[0]}`;
-      exportToExcel(exportData, filename, options);
-      
-      toast.showToast(`Excel exported successfully! (${filteredStudents.length} students)`, "success");
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.showToast("Export failed. Please try again.", "error");
+    const filters = {
+      year: selectedYear !== "all" ? `Year ${selectedYear}` : "All Years",
+      branch: selectedBranch !== "all" ? selectedBranch : "All Branches",
+      section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections"
+    };
+    
+    const success = exportTodayLateToExcel(filteredStudents, filters);
+    
+    if (success) {
+      alert(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
+    } else {
+      alert("❌ Export failed. Please try again.");
+    }
+  };
+
+  const handleExportReport = () => {
+    if (filteredStudents.length === 0) {
+      alert("⚠️ No data to export");
+      return;
+    }
+    
+    const exportData = formatStudentDataForExport(filteredStudents);
+    const timestamp = getTimestamp();
+    const title = `Late Students Report - ${new Date().toDateString()}`;
+    const success = downloadTextReport(exportData, `late_students_report_${timestamp}`, title);
+    
+    if (success) {
+      alert("✅ Report export successful!");
+    } else {
+      alert("❌ Export failed. Please try again.");
     }
   };
 
@@ -206,7 +197,35 @@ function LateList() {
                 e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
               }}
             >
-              📊 Export Excel
+              📈 Export Excel
+            </button>
+            <button
+              onClick={handleExportReport}
+              style={{
+                padding: "10px 18px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "0.9rem",
+                cursor: "pointer",
+                fontWeight: "600",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+              }}
+            >
+              📄 TXT Table
             </button>
           </div>
         )}
@@ -223,14 +242,14 @@ function LateList() {
           animation: "fadeIn 0.6s ease-out"
         }}>
           {/* Search Input */}
-          <div style={{ flex: 1, minWidth: "250px", display: "flex", gap: "0.5rem" }}>
+          <div style={{ flex: 1, minWidth: "250px" }}>
             <input
               type="text"
               placeholder="🔍 Search by roll number or name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
-                flex: 1,
+                width: "100%",
                 padding: "12px 16px",
                 border: "2px solid #e2e8f0",
                 borderRadius: "12px",
@@ -249,35 +268,6 @@ function LateList() {
                 e.target.style.boxShadow = "none";
               }}
             />
-            <button
-              onClick={() => setShowBarcodeScanner(true)}
-              style={{
-                padding: "12px 16px",
-                background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "12px",
-                fontSize: "1rem",
-                cursor: "pointer",
-                fontWeight: "600",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 15px rgba(245, 158, 11, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                whiteSpace: "nowrap"
-              }}
-              onMouseOver={(e) => {
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = "0 8px 25px rgba(245, 158, 11, 0.4)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "0 4px 15px rgba(245, 158, 11, 0.3)";
-              }}
-            >
-              📷 Scan
-            </button>
           </div>
 
           {/* Year Filter */}
@@ -798,13 +788,6 @@ function LateList() {
           ))}
         </ul>
       )}
-      
-      {/* Barcode Scanner Modal */}
-      <BarcodeScanner
-        isOpen={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        onDetected={handleBarcodeDetected}
-      />
     </div>
   );
 }

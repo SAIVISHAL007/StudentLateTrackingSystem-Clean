@@ -1,12 +1,9 @@
 import React, {useState,useEffect } from "react";
 import API from "../services/api";
-import { useToast } from "./ToastProvider";
 
 function AdminManagement() {
-  const toast = useToast();
   const [stats,setStats]=useState(null);
   const [loading,setLoading]=useState(false);
-  const [rollNoToDelete,setRollNoToDelete]=useState("");
   
   // Late record removal state (global list)
   const [lateRecords, setLateRecords] = useState([]); // flattened { key, rollNo, name, date, year, branch, fineAmount }
@@ -96,7 +93,7 @@ function AdminManagement() {
         });
       }
       
-      toast.showToast(`Semester promotion completed! ${promoted} students promoted.`, "success");
+      alert(resultMsg);
       fetchSystemStats();
     }catch (err){
       console.error('Semester promotion error:',err);
@@ -139,7 +136,7 @@ function AdminManagement() {
       const reset=res.data.studentsReset;
       const total=res.data.totalStudents;
 
-      toast.showToast(`${message} - Reset: ${reset}/${total} students`, "success");
+      alert(`✅ ${message}\n📊 Reset: ${reset}/${total} students`);
       fetchSystemStats();
     } catch (err){
       console.error('Data reset error:', err);
@@ -161,7 +158,7 @@ function AdminManagement() {
         errorMessage=`❌ Network Error: ${err.message}`;
       }
       
-      toast.showToast(errorMessage.replace(/[❌⚠️🔌💡📚]/g, '').trim(), "error");
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -172,17 +169,17 @@ function AdminManagement() {
     const userInput = window.prompt(`🚨 CRITICAL WARNING: This will permanently delete ALL students from the database!\n\nThis action CANNOT be undone!\n\nType "${confirmText}" to confirm:`);
     
     if (userInput !== confirmText) {
-      toast.showToast("Deletion cancelled", "info");
+      alert("Deletion cancelled.");
       return;
     }
 
     setLoading(true);
     try {
       const res = await API.delete("/students/delete-all-students");
-      toast.showToast(res.data.message, "success");
+      alert(`✅ ${res.data.message}`);
       fetchSystemStats();
     } catch (err) {
-      toast.showToast(err.response?.data?.error || "Failed to delete all students", "error");
+      alert(`❌ Error: ${err.response?.data?.error || "Failed to delete all students"}`);
     } finally {
       setLoading(false);
     }
@@ -328,7 +325,7 @@ function AdminManagement() {
   const handleExportLateRecords = () => {
     const filtered = getFilteredRecords();
     if (filtered.length === 0) {
-      toast.showToast("No records to export", "warning");
+      alert("⚠️ No records to export");
       return;
     }
     
@@ -353,21 +350,21 @@ function AdminManagement() {
     a.download = `late_records_${periodFilter}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.showToast(`Exported ${filtered.length} records to CSV`, "success");
+    alert(`✅ Exported ${filtered.length} records to CSV`);
   };
 
   const handleBulkRemoveLateRecords = async () => {
     // Validation
     if (selectedLateRecords.length === 0) {
-      toast.showToast("Please select at least one record to remove", "warning");
+      alert("❌ Please select at least one record to remove");
       return;
     }
     if (!lateRemovalForm.reason.trim() || lateRemovalForm.reason.trim().length < 10) {
-      toast.showToast("Please provide a detailed reason (minimum 10 characters)", "warning");
+      alert("❌ Please provide a detailed reason (minimum 10 characters)");
       return;
     }
     if (!lateRemovalForm.authorizedBy.trim()) {
-      toast.showToast("Please specify who authorized this removal", "warning");
+      alert("❌ Please specify who authorized this removal");
       return;
     }
     
@@ -383,10 +380,36 @@ function AdminManagement() {
     setRemovalProgress({ current: 0, total: selectedLateRecords.length, status: "Processing bulk removal..." });
     
     try {
-      // Build bulk removal payload
+      // Build bulk removal payload - ensure records array is not empty
+      if (!selectedLateRecords || selectedLateRecords.length === 0) {
+        alert("❌ No records selected");
+        setLoading(false);
+        return;
+      }
+
       const records = selectedLateRecords.map(key => {
-        const [rollNo, date] = key.split('|');
+        const parts = key.split('|');
+        if (parts.length < 2) {
+          console.error('Invalid key format:', key);
+          return null;
+        }
+        const [rollNo, ...dateParts] = parts;
+        const date = dateParts.join('|'); // In case date has | in it
         return { rollNo, date };
+      }).filter(r => r !== null); // Remove any invalid records
+      
+      if (records.length === 0) {
+        alert("❌ Invalid record format");
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Sending bulk removal request:', {
+        selectedKeys: selectedLateRecords,
+        recordsCount: records.length,
+        records,
+        reason: lateRemovalForm.reason,
+        authorizedBy: lateRemovalForm.authorizedBy
       });
       
       // Call bulk endpoint
@@ -396,20 +419,20 @@ function AdminManagement() {
         authorizedBy: lateRemovalForm.authorizedBy
       });
       
-      const { removedRecords, fineReductionTotal, failures } = res.data;
+      const { summary } = res.data;
       
       setRemovalProgress({ current: 0, total: 0, status: "" });
       
-      let resultMsg = `✅ Successfully removed: ${removedRecords} record(s)`;
-      if (failures && failures.length > 0) {
-        resultMsg += `\n❌ Failed: ${failures.length} record(s)`;
-        if (failures.length <= 5) {
-          resultMsg += '\n\nFailed records:\n' + failures.map(f => `${f.rollNo} (${f.error})`).join('\n');
+      let resultMsg = `✅ Successfully removed: ${summary.removedRecords} record(s)`;
+      resultMsg += `\n👥 Students affected: ${summary.affectedStudents}`;
+      if (summary.failures && summary.failures.length > 0) {
+        resultMsg += `\n❌ Failed: ${summary.failures.length} record(s)`;
+        if (summary.failures.length <= 5) {
+          resultMsg += '\n\nFailed records:\n' + summary.failures.map(f => `${f.rollNo} (${f.error})`).join('\n');
         }
       }
-      resultMsg += `\n\n💰 Total fine reduction: ₹${fineReductionTotal}`;
-      const cleanMsg = resultMsg.replace(/[✅❌📝💰]/g, '').trim();
-      toast.showToast(cleanMsg, success === total ? "success" : "warning");
+      resultMsg += `\n\n💰 Total fine reduction: ₹${summary.fineReductionTotal}`;
+      alert(resultMsg);
       
       setSelectedLateRecords([]);
       setLateRemovalForm({ reason: "", authorizedBy: "" });
@@ -417,7 +440,7 @@ function AdminManagement() {
       fetchSystemStats();
     } catch (err) {
       setRemovalProgress({ current: 0, total: 0, status: "" });
-      toast.showToast(`Bulk removal failed: ${err.response?.data?.error || err.message}`, "error");
+      alert(`❌ Bulk removal failed: ${err.response?.data?.error || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -430,7 +453,7 @@ function AdminManagement() {
       setStudentsWithFines(res.data.students || []);
       setShowFinesList(true);
     } catch (err) {
-      toast.showToast(err.response?.data?.error || "Failed to fetch students with fines", "error");
+      alert(`❌ Error: ${err.response?.data?.error || "Failed to fetch students with fines"}`);
       setStudentsWithFines([]);
     } finally {
       setLoading(false);
@@ -449,7 +472,7 @@ function AdminManagement() {
 
   const handleClearFines = async () => {
     if (selectedStudents.length === 0) {
-      toast.showToast("Please select at least one student", "warning");
+      alert("⚠️ Please select at least one student");
       return;
     }
 
@@ -476,8 +499,7 @@ function AdminManagement() {
       }
     }
 
-    const msg = `Fines cleared for ${successCount} student(s)${failCount > 0 ? ` | Failed: ${failCount}` : ''}`;
-    toast.showToast(msg, failCount > 0 ? "warning" : "success");
+    alert(`✅ Fines cleared for ${successCount} student(s)${failCount > 0 ? `\n❌ Failed: ${failCount}` : ''}`);
     
     setSelectedStudents([]);
     setShowFinesList(false);

@@ -4,50 +4,15 @@ import cors from "cors";
 import dotenv from "dotenv";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-import { errorHandler } from "./middleware/errorHandler.js";
-import { requestLogger } from "./middleware/logger.js";
-import { apiLimiter } from "./middleware/rateLimiter.js";
 
 dotenv.config();
 
 const app = express();
 
-// Request logging (before routes)
-app.use(requestLogger);
-
-// Global rate limiter
-app.use('/api', apiLimiter);
-
-// CORS configuration for production
-// Allow frontend from environment variable (Vercel domain) or localhost for development
-const allowedOrigins = [
-  'http://localhost:3000', // Local development
-  'http://localhost:5173', // Vite dev server
-  process.env.FRONTEND_URL, // Production frontend URL (Vercel)
-  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null // Vercel preview deployments
-].filter(Boolean); // Remove null/undefined values
-
+// CORS configuration
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Allow all Vercel deployments (*.vercel.app)
-    if (origin && origin.includes('.vercel.app')) {
-      return callback(null, true);
-    }
-    
-    // Check if origin is in allowed list
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      console.warn(`⚠️ CORS blocked request from: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: true,
+  credentials: true
 }));
 
 // Increase payload limit for base64 images
@@ -57,9 +22,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
-
-// Error handler (must be after routes)
-app.use(errorHandler);
 
 // Use MONGODB_URI for production deployment
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/studentLateTracking';

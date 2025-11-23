@@ -528,30 +528,24 @@ router.get("/records/:period", async (req, res) => {
         return res.status(400).json({ error: "Invalid period. Use weekly, monthly, or semester" });
     }
 
-    console.log(`📊 Fetching ${period} records`);
-
     // Find students with late logs in the specified period
     const students = await Student.find({
       "lateLogs.date": {
         $gte: startDate,
         $lte: now
       }
-    })
-    .select("rollNo name year semester branch section lateDays lateLogs fines status excuseDaysUsed limitExceeded alertFaculty consecutiveLateDays")
-    .lean(); // Performance optimization
+    }).select("rollNo name year semester branch section lateDays lateLogs fines status excuseDaysUsed limitExceeded alertFaculty consecutiveLateDays");
 
     // Filter late logs to only include those in the period
-    const studentsWithFilteredLogs = students.map(student => {
-      const periodLogs = student.lateLogs.filter(log => 
+    const studentsWithFilteredLogs = students.map(student => ({
+      ...student._doc,
+      lateLogs: student.lateLogs.filter(log => 
         log.date >= startDate && log.date <= now
-      );
-      
-      return {
-        ...student,
-        lateLogs: periodLogs,
-        lateCountInPeriod: periodLogs.length
-      };
-    }).filter(student => student.lateCountInPeriod > 0);
+      ),
+      lateCountInPeriod: student.lateLogs.filter(log => 
+        log.date >= startDate && log.date <= now
+      ).length
+    })).filter(student => student.lateCountInPeriod > 0);
 
     res.json({
       period,
@@ -1084,14 +1078,24 @@ router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
 // Bulk remove late records: accepts array of { rollNo, date, reason, authorizedBy }
 router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => {
   try {
+    console.log('Bulk removal request received:', {
+      body: req.body,
+      recordsType: typeof req.body.records,
+      recordsIsArray: Array.isArray(req.body.records),
+      recordsLength: req.body.records?.length
+    });
+    
     const { records, reason, authorizedBy } = req.body;
     if (!Array.isArray(records) || records.length === 0) {
+      console.error('Invalid records:', { records, isArray: Array.isArray(records), length: records?.length });
       return res.status(400).json({ error: 'Records array required' });
     }
     if (!reason || reason.trim().length < 10) {
+      console.error('Invalid reason:', { reason, length: reason?.length });
       return res.status(400).json({ error: 'Reason must be at least 10 characters' });
     }
     if (!authorizedBy || !authorizedBy.trim()) {
+      console.error('Invalid authorizedBy:', { authorizedBy });
       return res.status(400).json({ error: 'authorizedBy required' });
     }
 
@@ -1139,11 +1143,27 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
       // Recalculate lateDays
       student.lateDays = student.lateLogs.length;
 
-      // Recalculate status (use valid enum values)
-      if (student.lateDays === 0) student.status = 'normal';
-      else if (student.lateDays < 7) student.status = 'normal';
-      else if (student.lateDays < 10) student.status = 'approaching_limit';
-      else student.status = 'fined';
+      // Recalculate status based on valid enum values: 'normal', 'approaching_limit', 'excused', 'fined', 'alert', 'graduated'
+      const EXCUSE_DAYS = 2;
+      if (student.lateDays === 0) {
+        student.status = 'normal';
+        student.excuseDaysUsed = 0;
+        student.consecutiveLateDays = 0;
+        student.alertFaculty = false;
+      } else if (student.lateDays <= EXCUSE_DAYS) {
+        student.status = 'excused';
+        student.excuseDaysUsed = student.lateDays;
+      } else {
+        student.status = 'fined';
+        student.excuseDaysUsed = EXCUSE_DAYS;
+        student.consecutiveLateDays = student.lateDays - EXCUSE_DAYS;
+        if (student.lateDays >= 8) {
+          student.status = 'alert';
+          student.alertFaculty = true;
+        } else if (student.lateDays >= 7) {
+          student.status = 'approaching_limit';
+        }
+      }
 
       // Recalculate fines using existing logic (replicating fine calculation pattern)
       let newFines = 0;
@@ -1177,6 +1197,12 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
       }, null, 2));
     }
 
+    console.log('Bulk removal successful:', {
+      removedRecords: summary.removedCount,
+      affectedStudents: summary.affectedStudents.size,
+      fineReduction: summary.fineReductionTotal
+    });
+
     res.json({
       message: 'Bulk removal processed',
       summary: {
@@ -1190,29 +1216,24 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
       audit: { reason, authorizedBy, timestamp: new Date().toISOString() }
     });
   } catch (error) {
-    console.error('Bulk remove error:', error);
-    res.status(500).json({ error: 'Bulk removal failed', details: error.message });
+    console.error('❌ Bulk remove error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Bulk removal failed', details: error.message, stack: error.stack });
   }
 });
 
   // Analytics - Leaderboard
   router.get("/analytics/leaderboard", checkDbConnection, async (req, res) => {
     try {
-      console.log(`📊 Fetching leaderboard analytics`);
-
       // Most Late Students (top 10)
-      const mostLate = await Student.find({ 
-        lateDays: { $gt: 0 } 
-      })
+      const mostLate = await Student.find({ lateDays: { $gt: 0 } })
         .sort({ lateDays: -1 })
         .limit(10)
         .select('rollNo name year branch lateDays')
         .lean();
 
       // Least Late Students (top 10 with lowest late days, excluding 0)
-      const leastLate = await Student.find({ 
-        lateDays: { $gt: 0 } 
-      })
+      const leastLate = await Student.find({ lateDays: { $gt: 0 } })
         .sort({ lateDays: 1 })
         .limit(10)
         .select('rollNo name year branch lateDays')
@@ -1220,9 +1241,7 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
 
       // Most Improved (students with declining late trend - simplified)
       // For demo: find students who were late but haven't been late recently
-      const allStudents = await Student.find({ 
-        lateDays: { $gt: 0 } 
-      })
+      const allStudents = await Student.find({ lateDays: { $gt: 0 } })
         .select('rollNo name year branch lateDays lateLogs')
         .lean();
 
@@ -1259,8 +1278,6 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
   // Analytics - Financial
   router.get("/analytics/financial", checkDbConnection, async (req, res) => {
     try {
-      console.log(`💰 Fetching financial analytics`);
-
       // Get all students with financial data
       const students = await Student.find({}).select('fines fineHistory').lean();
 
