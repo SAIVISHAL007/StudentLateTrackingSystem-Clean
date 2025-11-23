@@ -77,13 +77,34 @@ export const exportToExcel = (students, filename, filters = {}) => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const fullFilename = `${filename}_${timestamp}.xlsx`;
 
-    // Write file
-    XLSX.writeFile(workbook, fullFilename);
-    
-    console.log(`✅ Excel export successful: ${fullFilename}`);
-    return true;
+    // Primary write attempt (simplest API)
+    try {
+      XLSX.writeFile(workbook, fullFilename);
+      console.log(`✅ Excel export successful (direct): ${fullFilename}`);
+      return true;
+    } catch (directErr) {
+      console.warn('⚠️ Direct write failed, attempting fallback blob method...', directErr);
+      // Fallback: manual blob download for environments where writeFile may fail silently
+      try {
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fullFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log(`✅ Excel export successful (fallback): ${fullFilename}`);
+        return true;
+      } catch (fallbackErr) {
+        console.error('❌ Excel export fallback also failed:', fallbackErr);
+        return false;
+      }
+    }
   } catch (error) {
-    console.error('❌ Excel export error:', error);
+    console.error('❌ Excel export error (unexpected):', error);
     return false;
   }
 };
@@ -197,13 +218,33 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const fullFilename = `${filename}_${timestamp}.xlsx`;
 
-    // Write file
-    XLSX.writeFile(workbook, fullFilename);
-    
-    console.log(`✅ Excel export successful: ${fullFilename}`);
-    return true;
+    // Primary write attempt
+    try {
+      XLSX.writeFile(workbook, fullFilename);
+      console.log(`✅ Excel export successful (direct): ${fullFilename}`);
+      return true;
+    } catch (directErr) {
+      console.warn('⚠️ Direct write failed for records export, attempting fallback...', directErr);
+      try {
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fullFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log(`✅ Excel export successful (fallback): ${fullFilename}`);
+        return true;
+      } catch (fallbackErr) {
+        console.error('❌ Excel records export fallback failed:', fallbackErr);
+        return false;
+      }
+    }
   } catch (error) {
-    console.error('❌ Excel export error:', error);
+    console.error('❌ Excel export error (unexpected records):', error);
     return false;
   }
 };
