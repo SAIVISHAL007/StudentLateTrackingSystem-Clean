@@ -188,22 +188,56 @@ graph TB
 
 ## 📸 Screenshots
 
-### Login Page
-Modern, responsive login interface with gradient background and glassmorphism effects.
+### 🔐 Login Page
+<img src="./screenshots/login.png" alt="Login Page" width="800"/>
 
-### Dashboard & Analytics
-Real-time analytics with live metrics, trend indicators, department breakdown, and financial insights.
+*Modern, responsive login interface with gradient background, glassmorphism effects, and test credentials display.*
 
-### Student Management
-Quick student late marking with QR scanner, search functionality, and instant feedback.
+---
 
-### Admin Panel
-Comprehensive admin controls for semester promotion, bulk operations, and faculty management.
+### 📝 Mark Student Late
+<img src="./screenshots/mark-student.png" alt="Mark Student Late" width="800"/>
 
-### Records & Reports
-Historical attendance records with weekly/monthly/semester views and multi-format export options.
+*Quick student attendance marking with QR/Barcode scanner, roll number search, and automated fine calculation display.*
 
-> **Note:** Screenshots showcase the production-deployed application running on Vercel with MongoDB Atlas backend.
+---
+
+### 📋 Late Students Today
+<img src="./screenshots/late-today.png" alt="Late Students Today" width="800"/>
+
+*View today's late arrivals with search, filters by year/branch/section, and Excel/TXT export options.*
+
+---
+
+### 📊 Late Records
+<img src="./screenshots/records.png" alt="Late Records" width="800"/>
+
+*Historical attendance records with weekly/monthly/semester views, filtering options, and detailed student late tracking.*
+
+---
+
+### 📈 Live Analytics Dashboard
+<img src="./screenshots/analytics.png" alt="Analytics Dashboard" width="800"/>
+
+*Real-time insights with student late count, financial analytics, payment rates, and auto-refresh capability.*
+
+---
+
+### 👥 Faculty Directory
+<img src="./screenshots/faculty.png" alt="Faculty Directory" width="800"/>
+
+*Complete faculty management with role badges, account status, and admin controls for creating/editing accounts.*
+
+---
+
+### ⚙️ Admin Management
+<img src="./screenshots/admin.png" alt="Admin Management" width="800"/>
+
+*System statistics, semester promotion controls, and bulk data management operations for administrators.*
+
+---
+
+> **Note:** All screenshots showcase the production-deployed application running on Vercel with MongoDB Atlas backend.
 
 ---
 
@@ -265,9 +299,9 @@ npm start
 
 | Role | Email | Password |
 |------|-------|----------|
-| **Admin** | `admin.admin@anits.edu.in` | `Admin@123` |
+| **Admin** | `admin.admin@anits.edu.in` | See Login Page |
 
-> **Note:** Create additional faculty accounts from the Admin panel after first login.
+> **Note:** Test credentials are displayed on the login page. For production deployment, change default passwords immediately and create additional faculty accounts from the Admin panel.
 
 ---
 
@@ -410,7 +444,7 @@ Days 12+:  Progressive increase (₹13, ₹18, ₹23...)
 ```bash
 curl -X POST https://backend-amber-three-76.vercel.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin.admin@anits.edu.in","password":"Admin@123"}'
+  -d '{"email":"your-email@anits.edu.in","password":"your-password"}'
 ```
 
 **Mark Student Late:**
@@ -541,8 +575,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Chelluri Sai Vishal**
 - GitHub: [@SAIVISHAL007](https://github.com/SAIVISHAL007)
-- LinkedIn: [Connect with me](https://www.linkedin.com/in/yourprofile)
-- Portfolio: [Your Portfolio](https://yourportfolio.com)
+- LinkedIn: [Connect with me](https://linkedin.com/in/saivishal)
+- Email: saivishal.chelluri@gmail.com
 
 ---
 
@@ -567,7 +601,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 📞 Support
 
-For support, email saivishal@anits.edu.in or open an issue in this repository.
+For support, email saivishal.chelluri@gmail.com or open an issue in this repository.
 
 ---
 
