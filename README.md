@@ -1,4 +1,4 @@
-# 🎓 Student Late Tracking System
+#  Student Late Tracking System
 
 > A comprehensive, production-ready full-stack web application for educational institutions to track student attendance, automate fine calculations, and generate real-time analytics.
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
@@ -24,18 +24,18 @@
 
 ---
 
-## 🌟 Overview
+##  Overview
 
 The **Student Late Tracking System** is a modern, enterprise-grade solution designed to digitize and automate attendance management for educational institutions. Built with the MERN stack and deployed on Vercel with MongoDB Atlas, this system handles real-time attendance tracking, automated fine calculations, role-based access control, and comprehensive analytics.
 
-### 🎯 Problem Statement
+###  Problem Statement
 Traditional manual attendance tracking systems are:
 - Time-consuming and error-prone
 - Lack real-time insights and analytics
 - Difficult to maintain historical records
 - Have no automated fine calculation or semester management
 
-### ✅ Solution Delivered
+###  Solution Delivered
 This system provides:
 - **Instant attendance recording** with QR/barcode scanning support
 - **Automated fine calculation** with configurable progressive rates
@@ -47,9 +47,9 @@ This system provides:
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-### 🎯 Core Functionality
+###  Core Functionality
 | Feature | Description |
 |---------|-------------|
 | **Smart Late Tracking** | One-click attendance recording with automated timestamp and fine calculation |
@@ -74,7 +74,7 @@ This system provides:
 - **📝 Comprehensive Audit Logs** - Track all actions with user, timestamp, and IP address
 - **⚡ Session Management** - Auto-logout on token expiry with clean localStorage handling
 
-### 🛠️ Admin Features
+###  Admin Features
 | Feature | Capability |
 |---------|------------|
 | **Semester Promotion** | Bulk promote students with automatic year calculation and late data reset |
@@ -90,7 +90,7 @@ This system provides:
 - **⚡ Fast Performance** - Optimized API calls, lazy loading, and efficient state management
 - **♿ Accessibility** - Keyboard navigation, ARIA labels, semantic HTML
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend Architecture
 ```
@@ -160,7 +160,7 @@ AuditLog Collection
 - Frontend: `REACT_APP_API_URL`
 - Backend: `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV`, `FRONTEND_URL`
 
-## 🏗️ Architecture
+##  Architecture
 
 ```mermaid
 graph TB
@@ -241,7 +241,7 @@ graph TB
 
 ---
 
-## 🚀 Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 - **Node.js** v16 or higher ([Download](https://nodejs.org/))
