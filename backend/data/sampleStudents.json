@@ -1,0 +1,122 @@
+[
+  {
+    "rollNo": "CSE001",
+    "name": "Ajay Kumar",
+    "year": 1,
+    "semester": 1,
+    "branch": "CSE",
+    "section": "A"
+  },
+  {
+    "rollNo": "CSE002",
+    "name": "Bhavna Sharma",
+    "year": 1,
+    "semester": 1,
+    "branch": "CSE",
+    "section": "A"
+  },
+  {
+    "rollNo": "CSE003",
+    "name": "Chandra Mohan",
+    "year": 1,
+    "semester": 1,
+    "branch": "CSE",
+    "section": "A"
+  },
+  {
+    "rollNo": "CSE004",
+    "name": "Divya Patel",
+    "year": 1,
+    "semester": 1,
+    "branch": "CSE",
+    "section": "B"
+  },
+  {
+    "rollNo": "CSE005",
+    "name": "Eshan Singh",
+    "year": 1,
+    "semester": 1,
+    "branch": "CSE",
+    "section": "B"
+  },
+  {
+    "rollNo": "CSE101",
+    "name": "Fatima Khan",
+    "year": 2,
+    "semester": 3,
+    "branch": "CSE",
+    "section": "A"
+  },
+  {
+    "rollNo": "CSE102",
+    "name": "Gaurav Verma",
+    "year": 2,
+    "semester": 3,
+    "branch": "CSE",
+    "section": "A"
+  },
+  {
+    "rollNo": "CSE103",
+    "name": "Hema Reddy",
+    "year": 2,
+    "semester": 3,
+    "branch": "CSE",
+    "section": "B"
+  },
+  {
+    "rollNo": "ECE001",
+    "name": "Ishaan Desai",
+    "year": 1,
+    "semester": 1,
+    "branch": "ECE",
+    "section": "A"
+  },
+  {
+    "rollNo": "ECE002",
+    "name": "Jaya Nair",
+    "year": 1,
+    "semester": 1,
+    "branch": "ECE",
+    "section": "A"
+  },
+  {
+    "rollNo": "ECE003",
+    "name": "Karan Yadav",
+    "year": 1,
+    "semester": 1,
+    "branch": "ECE",
+    "section": "B"
+  },
+  {
+    "rollNo": "ECE101",
+    "name": "Lakshmi Iyer",
+    "year": 2,
+    "semester": 3,
+    "branch": "ECE",
+    "section": "A"
+  },
+  {
+    "rollNo": "EEE001",
+    "name": "Mahesh Kumar",
+    "year": 1,
+    "semester": 1,
+    "branch": "EEE",
+    "section": "A"
+  },
+  {
+    "rollNo": "EEE002",
+    "name": "Nina Gupta",
+    "year": 1,
+    "semester": 1,
+    "branch": "EEE",
+    "section": "A"
+  },
+  {
+    "rollNo": "MECH001",
+    "name": "Om Prakash",
+    "year": 1,
+    "semester": 1,
+    "branch": "MECH",
+    "section": "A"
+  }
+]

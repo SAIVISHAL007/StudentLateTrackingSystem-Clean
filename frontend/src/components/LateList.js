@@ -107,7 +107,7 @@ function LateList() {
   };
 
   // Filter students based on search term, year, branch, and section
-  const filteredStudents = students.filter(student => {
+  const filteredStudents = (Array.isArray(students) ? students : []).filter(student => {
     // Search filter
     const matchesSearch = searchTerm === "" || 
       student.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||

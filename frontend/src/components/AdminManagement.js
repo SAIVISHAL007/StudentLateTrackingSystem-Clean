@@ -1,9 +1,14 @@
 import React, {useState,useEffect } from "react";
 import API from "../services/api";
+import { getCurrentUser } from "../utils/auth";
 
 function AdminManagement() {
   const [stats,setStats]=useState(null);
   const [loading,setLoading]=useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  
+    // Get current logged-in user
+    const currentUser = getCurrentUser();
   
   // Late record removal state (global list)
   const [lateRecords, setLateRecords] = useState([]); // flattened { key, rollNo, name, date, year, branch, fineAmount }
@@ -34,7 +39,14 @@ function AdminManagement() {
 
   useEffect(()=>{
     fetchSystemStats();
-  },[]);
+    // Auto-fill authorized by from logged-in user
+    if (currentUser) {
+      setLateRemovalForm(prev => ({
+        ...prev,
+        authorizedBy: currentUser.username || currentUser.email || ""
+      }));
+    }
+  },[currentUser?.username, currentUser?.email]);
 
   const fetchSystemStats=async()=>{
     try{
@@ -202,22 +214,10 @@ function AdminManagement() {
         sortedLogs.forEach((log, index) => {
           // Calculate fine for this specific late day
           const lateDayNumber = index + 1;
+          // Unified fine model: 2 excuse days, then ₹5/day
           let fineAmount = 0;
           if (lateDayNumber > 2) {
-            const dayAfterExcuse = lateDayNumber - 2;
-            const cycleNumber = Math.floor((dayAfterExcuse - 1) / 3);
-            if (cycleNumber === 0) fineAmount = 3;
-            else if (cycleNumber === 1) fineAmount = 5;
-            else if (cycleNumber === 2) fineAmount = 8;
-            else if (cycleNumber === 3) fineAmount = 13;
-            else {
-              const increments = [5,8,5,13,8,5,18,13];
-              let baseFine = 13;
-              for (let i = 4; i <= cycleNumber; i++) {
-                baseFine += increments[(i-4) % increments.length];
-              }
-              fineAmount = baseFine;
-            }
+            fineAmount = 5; // ₹5 for each day after 2 excuse days
           }
           
           flattened.push({
@@ -409,14 +409,18 @@ function AdminManagement() {
         recordsCount: records.length,
         records,
         reason: lateRemovalForm.reason,
-        authorizedBy: lateRemovalForm.authorizedBy
+        authorizedBy: lateRemovalForm.authorizedBy,
+        authorizedByEmail: currentUser?.email || "",
+        authorizedByRole: currentUser?.role || "faculty"
       });
       
       // Call bulk endpoint
       const res = await API.post('/students/bulk-remove-late-records', { 
         records,
         reason: lateRemovalForm.reason,
-        authorizedBy: lateRemovalForm.authorizedBy
+        authorizedBy: lateRemovalForm.authorizedBy,
+        authorizedByEmail: currentUser?.email || "",
+        authorizedByRole: currentUser?.role || "faculty"
       });
       
       const { summary } = res.data;
@@ -443,6 +447,71 @@ function AdminManagement() {
       alert(`❌ Bulk removal failed: ${err.response?.data?.error || err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportRemovalProof = async () => {
+    // Validation similar to removal
+    if (selectedLateRecords.length === 0) {
+      alert("❌ Please select at least one record to export");
+      return;
+    }
+    if (!lateRemovalForm.reason.trim() || lateRemovalForm.reason.trim().length < 5) {
+      alert("❌ Please provide a reason (minimum 5 characters)");
+      return;
+    }
+    if (!lateRemovalForm.authorizedBy.trim()) {
+      alert("❌ Please specify who authorized this export");
+      return;
+    }
+
+    // Build records payload
+    const records = selectedLateRecords.map(key => {
+      const found = lateRecords.find(r => r.key === key);
+      if (found) {
+        return {
+          rollNo: found.rollNo,
+          name: found.name,
+          date: found.date,
+          fineAmount: found.fineAmount || 0,
+          lateDayNumber: found.lateDayNumber || 0
+        };
+      }
+      const parts = key.split('|');
+      const [rollNo, ...dateParts] = parts;
+      return { rollNo, date: dateParts.join('|') };
+    });
+
+    const totalFinesRefunded = records.reduce((sum, r) => sum + (r.fineAmount || 0), 0);
+
+    const payload = {
+      removalRecords: records,
+      reason: lateRemovalForm.reason,
+      authorizedBy: lateRemovalForm.authorizedBy,
+      authorizedByEmail: currentUser?.email || "",
+      authorizedByRole: currentUser?.role || "faculty",
+      totalLateDaysRemoved: records.length,
+      totalFinesRefunded,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      setExportLoading(true);
+      const res = await API.post('/students/export-removal-proof', payload, { responseType: 'blob' });
+
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `late_removal_proof_${new Date().toISOString().split('T')[0]}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      alert('✅ Removal proof PDF generated');
+    } catch (err) {
+      console.error('Export PDF error:', err);
+      alert(`❌ Failed to export PDF: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -585,7 +654,7 @@ function AdminManagement() {
             </div>
             <div style={{ padding: "1.25rem", background: "rgba(255,255,255,0.7)", borderRadius: "16px", boxShadow: "0 4px 12px rgba(139,92,246,0.15)" }}>
               <div style={{ fontSize: ".85rem", color: "#8b5cf6", fontWeight: 500, marginBottom: ".5rem" }}>Year Distribution</div>
-              <div style={{ fontSize: ".9rem", fontWeight: 600, color: "#7c3aed" }}>{stats.yearDistribution.map(y => ` Y${y._id}: ${y.count}`).join(', ')}</div>
+              <div style={{ fontSize: ".9rem", fontWeight: 600, color: "#7c3aed" }}>{stats.yearDistribution && Array.isArray(stats.yearDistribution) ? stats.yearDistribution.map(y => ` Y${y._id}: ${y.count}`).join(', ') : 'N/A'}</div>
             </div>
             {stats.branchDistribution && stats.branchDistribution.length > 0 && (
               <div style={{ padding: "1.25rem", background: "rgba(255,255,255,0.7)", borderRadius: "16px", boxShadow: "0 4px 12px rgba(251,146,60,0.15)" }}>
@@ -1069,13 +1138,26 @@ function AdminManagement() {
             <div style={{ fontSize: ".7rem", color: "#dc2626", marginBottom: ".5rem" }}>⚠️ Reason must be at least 10 characters ({lateRemovalForm.reason.trim().length}/10)</div>
           )}
           
-          <input
-            type="text"
-            placeholder="Authorized by (Faculty/Admin name)"
-            value={lateRemovalForm.authorizedBy}
-            onChange={e => setLateRemovalForm(p => ({ ...p, authorizedBy: e.target.value }))}
-            style={{ width: "100%", padding: "10px", border: "2px solid #dee2e6", borderRadius: "8px", fontSize: ".85rem", marginBottom: ".9rem" }}
-          />
+          <div style={{ position: "relative", marginBottom: ".9rem" }}>
+            <input
+              type="text"
+              placeholder="Authorized by (Faculty/Admin name)"
+              value={lateRemovalForm.authorizedBy}
+              onChange={e => setLateRemovalForm(p => ({ ...p, authorizedBy: e.target.value }))}
+              title={currentUser ? `Logged in as: ${currentUser.username || currentUser.email}\nRole: ${currentUser.role || 'Faculty'}` : ''}
+              style={{ width: "100%", padding: "10px", border: "2px solid #dee2e6", borderRadius: "8px", fontSize: ".85rem" }}
+            />
+            {currentUser && (
+              <div style={{
+                fontSize: "0.7rem",
+                color: "#6b7280",
+                marginTop: "0.25rem",
+                fontStyle: "italic"
+              }}>
+                💡 Auto-filled from logged-in user: {currentUser.username || currentUser.email} ({currentUser.role || 'Faculty'})
+              </div>
+            )}
+          </div>
           
           <button
             onClick={handleBulkRemoveLateRecords}
@@ -1094,6 +1176,26 @@ function AdminManagement() {
             }}
           >
             🗑️ Remove {selectedLateRecords.length > 0 ? `${selectedLateRecords.length} Selected Record${selectedLateRecords.length > 1 ? 's' : ''}` : 'Records'}
+          </button>
+
+          <button
+            onClick={handleExportRemovalProof}
+            disabled={exportLoading || selectedLateRecords.length === 0 || lateRemovalForm.reason.trim().length < 5 || !lateRemovalForm.authorizedBy.trim()}
+            style={{ 
+              marginTop: "0.8rem",
+              padding: "12px 20px", 
+              backgroundColor: (selectedLateRecords.length === 0 || lateRemovalForm.reason.trim().length < 5 || !lateRemovalForm.authorizedBy.trim()) ? "#cbd5e1" : "#2563eb", 
+              color: "white", 
+              border: "none", 
+              borderRadius: "8px", 
+              cursor: (exportLoading || selectedLateRecords.length === 0) ? "not-allowed" : "pointer", 
+              fontSize: "0.95rem", 
+              fontWeight: 700, 
+              width: "100%",
+              boxShadow: "0 3px 10px rgba(37,99,235,0.25)"
+            }}
+          >
+            📄 {exportLoading ? 'Exporting...' : 'Export Removal Proof (PDF)'}
           </button>
 
           {/* Progress Overlay */}

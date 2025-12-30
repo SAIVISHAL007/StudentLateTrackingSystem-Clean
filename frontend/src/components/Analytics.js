@@ -286,7 +286,7 @@ function Analytics() {
               💰 Total Collected
             </div>
             <div style={{ fontSize: "2rem", fontWeight: "800", color: "#10b981" }}>
-              ₹{financialData.totalCollected.toLocaleString()}
+              ₹{(financialData?.totalCollected || 0).toLocaleString()}
             </div>
           </div>
 
@@ -306,7 +306,7 @@ function Analytics() {
               ⏳ Pending Fines
             </div>
             <div style={{ fontSize: "2rem", fontWeight: "800", color: "#dc2626" }}>
-              ₹{financialData.pendingFines.toLocaleString()}
+              ₹{(financialData?.pendingFines || 0).toLocaleString()}
             </div>
           </div>
 
@@ -321,7 +321,7 @@ function Analytics() {
               Projected Revenue
             </div>
             <div style={{ fontSize: "2rem", fontWeight: "800", color: "#667eea" }}>
-              ₹{financialData.projectedRevenue.toLocaleString()}
+              ₹{(financialData?.projectedRevenue || 0).toLocaleString()}
             </div>
           </div>
 

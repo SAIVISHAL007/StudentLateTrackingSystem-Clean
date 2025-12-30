@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import Student from "../models/student.js";
+import { generateRemovalProof } from "../utils/pdfGenerator.js";
 
 const router = express.Router();
 
@@ -59,25 +60,6 @@ const checkDbConnection = (req, res, next) => {
   next();
 };
 
-// Helper function to check if a number is prime
-const isPrime = (num) => {
-  if (num <= 1) return false;
-  if (num <= 3) return true;
-  if (num % 2 === 0 || num % 3 === 0) return false;
-  for (let i = 5; i * i <= num; i += 6) {
-    if (num % i === 0 || num % (i + 2) === 0) return false;
-  }
-  return true;
-};
-
-// Helper function to get the next prime number
-const getNextPrime = (num) => {
-  let candidate = num + 1;
-  while (!isPrime(candidate)) {
-    candidate++;
-  }
-  return candidate;
-};
 
 // Mark student late
 router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, res) => {
@@ -130,16 +112,12 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
     student.lateDays += 1;
     student.lateLogs.push({ date: new Date() });
 
-    // FINE STRUCTURE:
-    // - Days 1-2: Excuse days (no fine)
-    // - Days 3-5: ₹3 fine each day
-    // - Days 6-8: ₹5 fine each day (increased by ₹2)
-    // - Days 9-11: ₹8 fine each day (increased by ₹3)
-    // - Days 12-14: ₹13 fine each day (increased by ₹5)
-    // - Pattern: Every 3 days, increase fine by next amount in sequence (2, 3, 5, 7, 11, 13... - differences are prime-like)
-    // - If fines paid to ₹0, next late continues with the fine amount based on current lateDays count
+    // UNIFIED FINE STRUCTURE (NEW):
+    // - Days 1-2: Excuse days (no fine) ₹0
+    // - Days 3+: ₹5 per day (uniform rate)
     
     const EXCUSE_DAYS = 2;
+    const FINE_PER_DAY = 5; // ₹5 per late day after excuse period
     let fineAmount = 0;
     let statusMessage = "";
     let alertType = "success";
@@ -157,53 +135,22 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
         alertType = "warning";
       }
     } else {
-      // Calculate fine based on late day count (continues even if current fines = ₹0)
-      const dayAfterExcuse = student.lateDays - EXCUSE_DAYS;
+      // Calculate fine based on unified model: ₹5 per day after excuse period
+      fineAmount = FINE_PER_DAY;
       
-      // Fine progression: Days 3-5: ₹3, Days 6-8: ₹5, Days 9-11: ₹8, Days 12-14: ₹13, etc.
-      // Pattern: 3 days at same rate, then increase
-      const cycleNumber = Math.floor((dayAfterExcuse - 1) / 3);
-      
-      // Calculate fine for current cycle
-      if (cycleNumber === 0) {
-        // First cycle (days 3-5): ₹3
-        fineAmount = 3;
-      } else if (cycleNumber === 1) {
-        // Second cycle (days 6-8): ₹5
-        fineAmount = 5;
-      } else if (cycleNumber === 2) {
-        // Third cycle (days 9-11): ₹8
-        fineAmount = 8;
-      } else if (cycleNumber === 3) {
-        // Fourth cycle (days 12-14): ₹13
-        fineAmount = 13;
-      } else {
-        // Fifth cycle onwards (days 15+): ₹18, ₹23, ₹31, ₹36, ₹49...
-        // Increment pattern: +5, +8, +5, +13, +8 (alternating)
-        const increments = [5, 8, 5, 13, 8, 5, 18, 13]; // Expandable pattern
-        let baseFine = 13;
-        for (let i = 4; i <= cycleNumber; i++) {
-          const increment = increments[(i - 4) % increments.length];
-          baseFine += increment;
-        }
-        fineAmount = baseFine;
-      }
-      
-      // Add fine to student's total (even if current total is ₹0 after payment)
+      // Add fine to student's total
       student.fines += fineAmount;
       student.status = 'fined';
-      student.alertFaculty = dayAfterExcuse > 5;
-      student.consecutiveLateDays = dayAfterExcuse;
+      student.alertFaculty = student.lateDays > 5;
+      student.consecutiveLateDays = student.lateDays - EXCUSE_DAYS;
       
       student.fineHistory.push({
         amount: fineAmount,
         date: new Date(),
-        reason: `Late day #${student.lateDays} - Day ${dayAfterExcuse} after excuse period (Cycle ${cycleNumber + 1})`
+        reason: `Late day #${student.lateDays} - Day ${student.lateDays - EXCUSE_DAYS} after excuse period (₹${FINE_PER_DAY}/day)`
       });
       
-      const wasPaid = student.fines === fineAmount; // If current total equals today's fine, previous was cleared
-      const cycleInfo = `cycle ${cycleNumber + 1} (day ${dayAfterExcuse} after excuse)`;
-      statusMessage = `💸 FINE APPLIED: ${student.name} charged ₹${fineAmount}! (${cycleInfo})${wasPaid ? ' [Previous fines cleared]' : ''} - Total fines: ₹${student.fines}`;
+      statusMessage = `💸 FINE APPLIED: ${student.name} charged ₹${fineAmount}! (Day ${student.lateDays - EXCUSE_DAYS} after excuse) - Total fines: ₹${student.fines}`;
       
       if (student.alertFaculty) {
         statusMessage += ` - 🚨 Alert faculty!`;
@@ -329,6 +276,31 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
 });
 
 // Search students (optimized with text index)
+// Get all students (for admin management)
+router.get("/all", checkDbConnection, async (req, res) => {
+  try {
+    const { year } = req.query;
+    let query = {};
+    
+    if (year && year !== 'all') {
+      query.year = parseInt(year);
+    }
+    
+    const students = await Student.find(query)
+      .select("rollNo name year semester branch section lateDays status fines")
+      .sort({ year: 1, semester: 1, section: 1, rollNo: 1 })
+      .lean();
+    
+    res.json({ students, totalCount: students.length });
+  } catch (err) {
+    console.error('❌ Get all students error:', err);
+    res.status(500).json({ 
+      error: "Failed to fetch students", 
+      details: err.message 
+    });
+  }
+});
+
 router.get("/search", checkDbConnection, async (req, res) => {
   try {
     const { q, year, page = 1, limit = 20 } = req.query;
@@ -536,6 +508,8 @@ router.get("/records/:period", async (req, res) => {
       }
     }).select("rollNo name year semester branch section lateDays lateLogs fines status excuseDaysUsed limitExceeded alertFaculty consecutiveLateDays");
 
+    console.log(`📊 Records for ${period}: Found ${students.length} students with late logs`);
+
     // Filter late logs to only include those in the period
     const studentsWithFilteredLogs = students.map(student => ({
       ...student._doc,
@@ -547,13 +521,17 @@ router.get("/records/:period", async (req, res) => {
       ).length
     })).filter(student => student.lateCountInPeriod > 0);
 
+    console.log(`📋 After filtering by period: ${studentsWithFilteredLogs.length} students with late records`);
+
     res.json({
       period,
       startDate,
       endDate: now,
-      students: studentsWithFilteredLogs
+      students: studentsWithFilteredLogs,
+      totalRecords: studentsWithFilteredLogs.length
     });
   } catch (err) {
+    console.error('❌ Error fetching records:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -956,8 +934,10 @@ router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
     const newLateDays = student.lateLogs.length;
     student.lateDays = newLateDays;
 
-    // Recalculate status and fines based on NEW fine structure
+    // Recalculate status and fines based on UNIFIED fine structure
+    // Days 1-2: Excuse days (₹0), Days 3+: ₹5 per day
     const EXCUSE_DAYS = 2;
+    const FINE_PER_DAY = 5;
 
     // Reset all calculated fields
     student.fines = 0;
@@ -972,28 +952,22 @@ router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
       student.excuseDaysUsed = newLateDays;
       student.status = 'excused';
     } else {
-      // Calculate fines based on new structure
+      // Calculate fines based on unified structure: ₹5 per day after excuse period
       student.excuseDaysUsed = EXCUSE_DAYS;
       student.status = 'fined';
       student.consecutiveLateDays = newLateDays - EXCUSE_DAYS;
       
-      // Recalculate total fines: ₹3 for day 3, ₹5 for day 4, then primes
+      // Recalculate total fines: ₹5 per day after excuse period
+      const daysAfterExcuse = newLateDays - EXCUSE_DAYS;
+      student.fines = daysAfterExcuse * FINE_PER_DAY; // Simple: ₹5 × number of days after excuse
+      
+      // Also populate fineHistory for transparency
       for (let day = 3; day <= newLateDays; day++) {
-        let fineAmount = 0;
-        if (day === 3) {
-          fineAmount = 3;
-        } else if (day === 4) {
-          fineAmount = 5;
-        } else {
-          // Prime numbers starting from 7
-          let primeIndex = day - 5;
-          let currentPrime = 5;
-          for (let i = 0; i <= primeIndex; i++) {
-            currentPrime = getNextPrime(currentPrime);
-          }
-          fineAmount = currentPrime;
-        }
-        student.fines += fineAmount;
+        student.fineHistory.push({
+          amount: FINE_PER_DAY,
+          date: new Date(),
+          reason: `Late day #${day} - Day ${day - EXCUSE_DAYS} after excuse period (₹${FINE_PER_DAY}/day)`
+        });
       }
       
       if (newLateDays >= 5) {
@@ -1326,4 +1300,162 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
     }
   });
 
+// BETA: Filter students by year, branch, semester for prefetched selection
+// Supports partial filtering - can filter by just year, or year+branch, or all three
+router.get("/filter", async (req, res) => {
+  try {
+    const { year, branch, semester } = req.query;
+    
+    // Year is required, branch and semester are optional for live filtering
+    if (!year) {
+      return res.status(400).json({ 
+        error: "Year is required" 
+      });
+    }
+    
+    const queryYear = parseInt(year);
+    if (isNaN(queryYear) || queryYear < 1 || queryYear > 4) {
+      return res.status(400).json({ 
+        error: "Year must be a number between 1 and 4" 
+      });
+    }
+    
+    // Build query dynamically
+    const query = { year: queryYear };
+    
+    // Add branch filter if provided
+    if (branch) {
+      query.branch = branch.toUpperCase();
+    }
+    
+    // Add semester filter if provided
+    if (semester) {
+      const querySemester = parseInt(semester);
+      if (isNaN(querySemester) || querySemester < 1 || querySemester > 8) {
+        return res.status(400).json({ 
+          error: "Semester must be a number between 1 and 8" 
+        });
+      }
+      query.semester = querySemester;
+    }
+    
+    // Filter students with dynamic query
+    const students = await Student.find(query)
+    .select("rollNo name year semester branch section lateDays fines status")
+    .sort({ branch: 1, rollNo: 1 })
+    .lean();
+    
+    res.json({
+      success: true,
+      count: students.length,
+      students,
+      filters: { year: queryYear, branch: branch || 'all', semester: semester || 'all' }
+    });
+  } catch (err) {
+    console.error("Filter students error:", err);
+    res.status(500).json({ 
+      error: "Failed to filter students",
+      details: err.message 
+    });
+  }
+});
+
+// Export late record removal proof as PDF
+router.post("/export-removal-proof", async (req, res) => {
+  try {
+    const {
+      removalRecords = [],
+      reason,
+      authorizedBy,
+      authorizedByEmail,
+      authorizedByRole,
+      timestamp,
+      totalLateDaysRemoved,
+      totalFinesRefunded
+    } = req.body || {};
+
+    if (!Array.isArray(removalRecords) || removalRecords.length === 0) {
+      return res.status(400).json({ error: "No removal records provided" });
+    }
+    if (!authorizedBy || !authorizedBy.trim()) {
+      return res.status(400).json({ error: "Authorized by is required" });
+    }
+    if (!reason || reason.trim().length < 5) {
+      return res.status(400).json({ error: "Reason must be at least 5 characters" });
+    }
+
+    const removalData = {
+      removalRecords,
+      reason,
+      authorizedBy,
+      authorizedByEmail: authorizedByEmail || "",
+      authorizedByRole: authorizedByRole || "faculty",
+      timestamp: timestamp || new Date().toISOString(),
+      totalLateDaysRemoved: totalLateDaysRemoved ?? removalRecords.length,
+      totalFinesRefunded: totalFinesRefunded ?? removalRecords.reduce((sum, r) => sum + (r.fineAmount || 0), 0)
+    };
+
+    const pdfBuffer = await generateRemovalProof(removalData);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=late_removal_proof_${Date.now()}.pdf`);
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error("Export removal proof error:", err);
+    res.status(500).json({ error: "Failed to generate PDF", details: err.message });
+  }
+});
+
+// Update student details (admin only)
+router.put("/student/:rollNo", checkDbConnection, async (req, res) => {
+  try {
+    const { rollNo: oldRollNo } = req.params;
+    const { rollNo: newRollNo, name, year, semester, branch, section } = req.body;
+
+    if (!newRollNo || !name || !year || !semester || !branch || !section) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const student = await Student.findOne({ rollNo: oldRollNo });
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    // Check if new roll number already exists (if changed)
+    if (newRollNo.toUpperCase() !== oldRollNo.toUpperCase()) {
+      const existingStudent = await Student.findOne({ rollNo: newRollNo.toUpperCase() });
+      if (existingStudent) {
+        return res.status(400).json({ error: "A student with this roll number already exists" });
+      }
+    }
+
+    // Update student details
+    student.rollNo = newRollNo.toUpperCase().trim();
+    student.name = name.trim();
+    student.year = parseInt(year);
+    student.semester = parseInt(semester);
+    student.branch = branch.toUpperCase();
+    student.section = section.toUpperCase();
+
+    await student.save();
+
+    console.log(`✅ Updated student ${oldRollNo} -> ${newRollNo}: ${name}`);
+    res.json({ 
+      message: "Student updated successfully",
+      student: {
+        rollNo: student.rollNo,
+        name: student.name,
+        year: student.year,
+        semester: student.semester,
+        branch: student.branch,
+        section: student.section
+      }
+    });
+  } catch (err) {
+    console.error("❌ Update student error:", err);
+    res.status(500).json({ error: "Failed to update student", details: err.message });
+  }
+});
+
 export default router;
+

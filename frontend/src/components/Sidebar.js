@@ -14,9 +14,9 @@ function Sidebar({ currentPage, onPageChange }) {
   const baseItems = [
     {
       id: "mark-late",
-      icon: "🕐",
+      icon: "✔️",
       title: "Mark Student Late",
-      description: "Record late arrivals"
+      description: "Enhanced student selection with filters"
     },
     {
       id: "late-today",
@@ -45,6 +45,12 @@ function Sidebar({ currentPage, onPageChange }) {
   ];
 
   const adminItems = [
+    {
+      id: "student-management",
+      icon: "👥",
+      title: "Student Master Data",
+      description: "Add & manage student records"
+    },
     {
       id: 'faculty-directory',
       icon: '👥',

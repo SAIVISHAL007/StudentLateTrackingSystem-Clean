@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import StudentForm from "./components/StudentForm";
+import PrefetchedStudentForm from "./components/PrefetchedStudentForm";
 import LateList from "./components/LateList";
 import Record from "./components/Record";
 import Analytics from "./components/Analytics";
 import AdminManagement from "./components/AdminManagement";
+import StudentManagement from "./components/StudentManagement";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Login from "./components/Login";
@@ -74,28 +75,7 @@ function App() {
       case "mark-late":
         return (
           <div>
-            <div style={{
-              textAlign: "center",
-              marginBottom: "3rem"
-            }}>
-              <h1 style={{
-                color: "#343a40",
-                fontSize: "2.5rem",
-                fontWeight: "700",
-                marginBottom: "0.5rem",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)"
-              }}>
-                🎓 Student Late Attendance Tracking
-              </h1>
-              <p style={{
-                color: "#6c757d",
-                fontSize: "1.1rem",
-                margin: "0"
-              }}>
-                Mark students as late and track attendance
-              </p>
-            </div>
-            <StudentForm />
+            <PrefetchedStudentForm />
           </div>
         );
 
@@ -157,6 +137,12 @@ function App() {
 
       case "analytics":
         return <Analytics />;
+      case "student-management":
+        return (
+          <div>
+            <StudentManagement />
+          </div>
+        );
       case "register-faculty":
         return <FacultyRegister onNavigate={setCurrentPage} />;
       case "faculty-directory":
@@ -190,7 +176,7 @@ function App() {
         );
 
       default:
-        return <StudentForm />;
+        return <PrefetchedStudentForm />;
     }
   };
 

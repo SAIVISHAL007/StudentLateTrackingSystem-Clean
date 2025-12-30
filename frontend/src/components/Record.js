@@ -22,10 +22,13 @@ function Record() {
   const fetchRecords = async (period) => {
     setLoading(true);
     try {
+      console.log(`🔄 Fetching ${period} records...`);
       const res = await API.get(`/students/records/${period}`);
+      console.log(`📊 Records response:`, res.data);
       setRecordData(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('❌ Error fetching records:', err);
+      console.error('Response data:', err.response?.data);
       setRecordData(null);
     } finally {
       setLoading(false);
@@ -71,6 +74,7 @@ function Record() {
   };
 
   const getFilteredStudents = (students) => {
+    if (!Array.isArray(students)) return [];
     return students.filter(student => {
       const matchesYear = selectedYear === "all" || student.year.toString() === selectedYear;
       const matchesBranch = selectedBranch === "all" || student.branch?.toUpperCase() === selectedBranch.toUpperCase();

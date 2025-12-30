@@ -6,8 +6,16 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "dev:test": "node -r dotenv/config server.js dotenv_config_path=.env.test",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "check-health": "curl http://localhost:5000/health"
+    "check-health": "curl http://localhost:5000/health",
+    "check-db": "node scripts/checkStudents.js",
+    "seed": "node scripts/seedDatabase.js",
+    "seed:test": "node -r dotenv/config scripts/seedDatabase.js dotenv_config_path=.env.test",
+    "add-late": "node scripts/addLateRecords.js",
+    "remove-late": "node scripts/removeLateRecords.js",
+    "integration-test": "node scripts/integrationTest.js",
+    "cleanup": "node scripts/cleanupTestData.js"
   },
   "keywords": [
     "student",
@@ -29,6 +37,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.2",
+    "pdfkit": "^0.13.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

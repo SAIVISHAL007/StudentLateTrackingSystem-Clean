@@ -333,7 +333,7 @@ function Login({ onLogin }) {
               border: "1px solid #bae6fd",
               padding: "12px 16px",
               borderRadius: "12px",
-              fontSize: ".7rem",
+              fontSize: ".85rem",
               color: "#0c4a6e",
               lineHeight: 1.6,
               fontWeight: 500
@@ -343,57 +343,6 @@ function Login({ onLogin }) {
             </div>
           </div>
         </form>
-
-        {/* Test Credentials Card */}
-        <div style={{
-          marginTop: "2rem",
-          padding: "1.25rem",
-          background: "linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)",
-          borderRadius: "16px",
-          border: "2px solid #bfdbfe",
-          animation: "fadeIn 0.6s ease-out 0.3s both"
-        }}>
-          <h4 style={{ 
-            color: "#1e40af", 
-            fontSize: "0.95rem", 
-            marginBottom: "0.75rem",
-            fontWeight: "700",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem"
-          }}>
-            <span style={{ fontSize: "1.25rem" }}>🔐</span>
-            Test Credentials
-          </h4>
-          <div style={{ fontSize: "0.85rem", color: "#1e3a8a", lineHeight: "1.8" }}>
-            <div style={{ 
-              padding: "0.5rem",
-              background: "rgba(255, 255, 255, 0.6)",
-              borderRadius: "8px",
-              marginBottom: "0.5rem",
-              fontWeight: "600"
-            }}>
-              <strong>admin.admin@anits.edu.in</strong> / Admin@123
-            </div>
-            <div style={{ 
-              padding: "0.5rem",
-              background: "rgba(255, 255, 255, 0.6)",
-              borderRadius: "8px",
-              marginBottom: "0.75rem",
-              fontWeight: "600"
-            }}>
-              <strong>name.branch@anits.edu.in</strong> / [type your password]
-            </div>
-            <div style={{ 
-              marginTop: "0.75rem",
-              fontStyle: "italic",
-              fontSize: "0.8rem",
-              color: "#3730a3"
-            }}>
-
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
