@@ -37,38 +37,70 @@ app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Routes
+// Routes with DB connection check for serverless
+app.use(async (req, res, next) => {
+  try {
+    if (!isConnected) {
+      await connectDB();
+    }
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Database connection failed', details: err.message });
+  }
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 
 // Use MONGODB_URI for production deployment
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/studentLateTracking';
 
-mongoose.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 45000,
-    maxPoolSize: 10,
-    minPoolSize: 5,
-    maxIdleTimeMS: 30000,
-    retryWrites: true,
-    retryReads: true
-})
-.then(() => {
+// Serverless-friendly MongoDB connection
+let isConnecting = false;
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) return;
+  if (isConnecting) return;
+  
+  isConnecting = true;
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      maxIdleTimeMS: 30000,
+      retryWrites: true,
+      retryReads: true
+    });
+    isConnected = true;
+    isConnecting = false;
     console.log("✅ MongoDB Connected Successfully");
     console.log(`🌐 Connected to database: ${mongoose.connection.name}`);
-})
-.catch(err => {
+  } catch (err) {
+    isConnecting = false;
     console.error("❌ DB Connection Error:", err);
-    console.error("🔧 Check your MONGO_URI and network connection");
-    process.exit(1);
-});
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
+    throw err;
+  }
+};
+
+// Connect immediately for local development
+if (process.env.NODE_ENV !== 'production') {
+  connectDB().catch(console.error);
+}
 
 mongoose.connection.on('error', (err) => {
     console.error('❌ MongoDB connection error:', err);
+    isConnected = false;
 });
 
 mongoose.connection.on('disconnected', () => {
     console.log('⚠️ MongoDB disconnected');
+    isConnected = false;
 });
 
 mongoose.connection.on('reconnected', () => {
