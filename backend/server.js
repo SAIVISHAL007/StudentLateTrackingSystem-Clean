@@ -26,8 +26,12 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Authorization']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Increase payload limit for base64 images
 app.use(express.json({ limit: '10mb' }));
