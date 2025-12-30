@@ -30,8 +30,8 @@ app.use(cors({
   exposedHeaders: ['Authorization']
 }));
 
-// Handle preflight requests
-app.options('*', cors());
+// Handle preflight requests - CORS middleware already handles OPTIONS
+// app.options('*', cors()); // Removed - causing path-to-regexp error in serverless
 
 // Increase payload limit for base64 images
 app.use(express.json({ limit: '10mb' }));

@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Hardcoded backend URL for production deployment
 const configuredBase = process.env.NODE_ENV === 'production'
-  ? "https://backend-dgakgdfuv-chelluri-sai-vishals-projects-3f9c693c.vercel.app/api"
+  ? "https://backend-iesct31jw-chelluri-sai-vishals-projects-3f9c693c.vercel.app/api"
   : "http://localhost:5000/api";
 
 const API = axios.create({
