@@ -9,29 +9,27 @@ dotenv.config();
 
 const app = express();
 
-// CORS configuration - allow all Vercel deployments and localhost
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or Postman)
-    if (!origin) return callback(null, true);
-    
-    // Allow all localhost for development
-    if (origin.includes('localhost')) return callback(null, true);
-    
-    // Allow all Vercel deployments (production and preview)
-    if (origin.includes('.vercel.app')) return callback(null, true);
-    
-    // Allow specific domains if needed
-    callback(null, true);
+// CORS configuration with explicit allowlist
+const allowedOrigins = [
+  process.env.FRONTEND_ORIGIN,
+  'http://localhost:3000'
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // Allow non-browser clients
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true); // allow all Vercel deploys
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Authorization']
-}));
+  exposedHeaders: ['Authorization'],
+  optionsSuccessStatus: 200
+};
 
-// Handle preflight requests - CORS middleware already handles OPTIONS
-// app.options('*', cors()); // Removed - causing path-to-regexp error in serverless
+app.use(cors(corsOptions));
 
 // Increase payload limit for base64 images
 app.use(express.json({ limit: '10mb' }));
