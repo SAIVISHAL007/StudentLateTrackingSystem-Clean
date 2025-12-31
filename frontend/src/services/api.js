@@ -1,9 +1,9 @@
 import axios from "axios";
 
-// Hardcoded backend URL for production deployment
+// Backend base URL: use REACT_APP_API_URL in production to avoid hardcoding
 const configuredBase = process.env.NODE_ENV === 'production'
-  ? "https://backend-aq2ym15ta-chelluri-sai-vishals-projects-3f9c693c.vercel.app/api"
-  : "http://localhost:5000/api";
+  ? (process.env.REACT_APP_API_URL || "https://backend-aq2ym15ta-chelluri-sai-vishals-projects-3f9c693c.vercel.app/api")
+  : (process.env.REACT_APP_API_URL || "http://localhost:5000/api");
 
 const API = axios.create({
   baseURL: configuredBase,
