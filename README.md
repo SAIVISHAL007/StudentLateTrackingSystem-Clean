@@ -1,10 +1,11 @@
 #  Student Late Tracking System
 
-> A comprehensive, production-ready full-stack web application for educational institutions to track student attendance, automate fine calculations, and generate real-time analytics.
+> A comprehensive, production-ready full-stack web application for educational institutions to track student attendance, automate fine calculations, generate real-time analytics, and manage role-based access control with enterprise-grade security.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://frontend-bice-six-7xa3qoyuae.vercel.app)
 [![Backend API](https://img.shields.io/badge/API-live-blue?style=for-the-badge)](https://backend-amber-three-76.vercel.app)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/cloud/atlas)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
 **🔗 Live Application:** [https://frontend-bice-six-7xa3qoyuae.vercel.app](https://frontend-bice-six-7xa3qoyuae.vercel.app)
 
@@ -12,12 +13,13 @@
 
 ##  Table of Contents
 - [Overview](#overview)
-- [Key Features](#key-features)
+- [Key Features by Role](#key-features-by-role)
+- [Role-Based Access Control](#role-based-access-control)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Screenshots](#screenshots)
-- [Installation](#installation)
-- [Usage](#usage)
+- [Installation](#installation--setup)
+- [Usage](#usage-guide-by-role)
 - [API Documentation](#api-documentation)
 - [Deployment](#deployment)
 - [Contributing](#contributing)
@@ -26,7 +28,7 @@
 
 ##  Overview
 
-The **Student Late Tracking System** is a modern, enterprise-grade solution designed to digitize and automate attendance management for educational institutions. Built with the MERN stack and deployed on Vercel with MongoDB Atlas, this system handles real-time attendance tracking, automated fine calculations, role-based access control, and comprehensive analytics.
+The **Student Late Tracking System** is a modern, enterprise-grade solution designed to digitize and automate attendance management for educational institutions. Built with the MERN stack and deployed on Vercel with MongoDB Atlas, this system handles real-time attendance tracking, automated fine calculations, role-based access control, comprehensive analytics, and provides secure, scalable infrastructure for multiple user roles.
 
 ###  Problem Statement
 Traditional manual attendance tracking systems are:
@@ -34,210 +36,332 @@ Traditional manual attendance tracking systems are:
 - Lack real-time insights and analytics
 - Difficult to maintain historical records
 - Have no automated fine calculation or semester management
+- Lack proper role-based access control
+- Cannot handle bulk operations efficiently
 
 ###  Solution Delivered
 This system provides:
-- **Instant attendance recording** with QR/barcode scanning support
+- **Instant attendance recording** with instant fine calculation
 - **Automated fine calculation** with configurable progressive rates
-- **Real-time analytics dashboard** with visual insights
-- **Role-based access control** (SuperAdmin, Admin, Faculty)
-- **Offline-first architecture** with service worker support
-- **Comprehensive audit logging** for accountability
+- **Real-time analytics dashboard** with visual insights and leaderboards
+- **Robust role-based access control** (Faculty, Admin, SuperAdmin)
+- **Offline-first architecture** with service worker support and automatic sync
+- **Comprehensive audit logging** for accountability and compliance
 - **Bulk operations** for semester promotions and record management
+- **Professional UI** with responsive design and modern glassmorphism effects
 
 ---
 
-##  Key Features
+##  Key Features by Role
 
-###  Core Functionality
-| Feature | Description |
-|---------|-------------|
-| **Smart Late Tracking** | One-click attendance recording with automated timestamp and fine calculation |
-| **QR/Barcode Scanning** | Quick student identification using HTML5-QRCode library |
-| **Offline Queue System** | Service worker-powered offline support with automatic sync |
-| **Progressive Fine System** | Intelligent fine calculation (2 excuse days, then ₹3→₹5→₹8→progressive) |
-| **Semester Management** | Bulk promotion system with year/branch filtering and graduation tracking |
+### 👨‍🏫 Faculty Operations
+Faculty members have core attendance management capabilities:
 
-### 📊 Analytics & Reporting
-- **📈 Real-time Dashboard** - Live metrics with trend indicators and visual progress bars
-- **🏆 Smart Leaderboards** - Track most late, most improved, and best-performing students
-- **💰 Financial Analytics** - Total fines collected, payment rates, and revenue projections
-- **📥 Multi-format Export** - Download reports in Excel (.xlsx) and TXT format
-- **🔍 Historical Records** - Weekly, monthly, and semester-wise attendance reports
-- **📊 Department Breakdown** - Per-branch statistics with percentage calculations
+| Feature | Description | Impact |
+|---------|-------------|--------|
+| **Mark Student Late** | One-click attendance marking with QR/barcode scan or search | Real-time entry of attendance |
+| **Today's Late List** | View all students marked late today with filters | Quick overview of daily attendance |
+| **Late Records** | Access historical records (weekly/monthly/semester) | Comprehensive attendance tracking |
+| **Live Analytics** | View real-time dashboard with student metrics | Data-driven insights |
+| **Export Reports** | Download attendance data in Excel/TXT format | Data portability and external reporting |
+| **Leaderboards** | See top late, most improved, and best-performing students | Performance comparison |
 
-### 👥 User Management & Security
-- **🔐 JWT Authentication** - Secure token-based auth with 7-day expiry
-- **🛡️ Role-Based Access Control** - Three-tier system (SuperAdmin, Admin, Faculty)
-- **👨‍💼 Faculty Directory** - Complete faculty management with email editing
-- **🔑 Password Management** - Admin-controlled password resets (no OTP complexity)
-- **📝 Comprehensive Audit Logs** - Track all actions with user, timestamp, and IP address
-- **⚡ Session Management** - Auto-logout on token expiry with clean localStorage handling
+**Access:** Login with faculty credentials → Limited to core attendance features
 
-###  Admin Features
-| Feature | Capability |
-|---------|------------|
-| **Semester Promotion** | Bulk promote students with automatic year calculation and late data reset |
-| **Bulk Record Removal** | Remove multiple late records with admin authorization tracking |
-| **Fine Management** | Clear fines for selected students or entire departments |
-| **Student Import** | Bulk student upload via CSV with validation |
-| **System Statistics** | Real-time overview of students, faculty, total fines, and records |
+---
 
-### 🎨 User Experience
-- **📱 Responsive Design** - Works seamlessly on desktop, tablet, and mobile
-- **🌓 Modern UI** - Gradient backgrounds, glassmorphism effects, smooth animations
-- **🔔 Toast Notifications** - Real-time feedback for all operations
-- **⚡ Fast Performance** - Optimized API calls, lazy loading, and efficient state management
-- **♿ Accessibility** - Keyboard navigation, ARIA labels, semantic HTML
+### 🔧 Admin Operations
+Admins have all faculty features PLUS management capabilities:
+
+| Feature | Description | Impact |
+|---------|-------------|--------|
+| **All Faculty Operations** | Complete access to attendance marking and viewing | Foundation for admin role |
+| **Student Master Data** | Add, edit, delete student records in bulk | Manage student database |
+| **Faculty Directory** | View all faculty, create accounts, reset passwords | Manage faculty accounts and roles |
+| **Semester Promotion** | Bulk promote students with automated year calculation | Year-end batch operations |
+| **Bulk Record Removal** | Remove late records for selected students | Data correction and management |
+| **Fine Management** | Clear fines for individual or groups of students | Financial record management |
+| **System Statistics** | Real-time overview of students, faculty, fines | High-level system monitoring |
+| **Audit Logs** | View all system actions with user, IP, timestamp | Compliance and accountability |
+| **Financial Analytics** | Track fine collection, payment rates, projections | Business intelligence |
+
+**Access:** Login with admin credentials → Full system access except SuperAdmin functions
+
+---
+
+### 👑 SuperAdmin Operations
+SuperAdmins have complete system control:
+
+| Feature | Description | Impact |
+|---------|-------------|--------|
+| **All Admin Operations** | Complete access to all admin and faculty features | Full system control |
+| **System Configuration** | Modify fine rates and grace periods | Customize business logic |
+| **Role Management** | Promote/demote users to/from admin role | User hierarchy management |
+| **Database Operations** | Direct database access, backup/restore | System maintenance |
+| **Advanced Analytics** | System-wide metrics and predictions | Strategic planning |
+
+**Access:** Login with superadmin credentials → Unrestricted system access
+
+---
+
+## 🔐 Role-Based Access Control
+
+### Authentication Flow
+```
+User Login
+    ↓
+Email + Password Validation
+    ↓
+JWT Token Generated (7-day expiry)
+    ↓
+User Role Extracted from Database
+    ↓
+Route Authorization Based on Role
+    ↓
+Access Granted/Denied
+```
+
+### Permission Matrix
+
+| Operation | Faculty | Admin | SuperAdmin |
+|-----------|---------|-------|-----------|
+| Mark Student Late | ✅ | ✅ | ✅ |
+| View Late Records | ✅ | ✅ | ✅ |
+| View Today's Late | ✅ | ✅ | ✅ |
+| View Analytics | ✅ | ✅ | ✅ |
+| Export Reports | ✅ | ✅ | ✅ |
+| Student Master Data | ❌ | ✅ | ✅ |
+| Faculty Directory | ❌ | ✅ | ✅ |
+| Semester Promotion | ❌ | ✅ | ✅ |
+| Remove Late Records | ❌ | ✅ | ✅ |
+| Manage Fines | ❌ | ✅ | ✅ |
+| View Audit Logs | ❌ | ✅ | ✅ |
+| System Configuration | ❌ | ❌ | ✅ |
+| Role Management | ❌ | ❌ | ✅ |
+| Database Operations | ❌ | ❌ | ✅ |
+
+---
 
 ##  Tech Stack
 
 ### Frontend Architecture
 ```
 React 19.0.0 (Latest)
-├── React Router v7       → Client-side routing with nested routes
-├── Axios                 → HTTP client with interceptors for JWT
-├── HTML5-QRCode         → QR/Barcode scanning support
+├── React Hooks          → State management and side effects
+├── Axios                → HTTP client with JWT interceptors
+├── React Icons (fi)     → Professional iconography
 ├── XLSX (SheetJS)       → Excel export with BLOB fallback
+├── HTML5-QRCode         → QR/Barcode scanning support
 ├── Service Workers      → Offline queue and cache management
-└── CRACO                → Webpack configuration override
+├── Tailwind CSS         → Utility-first CSS framework
+├── CRACO                → Webpack configuration override
+└── Custom Utilities     → Auth, date formatting, export, offline sync
 ```
-
-**Key Libraries:**
-- `@testing-library/*` - Comprehensive testing suite
-- `web-vitals` - Performance monitoring
-- Custom utilities for auth, date formatting, and offline sync
 
 ### Backend Architecture
 ```
 Node.js v16+ & Express v5.1.0
-├── MongoDB Atlas (Mongoose v8.18.2)  → Cloud NoSQL database
-├── JWT (jsonwebtoken v9.0.2)         → Stateless authentication
-├── Bcrypt (bcryptjs v2.4.3)          → Password hashing
-├── Joi                                → Request validation
-├── CORS                               → Cross-origin resource sharing
-└── Dotenv                             → Environment configuration
+├── MongoDB Atlas        → Cloud NoSQL database (Mongoose v8.18.2)
+├── JWT                  → Stateless authentication (9.0.2)
+├── Bcrypt               → Password hashing (bcryptjs v2.4.3)
+├── Joi                  → Request validation
+├── CORS                 → Cross-origin resource sharing
+├── PDFKit               → PDF generation for removal proofs
+├── Dotenv               → Environment configuration
+└── Morgan               → HTTP request logging
 ```
-
-**Security Features:**
-- Password hashing with bcrypt (10 salt rounds)
-- JWT tokens with configurable expiry
-- CORS protection with origin whitelisting
-- Input validation and sanitization
-- Mongoose schema validation
 
 ### Database Schema (MongoDB)
 ```javascript
 Students Collection
-├── Personal Info (rollNo, name, year, semester, branch)
-├── Late Tracking (lateDays, status, gracePeriodUsed)
-├── Financial (fines, finesPaid)
-├── History (lateLogs[], fineHistory[])
-└── Metadata (createdAt, updatedAt, isActive)
+├── Personal Info        (rollNo, name, year, semester, branch)
+├── Late Tracking        (lateDays, status, gracePeriodUsed)
+├── Financial            (fines, finesPaid)
+├── History              (lateLogs[], fineHistory[])
+└── Metadata             (createdAt, updatedAt, isActive)
 
 Faculty Collection
-├── Credentials (email, password hash)
-├── Profile (name, branch, role)
-├── Auth Tracking (lastLogin, loginHistory[])
-└── Status (isActive, createdAt)
+├── Credentials          (email, passwordHash)
+├── Profile              (name, branch, role: [faculty|admin|superadmin])
+├── Auth Tracking        (lastLogin, loginHistory[])
+└── Status               (isActive, createdAt, updatedAt)
 
 AuditLog Collection
-├── Action Details (action, timestamp)
-├── Actor Info (facultyId, name, email, role)
-├── Target (affected resources)
-└── Context (ipAddress, userAgent)
+├── Action Details       (action, timestamp)
+├── Actor Info           (facultyId, name, email, role)
+├── Target              (affected resources)
+└── Context              (ipAddress, userAgent)
 ```
 
 ### Deployment & DevOps
 | Component | Platform | Configuration |
 |-----------|----------|---------------|
-| **Frontend** | Vercel | React build, automatic HTTPS, edge network |
-| **Backend API** | Vercel Serverless | Node.js runtime, auto-scaling, global CDN |
-| **Database** | MongoDB Atlas | Cloud-hosted, automated backups, replication |
-| **Version Control** | GitHub | CI/CD with Vercel auto-deployment |
+| **Frontend** | Vercel | React build, automatic HTTPS, CDN, serverless functions |
+| **Backend API** | Vercel Serverless | Node.js runtime, auto-scaling, global edge network |
+| **Database** | MongoDB Atlas | Cloud-hosted, automated backups, replication, 3-node cluster |
+| **Version Control** | GitHub | CI/CD with Vercel auto-deployment on push |
+| **Security** | Vercel SSL + Auth | HTTPS everywhere, JWT tokens, rate limiting |
 
 **Environment Variables:**
 - Frontend: `REACT_APP_API_URL`
 - Backend: `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV`, `FRONTEND_URL`
 
+---
+
 ##  Architecture
 
 ```mermaid
 graph TB
-    A[Client Browser] -->|HTTPS| B[Vercel CDN]
-    B --> C[React Frontend]
-    C -->|API Calls| D[Vercel Serverless Functions]
-    D -->|Mongoose ODM| E[MongoDB Atlas]
-    D -->|JWT Validation| F[Auth Middleware]
-    C -->|Service Worker| G[IndexedDB Cache]
+    A[Client Browser]
+    A -->|HTTPS| B[Vercel CDN]
+    B -->|React Frontend| C[UI Components]
+    C -->|JWT in Headers| D[API Interceptor]
+    D -->|HTTPS REST| E[Vercel Serverless]
+    E -->|Mongoose ODM| F[MongoDB Atlas]
+    E -->|JWT Validation| G[Auth Middleware]
+    G -->|Role Check| H[Route Handler]
+    C -->|Service Worker| I[IndexedDB Cache]
     
     style C fill:#61DAFB
-    style D fill:#68A063
-    style E fill:#4DB33D
+    style E fill:#68A063
+    style F fill:#4DB33D
 ```
 
 **Data Flow:**
-1. User interacts with React frontend (JWT stored in localStorage)
-2. Axios interceptor adds Authorization header to API requests
-3. Backend validates JWT and processes request
-4. Mongoose performs database operations on MongoDB Atlas
-5. Response sent back with appropriate status codes
-6. Frontend updates UI with toast notifications
+1. User authenticates with email/password → JWT token issued (7-day expiry)
+2. Token stored in localStorage, included in all API requests via Axios interceptor
+3. Backend validates JWT signature and checks user role
+4. Role-based middleware determines what endpoints are accessible
+5. Mongoose performs database operations on MongoDB Atlas
+6. Response returned with appropriate data based on permissions
+7. Frontend updates UI with toast notifications and state updates
+8. Service worker caches operations for offline support
 
 ---
 
 ## 📸 Screenshots
 
 ### 🔐 Login Page
-<img src="./screenshots/login.png" alt="Login Page" width="800"/>
+<img src="./screenshots/login page.png" alt="Login Page" width="900"/>
 
-*Modern, responsive login interface with gradient background, glassmorphism effects, and test credentials display.*
-
----
-
-### 📝 Mark Student Late
-<img src="./screenshots/mark-student.png" alt="Mark Student Late" width="800"/>
-
-*Quick student attendance marking with QR/Barcode scanner, roll number search, and automated fine calculation display.*
-
----
-
-### 📋 Late Students Today
-<img src="./screenshots/late-today.png" alt="Late Students Today" width="800"/>
-
-*View today's late arrivals with search, filters by year/branch/section, and Excel/TXT export options.*
+**Features:**
+- Modern glassmorphism design with gradient background
+- Test credentials display for demo
+- Responsive layout (mobile, tablet, desktop)
+- Field validation with error messages
+- Password visibility toggle
+- Forgot Password link
 
 ---
 
-### 📊 Late Records
-<img src="./screenshots/records.png" alt="Late Records" width="800"/>
+### 📝 Mark Student Late (Faculty & Admin)
+<img src="./screenshots/mark student late.png" alt="Mark Student Late" width="900"/>
 
-*Historical attendance records with weekly/monthly/semester views, filtering options, and detailed student late tracking.*
-
----
-
-### 📈 Live Analytics Dashboard
-<img src="./screenshots/analytics.png" alt="Analytics Dashboard" width="800"/>
-
-*Real-time insights with student late count, financial analytics, payment rates, and auto-refresh capability.*
-
----
-
-### 👥 Faculty Directory
-<img src="./screenshots/faculty.png" alt="Faculty Directory" width="800"/>
-
-*Complete faculty management with role badges, account status, and admin controls for creating/editing accounts.*
+**Features:**
+- QR/Barcode scanner integration
+- Roll number search with auto-complete
+- Student details display (name, year, semester)
+- Automated fine calculation with breakdown
+- Confirmation dialog before submission
+- Toast notification on success
+- Offline queue support
 
 ---
 
-### ⚙️ Admin Management
-<img src="./screenshots/admin.png" alt="Admin Management" width="800"/>
+### 📋 Late Students Today (Faculty & Admin)
+<img src="./screenshots/late student today.png" alt="Late Students Today" width="900"/>
 
-*System statistics, semester promotion controls, and bulk data management operations for administrators.*
+**Features:**
+- Today's late students list with timestamps
+- Search by roll number or name
+- Filter by year, branch, semester
+- Column sorting (name, roll number, time)
+- Excel/TXT export options
+- Student detail view
+- Batch operations for admins
 
 ---
 
-> **Note:** All screenshots showcase the production-deployed application running on Vercel with MongoDB Atlas backend.
+### 📊 Late Records (Faculty & Admin)
+<img src="./screenshots/student late record.png" alt="Late Records" width="900"/>
+
+**Features:**
+- Weekly, monthly, and semester views
+- Search and filter capabilities
+- Detailed student late tracking
+- Fine history breakdown
+- Export to Excel/TXT
+- Department-wise statistics
+- Period selection dropdown
+
+---
+
+### 📈 Live Analytics Dashboard (Faculty & Admin)
+<img src="./screenshots/live analytics.png" alt="Analytics Dashboard" width="900"/>
+
+**Features:**
+- Real-time student late count metrics
+- Financial analytics (total fines, payment rates)
+- Student performance leaderboards
+- Most late, most improved, best-performing students
+- Interactive charts with trend indicators
+- Auto-refresh capability (5-second intervals)
+- Department breakdown statistics
+- Responsive grid layout
+
+---
+
+### 👥 Faculty Directory (Admin Only)
+<img src="./screenshots/faculty directory.png" alt="Faculty Directory" width="900"/>
+
+**Features:**
+- Complete faculty listing with pagination
+- Faculty role badges (Faculty, Admin, SuperAdmin)
+- Account status indicators
+- Email and branch information
+- Edit faculty details (name, email, role)
+- Create new faculty accounts
+- Reset password functionality (admin controlled)
+- Deactivate/reactivate faculty accounts
+- Audit trail integration
+
+---
+
+### ⚙️ Admin Management (Admin Only)
+<img src="./screenshots/admin management.png" alt="Admin Management" width="900"/>
+
+**Features:**
+- System statistics dashboard
+- Real-time metrics (total students, faculty, fines)
+- Semester promotion with bulk filtering
+- Student Master Data management (add/edit/delete)
+- Bulk late record removal with proof export
+- Fine management and payment tracking
+- Year/Branch/Section filtering
+- Operation confirmation dialogs
+- Audit log viewing
+- PDF proof generation for record removals
+
+---
+
+### 📊 Students Master Data (Admin Only)
+<img src="./screenshots/students master data.png" alt="Students Master Data" width="900"/>
+
+**Features:**
+- Complete student database view
+- Add new student records
+- Edit student information
+- Bulk import from CSV
+- Student status management
+- Year/Branch/Section organization
+- Search and filtering
+- Pagination for large datasets
+- Deactivate/reactivate students
+- Export student list
+
+---
+
+> **Security Note:** All screenshots showcase the production-deployed application running on Vercel with encrypted MongoDB Atlas backend. User data is protected with JWT authentication and role-based access control.
 
 ---
 
@@ -268,7 +392,7 @@ cp .env.example .env
 **Edit `backend/.env`:**
 ```env
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/attendanceDB
-JWT_SECRET=your-super-secret-jwt-key-min-32-characters
+JWT_SECRET=your-super-secret-jwt-key-min-32-characters-long
 NODE_ENV=development
 PORT=5000
 FRONTEND_URL=http://localhost:3000
@@ -286,7 +410,7 @@ cd ../frontend
 npm install
 
 # Create environment file
-echo "REACT_APP_API_URL=http://localhost:5000/api" > .env
+echo "REACT_APP_API_URL=http://localhost:5000/api" > .env.local
 ```
 
 **Start frontend development server:**
@@ -300,268 +424,341 @@ npm start
 | Role | Email | Password |
 |------|-------|----------|
 | **Admin** | `admin.admin@anits.edu.in` | See Login Page |
+| **Faculty** | `faculty@anits.edu.in` | See Login Page |
 
-> **Note:** Test credentials are displayed on the login page. For production deployment, change default passwords immediately and create additional faculty accounts from the Admin panel.
+> **Important Security Notice:** 
+> - Test credentials are displayed on the login page for demo purposes
+> - **For production deployment, change all default passwords immediately**
+> - Create strong, unique passwords for all accounts
+> - Enable 2FA if available
+> - Restrict access based on actual user roles
 
 ---
 
-## 📖 Usage
+## 📖 Usage Guide by Role
 
-### For Faculty
-1. **Login** with your credentials
-2. **Mark Students Late** - Scan QR code or search by roll number
-3. **View Today's Late List** - See all students marked late today
-4. **Check Records** - View weekly/monthly/semester attendance history
-5. **Export Reports** - Download Excel or TXT reports
+### 👨‍🏫 Faculty Workflow
 
-### For Admins
-1. All faculty features plus:
-2. **Manage Faculty** - Create, edit, deactivate faculty accounts
-3. **Promote Semester** - Bulk student promotion with filtering
-4. **Analytics Dashboard** - Real-time system statistics and trends
-5. **Bulk Operations** - Remove late records, clear fines
-6. **Audit Logs** - Review all system actions
+**Day-to-Day Operations:**
+1. **Login** with your faculty email
+2. **Mark Students Late**
+   - Navigate to "Mark Student Late"
+   - Scan QR code from student ID or search by roll number
+   - Confirm student details
+   - System auto-calculates fine based on date and grace period
+   - Receive confirmation notification
 
-### For SuperAdmin
-1. All admin features plus:
-2. **System Configuration** - Modify fine rates, grace periods
-3. **User Role Management** - Promote/demote admins
-4. **Database Operations** - Backup, restore, maintenance
+3. **View Today's Late List**
+   - See all students marked late today
+   - Filter by year, branch, section
+   - Search for specific students
+   - Export daily report for records
 
-## Project Structure
+4. **Check Historical Records**
+   - Select period (weekly/monthly/semester)
+   - View detailed attendance history
+   - Export reports in Excel/TXT format
+   - Analyze patterns and trends
 
-```
-StudentLateTrackingSystem-Clean/
-├── backend/
-│   ├── models/           # MongoDB schemas
-│   │   ├── student.js    # Student model with semester tracking
-│   │   ├── faculty.js    # Faculty/user model
-│   │   └── auditLog.js   # Audit trail model
-│   ├── routes/           # API endpoints
-│   │   ├── studentRoutes.js  # Student operations
-│   │   └── authRoutes.js     # Authentication & faculty management
-│   ├── server.js         # Express server setup
-│   ├── .env              # Environment variables
-│   └── package.json
-│
-├── frontend/
-│   ├── public/
-│   │   ├── service-worker.js  # Offline support
-│   │   └── index.html
-│   ├── src/
-│   │   ├── components/   # React components
-│   │   │   ├── Login.js
-│   │   │   ├── StudentForm.js      # Mark students late
-│   │   │   ├── LateList.js         # Today's late students
-│   │   │   ├── Record.js           # Historical records
-│   │   │   ├── Analytics.js        # Live dashboard
-│   │   │   ├── AdminManagement.js  # Admin operations
-│   │   │   ├── FacultyDirectory.js # Faculty management
-│   │   │   ├── ForgotPassword.js
-│   │   │   ├── Navbar.js
-│   │   │   └── Sidebar.js
-│   │   ├── services/
-│   │   │   └── api.js    # Axios configuration
-│   │   ├── utils/
-│   │   │   ├── auth.js           # Auth helpers
-│   │   │   ├── dateUtils.js      # Date formatting
-│   │   │   ├── exportUtils.js    # TXT/CSV export
-│   │   │   ├── excelExport.js    # Excel export
-│   │   │   └── offlineQueue.js   # Offline queue management
-│   │   ├── App.js        # Main app component
-│   │   ├── App.css       # Global styles
-│   │   ├── index.js      # Entry point
-│   │   └── index.css     # Base styles
-│   ├── craco.config.js   # Webpack config override
-│   ├── .env              # Environment variables
-│   └── package.json
-│
-└── README.md
-```
+5. **Monitor Live Analytics**
+   - View real-time dashboard
+   - See student performance leaderboards
+   - Monitor department statistics
+   - Check financial metrics
 
-## Key Features Explained
+**Limitations:**
+- Cannot access student data management
+- Cannot access faculty directory
+- Cannot promote semesters or remove records
+- Cannot view system configuration
 
-### Fine Calculation System
-```
-Days 1-2:  Excuse days (no fine)
-Days 3-5:  ₹3 per day
-Days 6-8:  ₹5 per day
-Days 9-11: ₹8 per day
-Days 12+:  Progressive increase (₹13, ₹18, ₹23...)
-```
+---
 
-### Semester Promotion
-- Automatically calculates year based on semester (S1-2=Y1, S3-4=Y2, S5-6=Y3, S7-8=Y4)
-- Bulk promotion with flexible filtering (by year/branch)
-- Resets late data while preserving student information
-- Marks Y4S8 students as graduated
+### 🔧 Admin Workflow
 
-### Offline Support
-- Service worker caches mark-late operations
-- Visual queue counter with manual sync
-- Auto-sync when connection restored
-- Toast notifications for all operations
+**Management Operations:**
+1. **All Faculty Operations** (complete access)
+2. **Student Master Data Management**
+   - Add new students in bulk
+   - Edit existing student information
+   - Delete inactive students
+   - Manage student status
+   - Filter by year/branch/semester
+
+3. **Faculty Directory**
+   - View all faculty accounts
+   - Create new faculty accounts
+   - Edit faculty details (name, email, role)
+   - Reset faculty passwords
+   - Manage faculty roles
+   - Deactivate/reactivate accounts
+
+4. **Semester Promotion**
+   - Bulk promote all students to next semester
+   - Filter by year, branch, or section
+   - Automatic year calculation (S1-2→Y1, S3-4→Y2, etc.)
+   - Mark Y4S8 students as graduated
+   - Reset late data while preserving student records
+   - Generate promotion report
+
+5. **Bulk Record Management**
+   - Remove multiple late records at once
+   - Generate PDF proof of removal
+   - Clear fines for students
+   - Manage financial records
+   - Export removal proofs
+
+6. **Analytics & Reports**
+   - Access extended analytics
+   - View system statistics
+   - Monitor financial metrics
+   - Export comprehensive reports
+   - Access audit logs
+
+7. **Audit & Compliance**
+   - View all system actions (audit logs)
+   - Filter by user, action, date
+   - Track data modifications
+   - Ensure accountability
+
+---
+
+### 👑 SuperAdmin Operations
+
+**System Control:**
+1. **All Admin Operations** (complete access)
+2. **System Configuration**
+   - Modify fine calculation rates
+   - Adjust grace periods
+   - Configure system parameters
+   - Set business rules
+
+3. **Role Management**
+   - Promote faculty to admin
+   - Demote admin to faculty
+   - Manage role hierarchy
+   - Assign special permissions
+
+4. **Database Operations**
+   - Direct database access
+   - Backup and restore data
+   - Data migration tasks
+   - System maintenance
+
+5. **Advanced Analytics**
+   - System-wide performance metrics
+   - Predictive analytics
+   - Trend analysis
+   - Strategic planning
+
+---
 
 ## 📡 API Documentation
 
 ### Base URL
 - **Production:** `https://backend-amber-three-76.vercel.app/api`
-- **Local:** `http://localhost:5000/api`
+- **Local Development:** `http://localhost:5000/api`
 
 ### Authentication Endpoints
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/auth/login` | ❌ | Login with email and password |
-| `POST` | `/auth/register` | ✅ Admin | Create new faculty account |
-| `GET` | `/auth/profile` | ✅ | Get current user profile |
-| `GET` | `/auth/faculty` | ✅ Admin | List all faculty (paginated) |
-| `GET` | `/auth/faculty/:id` | ✅ Admin | Get specific faculty details |
-| `PATCH` | `/auth/faculty/:id` | ✅ Admin | Update faculty (name, email, role) |
-| `POST` | `/auth/faculty/:id/reset-password` | ✅ Admin | Admin reset password |
-| `POST` | `/auth/logout` | ✅ | Logout (audit log) |
 
-### Student Management Endpoints
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/students/mark-late` | ✅ | Mark student late with automated fine |
-| `GET` | `/students/late-today` | ✅ | Get today's late students |
-| `GET` | `/students/records/:period` | ✅ | Get records (weekly/monthly/semester) |
-| `GET` | `/students/system-stats` | ✅ Admin | System statistics overview |
-| `POST` | `/students/promote-semester` | ✅ Admin | Bulk semester promotion |
-| `POST` | `/students/bulk-remove-late-records` | ✅ Admin | Remove multiple late records |
-| `POST` | `/students/pay-fine` | ✅ Admin | Clear student fines |
-| `DELETE` | `/students/student/:rollNo` | ✅ Admin | Delete student account |
+#### Login
+```http
+POST /auth/login
+Content-Type: application/json
 
-### Analytics Endpoints
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/students/analytics/leaderboard` | ✅ | Get leaderboard data |
-| `GET` | `/students/analytics/financial` | ✅ Admin | Financial metrics |
-
-### Request Examples
-
-**Login:**
-```bash
-curl -X POST https://backend-amber-three-76.vercel.app/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"your-email@anits.edu.in","password":"your-password"}'
-```
-
-**Mark Student Late:**
-```bash
-curl -X POST https://backend-amber-three-76.vercel.app/api/students/mark-late \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{"rollNumber":"21A91A05H3"}'
-```
-
-### Response Formats
-
-**Success Response:**
-```json
 {
-  "message": "Operation successful",
-  "data": { ... }
+  "email": "faculty@anits.edu.in",
+  "password": "password123"
+}
+
+Response (200 OK):
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "email": "faculty@anits.edu.in",
+    "name": "John Doe",
+    "role": "faculty",
+    "branch": "CSE"
+  }
 }
 ```
 
-**Error Response:**
+#### Get Profile
+```http
+GET /auth/profile
+Authorization: Bearer {token}
+
+Response (200 OK):
+{
+  "id": "507f1f77bcf86cd799439011",
+  "email": "faculty@anits.edu.in",
+  "name": "John Doe",
+  "role": "faculty",
+  "branch": "CSE",
+  "lastLogin": "2024-02-04T10:30:00Z",
+  "isActive": true
+}
+```
+
+#### List Faculty (Admin Only)
+```http
+GET /auth/faculty?page=1&limit=10
+Authorization: Bearer {admin_token}
+
+Response (200 OK):
+{
+  "message": "Faculty retrieved",
+  "data": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "email": "faculty@anits.edu.in",
+      "name": "John Doe",
+      "role": "faculty",
+      "branch": "CSE",
+      "isActive": true,
+      "createdAt": "2024-01-15T08:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "pages": 3
+  }
+}
+```
+
+### Student Management Endpoints
+
+#### Mark Student Late
+```http
+POST /students/mark-late
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "rollNumber": "21A91A05H3"
+}
+
+Response (200 OK):
+{
+  "message": "Student marked late successfully",
+  "data": {
+    "rollNumber": "21A91A05H3",
+    "name": "Student Name",
+    "year": 1,
+    "semester": 1,
+    "branch": "CSE",
+    "lateDays": 5,
+    "todayFine": 3,
+    "totalFine": 15,
+    "timestamp": "2024-02-04T10:30:00Z"
+  }
+}
+```
+
+#### Get Today's Late Students
+```http
+GET /students/late-today?branch=CSE&year=1
+Authorization: Bearer {token}
+
+Response (200 OK):
+{
+  "message": "Late students retrieved",
+  "data": [
+    {
+      "rollNumber": "21A91A05H3",
+      "name": "Student Name",
+      "year": 1,
+      "semester": 1,
+      "branch": "CSE",
+      "lateDays": 5,
+      "time": "10:30 AM",
+      "markedBy": "John Doe"
+    }
+  ],
+  "count": 12
+}
+```
+
+### Error Handling
+
+**Standard Error Response:**
 ```json
 {
   "error": "Error message",
-  "details": "Additional context"
+  "details": "Additional context if available",
+  "code": "ERROR_CODE"
 }
 ```
 
-### Status Codes
+**HTTP Status Codes:**
 - `200` - Success
-- `201` - Created
-- `400` - Bad Request (validation error)
+- `201` - Created successfully
+- `400` - Bad Request (validation failed)
 - `401` - Unauthorized (invalid/missing token)
-- `403` - Forbidden (insufficient permissions)
-- `404` - Not Found
-- `409` - Conflict (duplicate entry)
+- `403` - Forbidden (insufficient permissions for role)
+- `404` - Not Found (resource doesn't exist)
+- `409` - Conflict (duplicate entry, e.g., duplicate email)
 - `500` - Internal Server Error
-
-## 🚢 Deployment
-
-This project is deployed using **Vercel** with separate frontend and backend projects connected to the same GitHub repository.
-
-### Deployment Architecture
-```
-GitHub Repository (main branch)
-├── Frontend Project (Vercel)
-│   ├── Root Directory: frontend/
-│   ├── Build Command: npm run build
-│   ├── Output Directory: build
-│   └── Environment: REACT_APP_API_URL
-│
-└── Backend Project (Vercel Serverless)
-    ├── Root Directory: backend/
-    ├── Serverless Function: api/index.js
-    ├── Environment: MONGODB_URI, JWT_SECRET, NODE_ENV
-    └── Auto-scaling enabled
-```
-
-### Deploy Your Own
-
-#### 1. Fork this repository
-
-#### 2. Deploy Backend
-```bash
-cd backend
-vercel --prod
-```
-Set environment variables in Vercel dashboard:
-- `MONGODB_URI` - Your MongoDB Atlas connection string
-- `JWT_SECRET` - Secret key for JWT (min 32 chars)
-- `NODE_ENV` - Set to `production`
-
-#### 3. Deploy Frontend
-```bash
-cd frontend
-vercel --prod
-```
-Set environment variables:
-- `REACT_APP_API_URL` - Your backend URL + `/api`
-
-#### 4. Connect to GitHub
-In Vercel dashboard → Settings → Git:
-- Connect both projects to your GitHub repo
-- Set Root Directory for each project
-- Enable auto-deployment on push to main
 
 ---
 
-## 🧪 Testing
+## 🚢 Deployment
 
+### Pre-Deployment Checklist
+- [ ] Change all default passwords in production
+- [ ] Set strong JWT_SECRET (min 32 characters)
+- [ ] Enable MongoDB Atlas IP whitelist
+- [ ] Update CORS origins to production domain
+- [ ] Test all role-based access controls
+- [ ] Review audit logs configuration
+- [ ] Optimize database indexes
+- [ ] Set up monitoring and error tracking
+
+### Deploy on Vercel
+
+#### Step 1: Prepare Repository
 ```bash
-# Frontend tests
-cd frontend
-npm test
-
-# Backend tests (if configured)
-cd backend
-npm test
+git add .
+git commit -m "Ready for deployment"
+git push origin main
 ```
+
+#### Step 2: Deploy Backend
+```bash
+cd backend
+vercel --prod
+```
+
+Set environment variables in Vercel:
+- `MONGODB_URI` - Your MongoDB Atlas connection string
+- `JWT_SECRET` - Secret key for JWT (min 32 chars)
+- `NODE_ENV` - Set to `production`
+- `FRONTEND_URL` - Your frontend URL
+
+#### Step 3: Deploy Frontend
+```bash
+cd frontend
+vercel --prod
+```
+
+Set environment variables:
+- `REACT_APP_API_URL` - Your backend URL + `/api`
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! To contribute:
+Contributions are welcome! 
 
 1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/AmazingFeature`)
-3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** to the branch (`git push origin feature/AmazingFeature`)
-5. **Open** a Pull Request
-
-### Code Style
-- Use ESLint configuration provided
-- Follow existing naming conventions
-- Add comments for complex logic
-- Update README for new features
+2. **Create Feature Branch** (`git checkout -b feature/AmazingFeature`)
+3. **Commit Changes** (`git commit -m 'Add feature'`)
+4. **Push to Branch** (`git push origin feature/AmazingFeature`)
+5. **Open Pull Request**
 
 ---
 
@@ -575,7 +772,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Chelluri Sai Vishal**
 - GitHub: [@SAIVISHAL007](https://github.com/SAIVISHAL007)
-- LinkedIn: [Connect with me](https://linkedin.com/in/saivishal)
 - Email: saivishal.chelluri@gmail.com
 
 ---
@@ -585,36 +781,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **ANITS** - For the project opportunity
 - **MongoDB Atlas** - Cloud database hosting
 - **Vercel** - Deployment platform
-- **React Community** - Amazing framework and ecosystem
-- **Open Source Contributors** - For the libraries and tools used
-
----
-
-## 📊 Project Stats
-
-![GitHub repo size](https://img.shields.io/github/repo-size/SAIVISHAL007/StudentLateTrackingSystem-Clean)
-![GitHub language count](https://img.shields.io/github/languages/count/SAIVISHAL007/StudentLateTrackingSystem-Clean)
-![GitHub top language](https://img.shields.io/github/languages/top/SAIVISHAL007/StudentLateTrackingSystem-Clean)
-![GitHub last commit](https://img.shields.io/github/last-commit/SAIVISHAL007/StudentLateTrackingSystem-Clean)
-
----
-
-## 📞 Support
-
-For support, email saivishal.chelluri@gmail.com or open an issue in this repository.
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Mobile app (React Native)
-- [ ] Email notifications for late students
-- [ ] SMS integration for parents
-- [ ] Biometric attendance integration
-- [ ] Multi-language support
-- [ ] Advanced analytics with ML predictions
-- [ ] Parent portal
-- [ ] Fine payment gateway integration
+- **React Community** - Amazing framework
 
 ---
 
@@ -623,7 +790,5 @@ For support, email saivishal.chelluri@gmail.com or open an issue in this reposit
 **⭐ Star this repo if you find it useful! ⭐**
 
 Made with ❤️ by Chelluri Sai Vishal
-
-[Report Bug](https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean/issues) · [Request Feature](https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean/issues)
 
 </div>
