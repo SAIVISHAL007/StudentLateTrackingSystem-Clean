@@ -772,7 +772,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Chelluri Sai Vishal**
 - GitHub: [@SAIVISHAL007](https://github.com/SAIVISHAL007)
-- Email: saivishal.chelluri@gmail.com
+- Email: chellurisaivishal@gmail.com
 
 ---
 
