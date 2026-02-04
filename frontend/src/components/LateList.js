@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FiList, FiClipboard, FiDownload, FiFileText, FiCalendar, FiXCircle, FiAlertCircle, FiCircle } from "react-icons/fi";
 import API from "../services/api";
 import { formatDate, isToday } from "../utils/dateUtils";
 import { downloadTextReport, formatStudentDataForExport, getTimestamp } from "../utils/exportUtils";
@@ -25,19 +26,19 @@ function LateList() {
         // Handle both old and new response formats
         const studentsData = res.data.students || res.data;
         
-        console.log(`📋 Processing ${studentsData.length} students late today`);
-        console.log('� Students data:', studentsData);
+        console.log(` Processing ${studentsData.length} students late today`);
+        console.log(' Students data:', studentsData);
         
         setStudents(studentsData);
         setLoading(false);
         
       } catch (err) {
-        console.error('❌ Error loading late students:', err);
-        console.error('❌ Error details:', err.response?.data);
+        console.error(' Error loading late students:', err);
+        console.error(' Error details:', err.response?.data);
         
         let errorMessage = "Failed to load today's late students";
         if (err.code === 'ECONNABORTED') {
-          errorMessage = "⏱️ Request timed out. Please refresh the page.";
+          errorMessage = "⏱ Request timed out. Please refresh the page.";
         } else if (err.response?.data?.error) {
           errorMessage = err.response.data.error;
         } else if (err.message) {
@@ -69,7 +70,7 @@ function LateList() {
 
   const handleExportExcel = () => {
     if (filteredStudents.length === 0) {
-      alert("⚠️ No data to export");
+      alert("No data to export");
       return;
     }
     
@@ -82,7 +83,7 @@ function LateList() {
     const success = exportTodayLateToExcel(filteredStudents, filters);
     
     if (success) {
-      alert(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
+      alert(`Excel export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
     } else {
       alert("❌ Export failed. Please try again.");
     }
@@ -90,7 +91,7 @@ function LateList() {
 
   const handleExportReport = () => {
     if (filteredStudents.length === 0) {
-      alert("⚠️ No data to export");
+      alert(" No data to export");
       return;
     }
     
@@ -100,7 +101,7 @@ function LateList() {
     const success = downloadTextReport(exportData, `late_students_report_${timestamp}`, title);
     
     if (success) {
-      alert("✅ Report export successful!");
+      alert(" Report export successful!");
     } else {
       alert("❌ Export failed. Please try again.");
     }
@@ -150,9 +151,9 @@ function LateList() {
             justifyContent: "center",
             fontSize: "2rem",
             boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
-            animation: "float 3s ease-in-out infinite"
+            animation: "float 3s ease-in-out infinite",
           }}>
-            📋
+            <FiClipboard color="#ffffff" size={28} />
           </div>
           <h2 style={{
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -197,7 +198,7 @@ function LateList() {
                 e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
               }}
             >
-              📈 Export Excel
+              <FiDownload /> Export Excel
             </button>
             <button
               onClick={handleExportReport}
@@ -225,7 +226,7 @@ function LateList() {
                 e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
               }}
             >
-              📄 TXT Table
+              <FiFileText /> TXT Table
             </button>
           </div>
         )}
@@ -420,7 +421,7 @@ function LateList() {
           border: "2px solid #fca5a5",
           animation: "scaleIn 0.5s ease-out"
         }}>
-          <div style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>❌</div>
+          <div style={{ fontSize: "3rem", marginBottom: "1.5rem" }}><FiXCircle color="#991b1b" /></div>
           <p style={{
             color: "#991b1b",
             fontSize: "1.2rem",
@@ -533,11 +534,11 @@ function LateList() {
                       marginBottom: "0.75rem",
                       fontWeight: "500"
                     }}>
-                      {s.branch && `🏢 ${s.branch}`}
+                      {s.branch && ` ${s.branch}`}
                       {s.branch && s.section && ' • '}
-                      {s.section && `📋 Section ${s.section}`}
-                      {s.year && ` • 🎓 Year ${s.year}`}
-                      {s.semester && ` • 📚 Sem ${s.semester}`}
+                      {s.section && ` Section ${s.section}`}
+                      {s.year && ` •  Year ${s.year}`}
+                      {s.semester && ` •  Sem ${s.semester}`}
                     </div>
                   )}
                   <div style={{
@@ -605,7 +606,7 @@ function LateList() {
                         color: "white",
                         boxShadow: "0 4px 12px rgba(220, 38, 38, 0.3)"
                       }}>
-                        💸 Being Fined
+                         Being Fined
                       </span>
                     )}
                     
@@ -680,7 +681,7 @@ function LateList() {
                     alignItems: "center",
                     gap: "0.5rem"
                   }}>
-                    <span style={{ fontSize: "1.5rem" }}>📅</span>
+                    <span style={{ fontSize: "1.5rem" }}><FiCalendar /></span>
                     Today's Late Entries:
                   </h4>
                   {getLateDatesForToday(s.lateLogs).length > 0 ? (
@@ -733,7 +734,7 @@ function LateList() {
                     alignItems: "center",
                     gap: "0.5rem"
                   }}>
-                    <span style={{ fontSize: "1.5rem" }}>📝</span>
+                    <span style={{ fontSize: "1.5rem" }}><FiList /></span>
                     Recent Late History:
                   </h4>
                   <ul style={{
@@ -757,7 +758,7 @@ function LateList() {
                         alignItems: "center",
                         gap: "0.5rem"
                       }}>
-                        <span style={{ fontSize: "1.1rem" }}>{isToday(log.date) ? "🔴" : "⭕"}</span>
+                        <span style={{ fontSize: "1.1rem" }}>{isToday(log.date) ? <FiAlertCircle color="#dc2626" /> : <FiCircle color="#64748b" />}</span>
                         {formatDate(log.date)}
                         {isToday(log.date) && <span style={{ color: "#dc2626", fontWeight: "700" }}>(Today)</span>}
                       </li>

@@ -3,12 +3,12 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import API from "../services/api";
 import { enqueueLateMark, flushQueue, getQueue } from "../utils/offlineQueue";
 import { toast } from "./Toast";
+import { FiClock, FiCamera, FiX, FiAlertTriangle, FiPackage, FiRefreshCw } from "react-icons/fi";
 
 function StudentForm() {
   const [rollNo, setRollNo] = useState("");
   const [name, setName] = useState("");
   const [year, setYear] = useState(""); // default to empty for placeholder
-  const [semester, setSemester] = useState(""); // Semester 1-8
   const [branch, setBranch] = useState("");
   const [section, setSection] = useState("");
   const [scannerActive, setScannerActive] = useState(false);
@@ -94,7 +94,6 @@ function StudentForm() {
     const payload = { rollNo: rollNo.trim() };
     if (name.trim()) payload.name = name.trim();
     if (year) payload.year = parseInt(year);
-    if (semester) payload.semester = parseInt(semester);
     if (branch) payload.branch = branch;
     if (section.trim()) payload.section = section.trim().toUpperCase();
 
@@ -116,19 +115,19 @@ function StudentForm() {
       // Create dynamic alert based on response
       const { message, alertType, daysRemaining, graceDaysRemaining } = res.data;
       
-      // Show detailed feedback
+      // Show detailed feedback using toast
       let displayMessage = message;
       if (daysRemaining !== undefined && graceDaysRemaining !== undefined) {
-        displayMessage += `\n📊 Days remaining: ${daysRemaining}/10 | Grace days: ${graceDaysRemaining}/4`;
+        displayMessage += ` - Days remaining: ${daysRemaining}/10 | Grace days: ${graceDaysRemaining}/4`;
       }
       
-      // Show styled alert based on alert type
+      // Show toast based on alert type
       if (alertType === "error") {
-        alert(`🚨 ${displayMessage}`);
+        toast.error(displayMessage);
       } else if (alertType === "warning") {
-        alert(`⚠️ ${displayMessage}`);
+        toast.warning(displayMessage);
       } else {
-        alert(`✅ ${displayMessage}`);
+        toast.success(displayMessage);
       }
 
       // Attempt to flush any queued items if just came back online
@@ -142,7 +141,7 @@ function StudentForm() {
       }
 
       // Reset inputs
-      setRollNo(""); setName(""); setYear(""); setSemester(""); setBranch(""); setSection("");
+      setRollNo(""); setName(""); setYear(""); setBranch(""); setSection("");
       setQueueCount(getQueue().length);
 
     } catch (err) {
@@ -151,42 +150,42 @@ function StudentForm() {
       let errorMessage = "Error marking student late";
       
       if (err.code === 'ECONNABORTED') {
-        errorMessage = "⏱️ Request timed out. Please check your connection and try again.";
+        errorMessage = "Request timed out. Please check your connection and try again.";
       } else if (err.response?.status === 400) {
         const errorData = err.response.data;
         
         // Special handling for new student registration
         if (errorData.required && errorData.required.includes('name')) {
-          errorMessage = `🆕 New Student Detected!\n\nRoll Number: ${errorData.rollNo || rollNo}\n\nPlease fill in all fields (Name, Year, Branch, Section) to register this student.`;
+          errorMessage = `New Student Detected! Roll Number: ${errorData.rollNo || rollNo} - Please fill in all fields (Name, Year, Branch, Section) to register this student.`;
+          toast.warning(errorMessage);
           
           // Don't clear the roll number so user can just add other fields
           setName(""); 
           setYear("");
-          setSemester("");
           setBranch("");
           setSection("");
-          // Keep rollNo as is
+          return; // Early return after showing warning
         } else {
-          errorMessage = `📝 ${errorData.error}`;
+          errorMessage = errorData.error;
           if (errorData.required) {
-            errorMessage += `\nRequired fields: ${errorData.required.join(', ')}`;
+            errorMessage += ` - Required fields: ${errorData.required.join(', ')}`;
           }
           if (errorData.details) {
-            errorMessage += `\n💡 ${errorData.details}`;
+            errorMessage += ` - ${errorData.details}`;
           }
         }
       } else if (err.response?.status === 503) {
-        errorMessage = `🔌 ${err.response.data.error}\n💡 ${err.response.data.details}`;
+        errorMessage = `${err.response.data.error} - ${err.response.data.details}`;
       } else if (err.response?.data?.error) {
-        errorMessage = `❌ ${err.response.data.error}`;
+        errorMessage = err.response.data.error;
         if (err.response.data.details) {
-          errorMessage += `\n💡 ${err.response.data.details}`;
+          errorMessage += ` - ${err.response.data.details}`;
         }
       } else if (err.message) {
-        errorMessage = `❌ Network Error: ${err.message}`;
+        errorMessage = `Network Error: ${err.message}`;
       }
       
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -212,11 +211,10 @@ function StudentForm() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "2.5rem",
           boxShadow: "0 10px 30px rgba(220, 38, 38, 0.4)",
           animation: "pulse 2s ease-in-out infinite"
         }}>
-          🕐
+          <FiClock size={40} color="white" />
         </div>
         <h2 style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -232,8 +230,8 @@ function StudentForm() {
         </h2>
         {queueCount > 0 && (
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem", marginTop: "1rem" }}>
-            <div style={{ background: "#fef3c7", border: "2px solid #fbbf24", padding: "8px 16px", borderRadius: "10px", fontSize: "0.8rem", color: "#92400e", fontWeight: 600 }}>
-              📦 {queueCount} queued item{queueCount > 1 ? 's' : ''} pending sync
+            <div style={{ background: "#fef3c7", border: "2px solid #fbbf24", padding: "8px 16px", borderRadius: "10px", fontSize: "0.8rem", color: "#92400e", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <FiPackage size={16} /> {queueCount} queued item{queueCount > 1 ? 's' : ''} pending sync
             </div>
             <button onClick={async () => {
               setSyncing(true);
@@ -243,8 +241,9 @@ function StudentForm() {
               setQueueCount(getQueue().length);
               if (result.flushed > 0) toast.success(`Synced ${result.flushed} item(s)`);
               if (result.failures.length > 0) toast.warning(`${result.failures.length} item(s) failed to sync`);
-            }} disabled={syncing} style={{ padding: "8px 14px", background: syncing ? "#94a3b8" : "#10b981", color: "white", border: "none", borderRadius: "8px", fontSize: "0.75rem", fontWeight: 600, cursor: syncing ? "not-allowed" : "pointer" }}>
-              {syncing ? "🔄 Syncing..." : "🔄 Sync Now"}
+            }} disabled={syncing} className="pro-btn pro-btn-success" style={{ padding: "8px 14px", fontSize: "0.75rem", opacity: syncing ? 0.6 : 1 }}>
+              <FiRefreshCw size={14} style={{ marginRight: "6px" }} />
+              {syncing ? "Syncing..." : "Sync Now"}
             </button>
           </div>
         )}
@@ -262,7 +261,9 @@ function StudentForm() {
         animation: "fadeIn 0.6s ease-out 0.2s both"
       }}>
         <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ fontSize: "1.25rem" }}>💡</span>
+          <div className="icon-wrapper" style={{ width: "24px", height: "24px" }}>
+            <FiAlertTriangle size={16} color="#1e40af" />
+          </div>
           <strong style={{ fontSize: "1rem", color: "#1e40af" }}>How it works:</strong>
         </div>
         <div style={{ paddingLeft: "0.5rem" }}>
@@ -320,31 +321,18 @@ function StudentForm() {
               <button
                 type="button"
                 onClick={scannerActive ? () => stopScanner() : startScanner}
+                className={scannerActive ? "pro-btn pro-btn-danger" : "pro-btn pro-btn-success"}
                 style={{
-                  padding: "10px 20px",
-                  background: scannerActive ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)" : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
                   display: "flex",
                   alignItems: "center",
-                  gap: "0.5rem",
-                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = "translateY(-2px)";
-                  e.target.style.boxShadow = scannerActive ? "0 6px 20px rgba(220, 38, 38, 0.4)" : "0 6px 20px rgba(16, 185, 129, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = "translateY(0)";
-                  e.target.style.boxShadow = scannerActive ? "0 4px 12px rgba(220, 38, 38, 0.3)" : "0 4px 12px rgba(16, 185, 129, 0.3)";
+                  gap: "0.5rem"
                 }}
               >
-                {scannerActive ? "📷 Stop Scanner" : "📱 Scan QR/Barcode"}
+                {scannerActive ? (
+                  <><FiX size={16} /> Stop Scanner</>
+                ) : (
+                  <><FiCamera size={16} /> Scan QR/Barcode</>
+                )}
               </button>
               <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
                 {scannerActive ? "Position barcode in frame" : "Quick roll number entry"}
@@ -371,8 +359,8 @@ function StudentForm() {
                   flexDirection: "column",
                   gap: "0.25rem"
                 }}>
-                  <div>📸 Point camera at QR code or barcode</div>
-                  <div>✅ Supports both QR codes and 1D barcodes</div>
+                  <div>Point camera at QR code or barcode</div>
+                  <div>Supports both QR codes and 1D barcodes</div>
                 </div>
               </div>
             )}
@@ -433,11 +421,6 @@ function StudentForm() {
               value={year}
               onChange={(e) => {
                 setYear(e.target.value);
-                // Auto-suggest semester based on year
-                if (e.target.value && !semester) {
-                  const yearNum = parseInt(e.target.value);
-                  setSemester(String((yearNum * 2) - 1)); // Y1→S1, Y2→S3, Y3→S5, Y4→S7
-                }
               }}
               style={{
                 padding: "14px 18px",
@@ -478,11 +461,11 @@ function StudentForm() {
               alignItems: "center",
               gap: "0.5rem"
             }}>
-              Semester <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "500" }}>(new only)</span>
+              Section <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "500" }}>(new only)</span>
             </label>
             <select
-              value={semester}
-              onChange={(e) => setSemester(e.target.value)}
+              value={section}
+              onChange={(e) => setSection(e.target.value)}
               style={{
                 padding: "14px 18px",
                 border: "2px solid #e2e8f0",
@@ -504,15 +487,13 @@ function StudentForm() {
                 e.target.style.boxShadow = "none";
               }}
             >
-              <option value="">Select Semester</option>
-              <option value="1">Semester 1 (Y1)</option>
-              <option value="2">Semester 2 (Y1)</option>
-              <option value="3">Semester 3 (Y2)</option>
-              <option value="4">Semester 4 (Y2)</option>
-              <option value="5">Semester 5 (Y3)</option>
-              <option value="6">Semester 6 (Y3)</option>
-              <option value="7">Semester 7 (Y4)</option>
-              <option value="8">Semester 8 (Y4)</option>
+              <option value="">Select Section</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+              <option value="E">Section E</option>
+              <option value="F">Section F</option>
             </select>
           </div>
         </div>
@@ -529,9 +510,9 @@ function StudentForm() {
           gap: "0.5rem",
           marginTop: "-1rem"
         }}>
-          <span style={{ fontSize: "1rem" }}>💡</span>
+          <FiAlertTriangle size={16} />
           <div>
-            <strong>Auto-sync:</strong> Selecting Year auto-suggests Semester (Y1→S1, Y2→S3, Y3→S5, Y4→S7). Adjust if student is in 2nd semester of year.
+            <strong>Section Info:</strong> Select the section for the student (A, B, C, D, E, or F).
           </div>
         </div>
 
@@ -654,7 +635,7 @@ function StudentForm() {
             e.target.style.boxShadow = "0 4px 15px rgba(220, 38, 38, 0.4)";
           }}
         >
-          <span style={{ fontSize: "1.25rem" }}>⚠️</span>
+          <FiAlertTriangle size={20} />
           Mark as Late
         </button>
       </form>

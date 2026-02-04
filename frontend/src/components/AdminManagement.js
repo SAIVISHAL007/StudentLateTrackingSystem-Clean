@@ -1,4 +1,5 @@
-import React, {useState,useEffect } from "react";
+import React, {useState,useEffect, useRef } from "react";
+import { FiBarChart2 } from "react-icons/fi";
 import API from "../services/api";
 import { getCurrentUser } from "../utils/auth";
 
@@ -37,16 +38,21 @@ function AdminManagement() {
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [showFinesList, setShowFinesList] = useState(false);
 
+  const initializedRef = useRef(false);
+
   useEffect(()=>{
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     fetchSystemStats();
-    // Auto-fill authorized by from logged-in user
+    // Auto-fill authorized by from logged-in user (run once on mount)
     if (currentUser) {
       setLateRemovalForm(prev => ({
         ...prev,
-        authorizedBy: currentUser.username || currentUser.email || ""
+        authorizedBy: currentUser.name || currentUser.username || currentUser.email || ""
       }));
     }
-  },[currentUser?.username, currentUser?.email]);
+  },[currentUser]);
 
   const fetchSystemStats=async()=>{
     try{
@@ -64,7 +70,7 @@ function AdminManagement() {
       ? specificBranch
       : 'ALL';
     
-    if (!window.confirm(`🎓 SEMESTER PROMOTION\n\nTarget: ${filterText} students\n\nThis will:\n✅ Move students to next semester\n✅ Update year (if crossing year boundary)\n✅ Mark Y4S8 students as graduated\n✅ Reset all late records and fines\n✅ Keep student information intact\n\nProceed with promotion?`)){
+    if (!window.confirm(`SEMESTER PROMOTION\n\nTarget: ${filterText} students\n\nThis will:\n Move students to next semester\n Update year (if crossing year boundary)\n Mark Y4S8 students as graduated\n Reset all late records and fines\n Keep student information intact\n\nProceed with promotion?`)){
       return;
     }
 
@@ -99,7 +105,7 @@ function AdminManagement() {
       
       // Show sample details if available
       if (details && details.sample && details.sample.length > 0) {
-        resultMsg += `\n\n📋 Sample (first 10):\n`;
+        resultMsg += `\n\nSample (first 10):\n`;
         details.sample.slice(0, 5).forEach(d => {
           resultMsg += `• ${d.rollNo}: ${d.from} → ${d.to}${d.yearChanged ? ' 🎓' : ''}\n`;
         });
@@ -113,15 +119,15 @@ function AdminManagement() {
       let errorMessage="Failed to promote students";
       
       if (err.code==='ECONNABORTED') {
-        errorMessage="⏱️ Operation timed out. Please check your connection and try again.";
+        errorMessage="⏱ Operation timed out. Please check your connection and try again.";
       }else if (err.response?.status===503){
-        errorMessage=`🔌 ${err.response.data.error}\n💡 ${err.response.data.details}`;
+        errorMessage=`${err.response.data.error}\n💡 ${err.response.data.details}`;
       }else if (err.response?.status===404){
-        errorMessage="📚 No students found to promote. Add students first.";
+        errorMessage="No students found to promote. Add students first.";
       }else if (err.response?.data?.error){
         errorMessage=`❌ ${err.response.data.error}`;
         if (err.response.data.details) {
-          errorMessage+=`\n💡 ${err.response.data.details}`;
+          errorMessage+=`\n ${err.response.data.details}`;
         }
       }else if (err.message){
         errorMessage=`❌ Network Error: ${err.message}`;
@@ -148,7 +154,7 @@ function AdminManagement() {
       const reset=res.data.studentsReset;
       const total=res.data.totalStudents;
 
-      alert(`✅ ${message}\n📊 Reset: ${reset}/${total} students`);
+      alert(`${message}\nReset: ${reset}/${total} students`);
       fetchSystemStats();
     } catch (err){
       console.error('Data reset error:', err);
@@ -156,15 +162,15 @@ function AdminManagement() {
       let errorMessage = "Failed to reset data";
       
       if (err.code === 'ECONNABORTED') {
-        errorMessage = "⏱️ Operation timed out. Please check your connection and try again.";
+        errorMessage = "⏱ Operation timed out. Please check your connection and try again.";
       } else if (err.response?.status === 503) {
-        errorMessage = `🔌 ${err.response.data.error}\n💡 ${err.response.data.details}`;
+        errorMessage = `${err.response.data.error}\n ${err.response.data.details}`;
       } else if (err.response?.status === 404) {
-        errorMessage = "📚 No students found to reset. Add students first.";
+        errorMessage = "No students found to reset. Add students first.";
       } else if (err.response?.data?.error) {
         errorMessage = `❌ ${err.response.data.error}`;
         if (err.response.data.details) {
-          errorMessage+=`\n💡 ${err.response.data.details}`;
+          errorMessage+=`\n ${err.response.data.details}`;
         }
       } else if (err.message) {
         errorMessage=`❌ Network Error: ${err.message}`;
@@ -188,7 +194,7 @@ function AdminManagement() {
     setLoading(true);
     try {
       const res = await API.delete("/students/delete-all-students");
-      alert(`✅ ${res.data.message}`);
+      alert(`${res.data.message}`);
       fetchSystemStats();
     } catch (err) {
       alert(`❌ Error: ${err.response?.data?.error || "Failed to delete all students"}`);
@@ -350,7 +356,7 @@ function AdminManagement() {
     a.download = `late_records_${periodFilter}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    alert(`✅ Exported ${filtered.length} records to CSV`);
+    alert(`Exported ${filtered.length} records to CSV`);
   };
 
   const handleBulkRemoveLateRecords = async () => {
@@ -373,7 +379,7 @@ function AdminManagement() {
     const affectedStudents = new Set(affectedRecords.map(r => r.rollNo)).size;
     const totalFineReduction = affectedRecords.reduce((sum, r) => sum + r.fineAmount, 0);
     
-    const confirmMsg = `🗑️ CONFIRM REMOVAL\n\n📊 Summary:\n• Records to remove: ${selectedLateRecords.length}\n• Students affected: ${affectedStudents}\n• Total fine reduction: ₹${totalFineReduction}\n\n📝 Reason: ${lateRemovalForm.reason}\n👤 Authorized by: ${lateRemovalForm.authorizedBy}\n\n⚠️ This action will recalculate fines and status for each student. Continue?`;
+    const confirmMsg = `CONFIRM REMOVAL\n\nSummary:\n• Records to remove: ${selectedLateRecords.length}\n• Students affected: ${affectedStudents}\n• Total fine reduction: ₹${totalFineReduction}\n\n📝 Reason: ${lateRemovalForm.reason}\n👤 Authorized by: ${lateRemovalForm.authorizedBy}\n\n⚠️ This action will recalculate fines and status for each student. Continue?`;
     if (!window.confirm(confirmMsg)) return;
 
     setLoading(true);
@@ -427,16 +433,58 @@ function AdminManagement() {
       
       setRemovalProgress({ current: 0, total: 0, status: "" });
       
-      let resultMsg = `✅ Successfully removed: ${summary.removedRecords} record(s)`;
-      resultMsg += `\n👥 Students affected: ${summary.affectedStudents}`;
+      let resultMsg = `Successfully removed: ${summary.removedRecords} record(s)`;
+      resultMsg += `\n Students affected: ${summary.affectedStudents}`;
       if (summary.failures && summary.failures.length > 0) {
         resultMsg += `\n❌ Failed: ${summary.failures.length} record(s)`;
         if (summary.failures.length <= 5) {
           resultMsg += '\n\nFailed records:\n' + summary.failures.map(f => `${f.rollNo} (${f.error})`).join('\n');
         }
       }
-      resultMsg += `\n\n💰 Total fine reduction: ₹${summary.fineReductionTotal}`;
+      resultMsg += `\n\nTotal fine reduction: ₹${summary.fineReductionTotal}`;
+      resultMsg += `\n\nAuto-exporting removal proof...`;
       alert(resultMsg);
+      
+      // AUTO-EXPORT REMOVAL PROOF
+      try {
+        const recordsPayload = records.map(r => {
+          const affectedRecord = affectedRecords.find(ar => ar.rollNo === r.rollNo && ar.date === r.date);
+          return {
+            rollNo: r.rollNo,
+            name: affectedRecord?.name || 'N/A',
+            date: r.date,
+            fineAmount: affectedRecord?.fineAmount || 0
+          };
+        });
+        
+        const totalFinesRefunded = recordsPayload.reduce((sum, r) => sum + (r.fineAmount || 0), 0);
+        
+        const exportPayload = {
+          removalRecords: recordsPayload,
+          reason: lateRemovalForm.reason,
+          authorizedBy: lateRemovalForm.authorizedBy,
+          authorizedByEmail: currentUser?.email || "",
+          authorizedByRole: currentUser?.role || "faculty",
+          totalLateDaysRemoved: records.length,
+          totalFinesRefunded,
+          timestamp: new Date().toISOString()
+        };
+        
+        const exportRes = await API.post('/students/export-removal-proof', exportPayload, { responseType: 'blob' });
+        
+        const blob = new Blob([exportRes.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = `late_removal_proof_${new Date().toISOString().split('T')[0]}.pdf`;
+        downloadLink.click();
+        window.URL.revokeObjectURL(url);
+        
+        alert('Removal proof document exported successfully!');
+      } catch (exportErr) {
+        console.error('Auto-export error:', exportErr);
+        alert('⚠️ Records removed but automatic export failed. You can export manually using the Export button.');
+      }
       
       setSelectedLateRecords([]);
       setLateRemovalForm({ reason: "", authorizedBy: "" });
@@ -506,7 +554,7 @@ function AdminManagement() {
       a.download = `late_removal_proof_${new Date().toISOString().split('T')[0]}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
-      alert('✅ Removal proof PDF generated');
+      alert('Removal proof PDF generated');
     } catch (err) {
       console.error('Export PDF error:', err);
       alert(`❌ Failed to export PDF: ${err.response?.data?.error || err.message}`);
@@ -568,7 +616,7 @@ function AdminManagement() {
       }
     }
 
-    alert(`✅ Fines cleared for ${successCount} student(s)${failCount > 0 ? `\n❌ Failed: ${failCount}` : ''}`);
+    alert(`Fines cleared for ${successCount} student(s)${failCount > 0 ? `\n❌ Failed: ${failCount}` : ''}`);
     
     setSelectedStudents([]);
     setShowFinesList(false);
@@ -624,7 +672,7 @@ function AdminManagement() {
         boxShadow: "0 8px 20px rgba(102,126,234,0.1)"
       }}>
         <h3 style={{ color: "#1e40af", fontSize: "1.5rem", fontWeight: 700, marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: ".5rem" }}>
-          <span style={{ fontSize: "1.75rem" }}>📊</span>System Statistics
+          <span style={{ fontSize: "1.75rem" }}><FiBarChart2 size={32} color="#667eea" /></span>System Statistics
         </h3>
         {stats ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: "1.25rem", marginBottom: "1.5rem" }}>
@@ -696,18 +744,18 @@ function AdminManagement() {
           backgroundColor: "#f8fff9"
         }}>
           <h4 style={{ color: "#28a745", marginBottom: "1rem", fontSize: "1.1rem", fontWeight: "700" }}>
-            🎓 Semester Promotion
+             Semester Promotion
           </h4>
           <p style={{ fontSize: "0.85rem", color: "#6c757d", marginBottom: "1rem", lineHeight: "1.5" }}>
             Smart promotion system with automatic year transitions:
-            <br />• ✅ Increments semester (S1→S2, S2→S3, S6→S7, etc.)
-            <br />• ✅ Auto-updates year when crossing boundaries
-            <br />• ✅ Y1S2→Y2S3 (1st→2nd year transition)
-            <br />• ✅ Y2S4→Y3S5 (2nd→3rd year transition)
-            <br />• ✅ Y3S6→Y4S7 (3rd→4th year transition)
-            <br />• ✅ Y4S8 students marked as graduated 🎉
-            <br />• ✅ Resets all late data & fines
-            <br />• ✅ Keeps student records intact
+            <br />• Increments semester (S1→S2, S2→S3, S6→S7, etc.)
+            <br />• Auto-updates year when crossing boundaries
+            <br />• Y1S2→Y2S3 (1st→2nd year transition)
+            <br />• Y2S4→Y3S5 (2nd→3rd year transition)
+            <br />• Y3S6→Y4S7 (3rd→4th year transition)
+            <br />• Y4S8 students marked as graduated 🎉
+            <br />• Resets all late data & fines
+            <br />• Keeps student records intact
           </p>
           
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.75rem" }}>
@@ -726,7 +774,7 @@ function AdminManagement() {
                 gridColumn: "1 / -1"
               }}
             >
-              🎓 Promote ALL Students
+               Promote ALL Students
             </button>
             
             <button
@@ -805,7 +853,7 @@ function AdminManagement() {
               backgroundColor: "#e8f5e9",
               borderRadius: "4px"
             }}>
-              🔧 Advanced: Promote by Branch
+               Advanced: Promote by Branch
             </summary>
             <div style={{ 
               marginTop: "0.5rem", 
@@ -847,7 +895,7 @@ function AdminManagement() {
           backgroundColor: "#fffbf0"
         }}>
           <h4 style={{ color: "#e58e00", marginBottom: "1rem", fontSize: "1.1rem" }}>
-            🔄 Reset Late Data
+             Reset Late Data
           </h4>
           <p style={{ fontSize: "0.9rem", color: "#6c757d", marginBottom: "1rem" }}>
             Reset all late-related data for testing:
@@ -870,7 +918,7 @@ function AdminManagement() {
               fontWeight: "600"
             }}
           >
-            🔄 Reset All Data
+             Reset All Data
           </button>
         </div>
 
@@ -882,7 +930,7 @@ function AdminManagement() {
           backgroundColor: "#e6fffa",
           gridColumn: "1 / -1"
         }}>
-          <h4 style={{ color: "#17a2b8", marginBottom: "1rem", fontSize: "1.3rem", fontWeight: "700" }}>🗑️ Remove Late Records</h4>
+          <h4 style={{ color: "#17a2b8", marginBottom: "1rem", fontSize: "1.3rem", fontWeight: "700" }}>Remove Late Records</h4>
           <p style={{ fontSize: ".85rem", color: "#555", marginBottom: "1rem" }}>
             Advanced filtering + bulk removal with reason & authorization • Fines recalculated automatically
           </p>
@@ -903,13 +951,13 @@ function AdminManagement() {
               onClick={fetchLateRecords}
               disabled={lateRecordsLoading}
               style={{ padding: "10px 18px", backgroundColor: "#17a2b8", color: "white", border: "none", borderRadius: "6px", cursor: lateRecordsLoading ? "not-allowed" : "pointer", fontSize: ".9rem", fontWeight: 600 }}
-            >{lateRecordsLoading ? "Loading..." : "📋 Load Records"}</button>
+            >{lateRecordsLoading ? "Loading..." : "Load Records"}</button>
             {lateRecords.length > 0 && (
               <>
                 <button
                   onClick={handleExportLateRecords}
                   style={{ padding: "10px 18px", backgroundColor: "#10b981", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: ".85rem", fontWeight: 600 }}
-                >📊 Export CSV</button>
+                > Export CSV</button>
                 <div style={{ flex: 1, fontSize: ".75rem", color: "#0f766e", display: "flex", alignItems: "center", fontWeight: "600" }}>
                   {getFilteredRecords().length} of {lateRecords.length} records
                   {selectedLateRecords.length > 0 && ` • ${selectedLateRecords.length} selected`}
@@ -1154,7 +1202,7 @@ function AdminManagement() {
                 marginTop: "0.25rem",
                 fontStyle: "italic"
               }}>
-                💡 Auto-filled from logged-in user: {currentUser.username || currentUser.email} ({currentUser.role || 'Faculty'})
+                 Auto-filled from logged-in user: {currentUser.username || currentUser.email} ({currentUser.role || 'Faculty'})
               </div>
             )}
           </div>
@@ -1175,7 +1223,7 @@ function AdminManagement() {
               boxShadow: "0 4px 12px rgba(220,38,38,0.3)"
             }}
           >
-            🗑️ Remove {selectedLateRecords.length > 0 ? `${selectedLateRecords.length} Selected Record${selectedLateRecords.length > 1 ? 's' : ''}` : 'Records'}
+             Remove {selectedLateRecords.length > 0 ? `${selectedLateRecords.length} Selected Record${selectedLateRecords.length > 1 ? 's' : ''}` : 'Records'}
           </button>
 
           <button
@@ -1195,7 +1243,7 @@ function AdminManagement() {
               boxShadow: "0 3px 10px rgba(37,99,235,0.25)"
             }}
           >
-            📄 {exportLoading ? 'Exporting...' : 'Export Removal Proof (PDF)'}
+             {exportLoading ? 'Exporting...' : 'Export Removal Proof (PDF)'}
           </button>
 
           {/* Progress Overlay */}
@@ -1224,7 +1272,7 @@ function AdminManagement() {
                 width: "90%",
                 animation: "scaleIn 0.3s ease-out"
               }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem", animation: "pulse 2s infinite" }}>🗑️</div>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem", animation: "pulse 2s infinite" }}></div>
                 <h3 style={{ fontSize: "1.5rem", marginBottom: "1rem", fontWeight: "700" }}>Removing Records</h3>
                 <div style={{ 
                   fontSize: "1.1rem", 
@@ -1271,7 +1319,7 @@ function AdminManagement() {
           backgroundColor: "#f0fdf4"
         }}>
           <h4 style={{ color: "#10b981", marginBottom: "1rem", fontSize: "1.1rem" }}>
-            💰 Clear Student Fines
+             Clear Student Fines
           </h4>
           <p style={{ fontSize: "0.9rem", color: "#6c757d", marginBottom: "1rem" }}>
             Mark fines as paid/cleared (cash/UPI):
@@ -1293,7 +1341,7 @@ function AdminManagement() {
                 width: "100%"
               }}
             >
-              📋 Show Students with Fines
+              Show Students with Fines
             </button>
           ) : (
             <>
@@ -1308,7 +1356,7 @@ function AdminManagement() {
               }}>
                 {studentsWithFines.length === 0 ? (
                   <p style={{ textAlign: "center", color: "#6c757d", margin: "1rem 0" }}>
-                    🎉 No students have pending fines!
+                    No students have pending fines!
                   </p>
                 ) : (
                   studentsWithFines.map(student => (
@@ -1373,7 +1421,7 @@ function AdminManagement() {
                     fontWeight: "600"
                   }}
                 >
-                  ✅ Clear Fines ({selectedStudents.length})
+                  Clear Fines ({selectedStudents.length})
                 </button>
                 <button
                   onClick={() => {

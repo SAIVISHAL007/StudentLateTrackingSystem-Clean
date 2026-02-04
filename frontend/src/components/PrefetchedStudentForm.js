@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 import { enqueueLateMark } from "../utils/offlineQueue";
 import { toast } from "./Toast";
+import { FiCalendar, FiBriefcase, FiBookOpen, FiZap } from "react-icons/fi";
 
 function PrefetchedStudentForm() {
   const [year, setYear] = useState("");
   const [branch, setBranch] = useState("");
-  const [semester, setSemester] = useState("");
+  const [section, setSection] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ function PrefetchedStudentForm() {
 
   const years = [1, 2, 3, 4];
   const branches = ["CSE", "CSM", "CSD", "CSC", "ECE", "EEE", "MECH", "CIVIL", "IT"];
-  const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
+  const sections = ["A", "B", "C", "D", "E", "F"];
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -24,10 +25,14 @@ function PrefetchedStudentForm() {
       // Build params dynamically based on what's selected
       const params = { year };
       if (branch) params.branch = branch;
-      if (semester) params.semester = semester;
+      if (section) params.section = section;
       
       const response = await API.get("/students/filter", { params });
-      setStudents(response.data.students || []);
+      const fetched = response.data.students || [];
+      const filteredBySection = section
+        ? fetched.filter(s => (s.section || "").toUpperCase() === section.toUpperCase())
+        : fetched;
+      setStudents(filteredBySection);
       setSelectedStudent(null);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -36,7 +41,7 @@ function PrefetchedStudentForm() {
     } finally {
       setLoading(false);
     }
-  }, [year, branch, semester]);
+  }, [year, branch, section]);
 
   // Fetch students when filters change - show live results as user selects
   useEffect(() => {
@@ -71,14 +76,14 @@ function PrefetchedStudentForm() {
       // Try to mark online first
       try {
         await API.post("/students/mark-late", payload);
-        toast.success(`✅ ${selectedStudent.name} marked as late`);
+        toast.success(`${selectedStudent.name} marked as late`);
         setShowConfirmation(false);
         setSelectedStudent(null);
       } catch (error) {
         // If offline, queue it
         if (error.message === "Network Error" || !navigator.onLine) {
           enqueueLateMark(payload);
-          toast.warning(`📱 Queued: ${selectedStudent.name} (will sync when online)`);
+          toast.warning(`Queued: ${selectedStudent.name} (will sync when online)`);
           setShowConfirmation(false);
           setSelectedStudent(null);
         } else {
@@ -110,11 +115,16 @@ function PrefetchedStudentForm() {
         border: "2px solid #fbbf24",
         borderRadius: "0.5rem"
       }}>
-        <span style={{
+        <div style={{
           fontSize: "1.5rem",
           fontWeight: "bold",
-          color: "#d97706"
-        }}>🚀 BETA</span>
+          color: "#d97706",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem"
+        }}>
+          <FiZap size={24} /> BETA
+        </div>
         <div>
           <p style={{ margin: 0, fontWeight: "600", color: "#b45309" }}>
             Working in Development
@@ -134,8 +144,8 @@ function PrefetchedStudentForm() {
       }}>
         {/* Year Dropdown */}
         <div>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>
-            📅 Year
+          <label style={{ display: "flex", marginBottom: "0.5rem", fontWeight: "600", alignItems: "center", gap: "0.5rem" }}>
+            <FiCalendar size={16} /> Year
           </label>
           <select
             value={year}
@@ -159,8 +169,8 @@ function PrefetchedStudentForm() {
 
         {/* Branch Dropdown */}
         <div>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>
-            🏢 Branch
+          <label style={{ display: "flex", marginBottom: "0.5rem", fontWeight: "600", alignItems: "center", gap: "0.5rem" }}>
+            <FiBriefcase size={16} /> Branch
           </label>
           <select
             value={branch}
@@ -182,14 +192,14 @@ function PrefetchedStudentForm() {
           </select>
         </div>
 
-        {/* Semester Dropdown */}
+        {/* Section Dropdown */}
         <div>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>
-            📚 Semester
+          <label style={{ display: "flex", marginBottom: "0.5rem", fontWeight: "600", alignItems: "center", gap: "0.5rem" }}>
+            <FiBookOpen size={16} /> Section
           </label>
           <select
-            value={semester}
-            onChange={(e) => setSemester(e.target.value)}
+            value={section}
+            onChange={(e) => setSection(e.target.value)}
             style={{
               width: "100%",
               padding: "0.75rem",
@@ -200,9 +210,9 @@ function PrefetchedStudentForm() {
               transition: "border-color 0.2s"
             }}
           >
-            <option value="">Select Semester</option>
-            {semesters.map(s => (
-              <option key={s} value={s}>Semester {s}</option>
+            <option value="">Select Section</option>
+            {sections.map(s => (
+              <option key={s} value={s}>Section {s}</option>
             ))}
           </select>
         </div>
@@ -291,7 +301,7 @@ function PrefetchedStudentForm() {
             No students found for selected filters
           </p>
           <p style={{ fontSize: "0.9rem", color: "#9ca3af", marginTop: "0.5rem" }}>
-            {!branch ? "Try selecting a branch" : !semester ? "Try selecting a semester" : "No matching students"}
+            {!branch ? "Try selecting a branch" : !section ? "Try selecting a section" : "No matching students"}
           </p>
         </div>
       ) : (
@@ -303,7 +313,7 @@ function PrefetchedStudentForm() {
           marginBottom: "2rem"
         }}>
           <p style={{ fontSize: "1.1rem", color: "#9ca3af" }}>
-            👆 Start by selecting a Year to see students
+            Start by selecting a Year to see students
           </p>
         </div>
       )}

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { FiAlertTriangle, FiLogIn, FiAward } from "react-icons/fi";
 import API from "../services/api";
+import "./Login.css";
 
 function Login({ onLogin }) {
   const [credentials, setCredentials] = useState({
@@ -52,7 +54,7 @@ function Login({ onLogin }) {
         errorMessage = err.message;
       }
       
-      setError(`❌ ${errorMessage}`);
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -67,107 +69,33 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "2rem",
-      position: "relative",
-      overflow: "hidden"
-    }}>
-      {/* Animated Background Elements */}
-      <div style={{
-        position: "absolute",
-        width: "100%",
-        height: "100%",
-        opacity: 0.1
-      }}>
-        <div style={{
-          position: "absolute",
-          top: "10%",
-          left: "10%",
-          width: "300px",
-          height: "300px",
-          borderRadius: "50%",
-          background: "white",
-          animation: "float 6s ease-in-out infinite"
-        }} />
-        <div style={{
-          position: "absolute",
-          bottom: "10%",
-          right: "10%",
-          width: "200px",
-          height: "200px",
-          borderRadius: "50%",
-          background: "white",
-          animation: "float 8s ease-in-out infinite"
-        }} />
+    <div className="login-container">
+      {/* Floating Particle Background */}
+      <div className="login-particles">
+        <div className="particle particle-1"></div>
+        <div className="particle particle-2"></div>
+        <div className="particle particle-3"></div>
+        <div className="particle particle-4"></div>
+        <div className="particle particle-5"></div>
       </div>
 
-      <div style={{
-        backgroundColor: "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(20px)",
-        padding: "3rem",
-        borderRadius: "24px",
-        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-        border: "1px solid rgba(255, 255, 255, 0.5)",
-        width: "100%",
-        maxWidth: "480px",
-        animation: "scaleIn 0.5s ease-out",
-        position: "relative",
-        zIndex: 1
-      }}>
+      <div className="login-box">
         {/* Logo/Header Section */}
-        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-          <div style={{
-            width: "80px",
-            height: "80px",
-            margin: "0 auto 1.5rem",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            borderRadius: "20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "3rem",
-            boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
-            animation: "float 3s ease-in-out infinite"
-          }}>
-            🎓
+        <div className="login-header">
+          <div className="login-logo no-select">
+            <FiAward size={48} />
           </div>
-          <h1 style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            fontSize: "2.25rem",
-            fontWeight: "800",
-            marginBottom: "0.5rem",
-            letterSpacing: "-0.5px"
-          }}>
+          <h1 className="login-title no-select">
             Faculty Login
           </h1>
-          <p style={{
-            color: "#64748b",
-            fontSize: "1.05rem",
-            margin: "0",
-            fontWeight: "500"
-          }}>
+          <p className="login-subtitle no-select">
             ANITS Student Late Tracking System
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} autoComplete="off" style={{ width: "100%", display: "block" }}>
-          <div style={{ marginBottom: "1.75rem", width: "100%", display: "block", boxSizing: "border-box" }}>
-            <label style={{
-              display: "block",
-              marginBottom: "0.75rem",
-              color: "#334155",
-              fontWeight: "600",
-              fontSize: "0.95rem",
-              letterSpacing: "0.3px"
-            }}>
+        <form onSubmit={handleSubmit} autoComplete="off" className="login-form">
+          <div className="form-group">
+            <label className="form-label">
               Email Address
             </label>
             <input
@@ -180,42 +108,12 @@ function Login({ onLogin }) {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck="false"
-              style={{
-                width: "100%",
-                minWidth: "100%",
-                maxWidth: "100%",
-                padding: "14px 18px",
-                border: "2px solid #e2e8f0",
-                borderRadius: "12px",
-                fontSize: "1rem",
-                transition: "all 0.3s ease",
-                outline: "none",
-                background: "white",
-                boxSizing: "border-box",
-                display: "block",
-                fontFamily: "inherit",
-                color: "#2d3748"
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#667eea";
-                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#e2e8f0";
-                e.target.style.boxShadow = "none";
-              }}
+              className="form-input"
             />
           </div>
 
-          <div style={{ marginBottom: "1.75rem", width: "100%", display: "block", boxSizing: "border-box" }}>
-            <label style={{
-              display: "block",
-              marginBottom: "0.75rem",
-              color: "#334155",
-              fontWeight: "600",
-              fontSize: "0.95rem",
-              letterSpacing: "0.3px"
-            }}>
+          <div className="form-group">
+            <label className="form-label">
               Password
             </label>
             <input
@@ -228,119 +126,39 @@ function Login({ onLogin }) {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck="false"
-              style={{
-                width: "100%",
-                minWidth: "100%",
-                maxWidth: "100%",
-                padding: "14px 18px",
-                border: "2px solid #e2e8f0",
-                borderRadius: "12px",
-                fontSize: "1rem",
-                transition: "all 0.3s ease",
-                outline: "none",
-                background: "white",
-                boxSizing: "border-box",
-                display: "block",
-                fontFamily: "inherit",
-                color: "#2d3748"
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#667eea";
-                e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#e2e8f0";
-                e.target.style.boxShadow = "none";
-              }}
+              className="form-input"
             />
           </div>
 
           {error && (
-            <div style={{
-              background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
-              color: "#991b1b",
-              padding: "14px 18px",
-              borderRadius: "12px",
-              border: "2px solid #fca5a5",
-              marginBottom: "1.75rem",
-              fontSize: "0.95rem",
-              fontWeight: "500",
-              animation: "slideInRight 0.4s ease-out"
-            }}>
-              {error}
+            <div className="error-message">
+              <FiAlertTriangle size={20} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
           )}
           
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: "100%",
-              padding: "16px 20px",
-              background: loading
-                ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
-                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "1.05rem",
-              fontWeight: "700",
-              cursor: loading ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: loading
-                ? "0 4px 15px rgba(100, 116, 139, 0.3)"
-                : "0 4px 15px rgba(102, 126, 234, 0.4)",
-              letterSpacing: "0.5px",
-              position: "relative",
-              overflow: "hidden"
-            }}
-            onMouseOver={(e) => {
-              if (!loading) {
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.5)";
-              }
-            }}
-            onMouseOut={(e) => {
-              if (!loading) {
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.4)";
-              }
-            }}
+            className="login-button"
           >
             {loading ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-                <span className="spinner" style={{
-                  width: "20px",
-                  height: "20px",
-                  border: "3px solid rgba(255, 255, 255, 0.3)",
-                  borderTopColor: "white",
-                  borderRadius: "50%",
-                  display: "inline-block"
-                }} />
+              <span className="flex-center">
+                <span className="button-spinner" />
                 Logging in...
               </span>
             ) : (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-                🔑 Login to Dashboard
+              <span className="flex-center">
+                <FiLogIn size={20} style={{ marginRight: '8px' }} />
+                Login to Dashboard
               </span>
             )}
           </button>
 
           {/* Auxiliary Info */}
-          <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: ".75rem" }}>
-            <div style={{
-              background: "linear-gradient(135deg,#f0f9ff,#e0f2fe)",
-              border: "1px solid #bae6fd",
-              padding: "12px 16px",
-              borderRadius: "12px",
-              fontSize: ".85rem",
-              color: "#0c4a6e",
-              lineHeight: 1.6,
-              fontWeight: 500
-            }}>
-              New faculty accounts and password resets are handled only by the <strong>Admin Office / Superadmin</strong>.<br />
-              If you need access or forgot your password, contact the system administrator.
-            </div>
+          <div className="info-box">
+            New faculty accounts and password resets are handled only by the <strong>Admin Office / Superadmin</strong>.<br />
+            If you need access or forgot your password, contact the system administrator.
           </div>
         </form>
       </div>

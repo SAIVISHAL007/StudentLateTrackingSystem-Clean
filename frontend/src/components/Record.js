@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FiList, FiDownload, FiFileText, FiCalendar, FiBarChart2, FiUser } from "react-icons/fi";
 import API from "../services/api";
 import { formatDate } from "../utils/dateUtils";
 import { downloadTextReport, formatLateRecordsForExport, getTimestamp } from "../utils/exportUtils";
@@ -24,7 +25,7 @@ function Record() {
     try {
       console.log(`🔄 Fetching ${period} records...`);
       const res = await API.get(`/students/records/${period}`);
-      console.log(`📊 Records response:`, res.data);
+      console.log(` Records response:`, res.data);
       setRecordData(res.data);
     } catch (err) {
       console.error('❌ Error fetching records:', err);
@@ -37,9 +38,9 @@ function Record() {
 
   const getPeriodTitle = (period) => {
     switch (period) {
-      case "weekly": return "📅 Weekly Records";
-      case "monthly": return "📊 Monthly Records";
-      case "semester": return "🎓 Semester Records";
+      case "weekly": return "Weekly Records";
+      case "monthly": return "Monthly Records";
+      case "semester": return "Semester Records";
       default: return "Records";
     }
   };
@@ -84,7 +85,7 @@ function Record() {
   };
 
   const getYearOptions = () => [
-    { value: "all", label: "All Years", icon: "🎓" },
+    { value: "all", label: "All Years"},
     { value: "1", label: "1st Year", icon: "🟢" },
     { value: "2", label: "2nd Year", icon: "🟡" },
     { value: "3", label: "3rd Year", icon: "🟠" },
@@ -120,7 +121,7 @@ function Record() {
     const success = exportLateRecordsToExcel(filteredStudents, filename, filters, periodInfo);
     
     if (success) {
-      alert(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
+      alert(`Excel export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
     } else {
       alert("❌ Export failed. Please try again.");
     }
@@ -140,7 +141,7 @@ function Record() {
     const success = downloadTextReport(exportData, `late_records_report_${selectedPeriod}_${timestamp}`, title);
     
     if (success) {
-      alert("✅ Report export successful!");
+      alert("Report export successful!");
     } else {
       alert("❌ Export failed. Please try again.");
     }
@@ -319,7 +320,7 @@ function Record() {
             boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
             animation: "float 3s ease-in-out infinite"
           }}>
-            📊
+            <FiList style={{ fontSize: "2.5rem", color: "white" }} />
           </div>
           <div>
             <h2 style={{
@@ -374,7 +375,7 @@ function Record() {
                 e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
               }}
             >
-              📈 Export Excel
+              <FiDownload /> Export Excel
             </button>
             <button
               onClick={handleExportReport}
@@ -402,7 +403,7 @@ function Record() {
                 e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
               }}
             >
-              📄 Export TXT
+              <FiFileText /> Export TXT
             </button>
           </div>
         )}
@@ -417,9 +418,9 @@ function Record() {
         flexWrap: "wrap"
       }}>
         {[
-          { key: "weekly", label: "📅 Weekly", desc: "Last 7 days" },
-          { key: "monthly", label: "📊 Monthly", desc: "Current month" },
-          { key: "semester", label: "🎓 Semester", desc: "Current semester" }
+          { key: "weekly", label: <><FiCalendar /> Weekly</>, desc: "Last 7 days" },
+          { key: "monthly", label: <><FiBarChart2 /> Monthly</>, desc: "Current month" },
+          { key: "semester", label: <><FiUser /> Semester</>, desc: "Current semester" }
         ].map(period => (
           <button
             key={period.key}
@@ -707,7 +708,7 @@ function Record() {
                   border: "2px dashed #dee2e6"
                 }}>
                   <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>
-                    {selectedYear === "all" ? "🎉" : getYearOptions().find(y => y.value === selectedYear)?.icon}
+                    {selectedYear === "all" ? "✓" : getYearOptions().find(y => y.value === selectedYear)?.icon}
                   </div>
                   <h3 style={{ color: "#28a745", margin: "0 0 0.5rem 0" }}>
                     {selectedYear === "all" ? "Excellent Attendance!" : "No Late Records Found!"}
@@ -783,9 +784,9 @@ function Record() {
                               color: "#6c757d",
                               marginBottom: "0.5rem"
                             }}>
-                              {student.branch && `🏢 ${student.branch}`}
+                              {student.branch && ` ${student.branch}`}
                               {student.branch && student.section && ' • '}
-                              {student.section && `📋 Sec ${student.section}`}
+                              {student.section && ` Sec ${student.section}`}
                             </div>
                           )}
                           <div style={{
@@ -828,7 +829,7 @@ function Record() {
                                 backgroundColor: "#fd7e14",
                                 color: "white"
                               }}>
-                                🔶 Grace ({student.gracePeriodUsed}/4)
+                                Grace ({student.gracePeriodUsed}/4)
                               </span>
                             )}
                             

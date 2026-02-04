@@ -10,29 +10,34 @@ import Navbar from "./components/Navbar";
 import Login from "./components/Login";
 import FacultyRegister from "./components/FacultyRegister";
 import FacultyDirectory from "./components/FacultyDirectory";
-import Toast from "./components/Toast";
 import { isAuthenticated } from "./utils/auth";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState("mark-late");
+  // Get last page from localStorage, default to "mark-late"
+  const [currentPage, setCurrentPage] = useState(() => {
+    return localStorage.getItem('lastPage') || "mark-late";
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
 
   const handlePageChange = (pageId) => {
     setCurrentPage(pageId);
+    // Save current page to localStorage
+    localStorage.setItem('lastPage', pageId);
   };
 
   const handleLogin = (username) => {
     setAuthenticated(true);
-    console.log(`✅ Faculty ${username} logged in successfully`);
+    console.log(`Faculty ${username} logged in successfully`);
     console.log('JWT Token:', localStorage.getItem('jwt_token') ? 'Present' : 'Missing');
     console.log('Auth Data:', localStorage.getItem('facultyAuth'));
   };
 
   const handleLogout = () => {
     setAuthenticated(false);
-    setCurrentPage("mark-late"); // Reset to default page
-    console.log("👋 User logged out");
+    localStorage.setItem('lastPage', "mark-late"); // Reset to default page on logout
+    setCurrentPage("mark-late");
+    console.log("User logged out");
   };
 
   // Check authentication status on app load
@@ -59,7 +64,10 @@ function App() {
 
     const handleNavigate = (event) => {
       const { page } = event.detail || {};
-      if (page) setCurrentPage(page);
+      if (page) {
+        setCurrentPage(page);
+        localStorage.setItem('lastPage', page);
+      }
     };
 
     window.addEventListener('sidebarToggle', handleSidebarToggle);
@@ -93,7 +101,7 @@ function App() {
                 marginBottom: "0.5rem",
                 textShadow: "0 2px 4px rgba(0,0,0,0.1)"
               }}>
-                📋 Late Students Today
+                Late Students Today
               </h1>
               <p style={{
                 color: "#6c757d",
@@ -121,7 +129,7 @@ function App() {
                 marginBottom: "0.5rem",
                 textShadow: "0 2px 4px rgba(0,0,0,0.1)"
               }}>
-                📊 Attendance Records
+                Attendance Records
               </h1>
               <p style={{
                 color: "#6c757d",
@@ -186,13 +194,11 @@ function App() {
   }
 
   return (
-    <>
-      <Toast />
-      <div style={{
-        minHeight: "100vh",
-        backgroundColor: "#f8f9fa",
-        display: "flex"
-      }}>
+    <div style={{
+      minHeight: "100vh",
+      backgroundColor: "#f8f9fa",
+      display: "flex"
+    }}>
       {/* Sidebar */}
       <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
       
@@ -219,13 +225,12 @@ function App() {
             fontSize: "0.9rem"
           }}>
             <p style={{ margin: "0" }}>
-              🚀 Prototype project built by Chelluri Sai Vishal
+              Prototype project built by Chelluri Sai Vishal - CSE(AI&ML) dept
             </p>
           </footer>
         </div>
       </div>
     </div>
-    </>
   );
 }
 

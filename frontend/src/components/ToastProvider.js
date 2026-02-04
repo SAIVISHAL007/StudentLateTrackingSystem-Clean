@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { FiCheckCircle, FiXCircle, FiAlertTriangle, FiInfo } from 'react-icons/fi';
 
 const ToastContext = createContext();
 
@@ -10,14 +11,28 @@ export const useToast = () => {
   return context;
 };
 
+// Create a global toast object for easy access
+let globalToast = null;
+
+export const toast = {
+  success: (message, duration) => globalToast?.success(message, duration),
+  error: (message, duration) => globalToast?.error(message, duration),
+  warning: (message, duration) => globalToast?.warning(message, duration),
+  info: (message, duration) => globalToast?.info(message, duration)
+};
+
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   const addToast = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now() + Math.random();
-    const toast = { id, message, type, duration };
+    const toastItem = { id, message, type, duration };
     
-    setToasts(prev => [...prev, toast]);
+    setToasts(prev => [...prev, toastItem]);
     
     if (duration > 0) {
       setTimeout(() => {
@@ -26,16 +41,20 @@ export const ToastProvider = ({ children }) => {
     }
     
     return id;
-  }, []);
-
-  const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
+  }, [removeToast]);
 
   const success = useCallback((message, duration) => addToast(message, 'success', duration), [addToast]);
   const error = useCallback((message, duration) => addToast(message, 'error', duration), [addToast]);
   const warning = useCallback((message, duration) => addToast(message, 'warning', duration), [addToast]);
   const info = useCallback((message, duration) => addToast(message, 'info', duration), [addToast]);
+
+  // Set global toast reference
+  React.useEffect(() => {
+    globalToast = { success, error, warning, info };
+    return () => {
+      globalToast = null;
+    };
+  }, [success, error, warning, info]);
 
   return (
     <ToastContext.Provider value={{ success, error, warning, info, removeToast }}>
@@ -51,44 +70,51 @@ const ToastContainer = ({ toasts, removeToast }) => {
   return (
     <div style={{
       position: 'fixed',
-      top: '20px',
-      right: '20px',
-      zIndex: 9999,
+      top: '1.5rem',
+      right: '1.5rem',
+      zIndex: 10000,
       display: 'flex',
       flexDirection: 'column',
-      gap: '12px',
-      maxWidth: '400px'
+      gap: '1rem',
+      maxWidth: '450px'
     }}>
-      {toasts.map(toast => (
-        <Toast key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+      {toasts.map(toastItem => (
+        <Toast key={toastItem.id} toast={toastItem} onClose={() => removeToast(toastItem.id)} />
       ))}
     </div>
   );
 };
 
-const Toast = ({ toast, onClose }) => {
-  const { type, message } = toast;
+const Toast = ({ toast: toastItem, onClose }) => {
+  const { type, message } = toastItem;
   
+  const icons = {
+    success: <FiCheckCircle size={22} />,
+    error: <FiXCircle size={22} />,
+    warning: <FiAlertTriangle size={22} />,
+    info: <FiInfo size={22} />
+  };
+
   const styles = {
     success: {
-      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-      icon: '✓',
-      color: '#fff'
+      bg: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+      border: '#6ee7b7',
+      text: '#065f46'
     },
     error: {
-      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-      icon: '✕',
-      color: '#fff'
+      bg: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+      border: '#fca5a5',
+      text: '#991b1b'
     },
     warning: {
-      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-      icon: '⚠',
-      color: '#fff'
+      bg: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+      border: '#fbbf24',
+      text: '#92400e'
     },
     info: {
-      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-      icon: 'ℹ',
-      color: '#fff'
+      bg: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+      border: '#93c5fd',
+      text: '#1e40af'
     }
   };
 
@@ -96,51 +122,59 @@ const Toast = ({ toast, onClose }) => {
 
   return (
     <div style={{
-      background: style.background,
-      color: style.color,
-      padding: '16px 20px',
-      borderRadius: '12px',
-      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+      background: style.bg,
+      color: style.text,
+      padding: '1.125rem 1.5rem',
+      borderRadius: '14px',
+      border: `2px solid ${style.border}`,
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 15px rgba(0, 0, 0, 0.1)',
       display: 'flex',
       alignItems: 'center',
-      gap: '12px',
-      minWidth: '300px',
-      animation: 'slideInRight 0.3s ease-out',
-      backdropFilter: 'blur(10px)'
+      gap: '1rem',
+      minWidth: '340px',
+      animation: 'slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      fontWeight: '600',
+      fontSize: '0.975rem'
     }}>
-      <div style={{
-        fontSize: '20px',
-        fontWeight: 'bold',
-        width: '28px',
-        height: '28px',
-        borderRadius: '50%',
-        background: 'rgba(255, 255, 255, 0.2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+      <div className="icon-wrapper icon-lg" style={{
+        flexShrink: 0,
+        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
       }}>
-        {style.icon}
+        {icons[type]}
       </div>
-      <div style={{ flex: 1, fontSize: '14px', fontWeight: '500' }}>
+      <div style={{ flex: 1, lineHeight: '1.5' }}>
         {message}
       </div>
       <button
         onClick={onClose}
         style={{
-          background: 'rgba(255, 255, 255, 0.2)',
+          background: 'transparent',
           border: 'none',
-          color: 'inherit',
+          color: style.text,
           cursor: 'pointer',
-          padding: '4px 8px',
+          fontSize: '1.25rem',
+          padding: '0.25rem',
           borderRadius: '6px',
-          fontSize: '18px',
-          lineHeight: '1',
-          transition: 'background 0.2s'
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '28px',
+          height: '28px',
+          flexShrink: 0
         }}
-        onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
-        onMouseOut={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+        onMouseOver={(e) => {
+          e.target.style.background = 'rgba(0, 0, 0, 0.1)';
+          e.target.style.transform = 'scale(1.1)';
+        }}
+        onMouseOut={(e) => {
+          e.target.style.background = 'transparent';
+          e.target.style.transform = 'scale(1)';
+        }}
       >
-        ×
+        <FiXCircle size={18} />
       </button>
       <style>{`
         @keyframes slideInRight {

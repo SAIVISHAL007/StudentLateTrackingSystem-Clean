@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Student Late Tracker Favicon</title>
+  <rect width="512" height="512" fill="#ffffff"/>
+
+  <!-- Match provided mark: bold navy outline, teal iris, white clock -->
+  <defs>
+    <style>
+      .navy { stroke: #1b2a57; }
+      .teal { fill: #00a6ad; }
+    </style>
+  </defs>
+
+  <!-- Outer eye outline (bold, geometric) -->
+  <path
+    d="M 64 256 C 126 168 194 128 256 128 C 318 128 386 168 448 256 C 386 344 318 384 256 384 C 194 384 126 344 64 256 Z"
+    fill="none"
+    class="navy"
+    stroke-width="36"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+  />
+
+  <!-- Inner side arcs (the two navy strokes inside the eye) -->
+  <path
+    d="M 168 192 C 142 220 130 242 130 256 C 130 270 142 292 168 320"
+    fill="none"
+    class="navy"
+    stroke-width="20"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M 344 192 C 370 220 382 242 382 256 C 382 270 370 292 344 320"
+    fill="none"
+    class="navy"
+    stroke-width="20"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Iris with white ring -->
+  <circle cx="256" cy="256" r="122" fill="#ffffff"/>
+  <circle cx="256" cy="256" r="104" class="teal"/>
+
+  <!-- Clock hands (match image: one up, one left) -->
+  <circle cx="256" cy="256" r="18" fill="#ffffff"/>
+  <path d="M 256 256 L 256 176" stroke="#ffffff" stroke-width="26" stroke-linecap="round"/>
+  <path d="M 256 256 L 178 256" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+</svg>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 import { toast } from "./Toast";
+import { FiBarChart2, FiRefreshCw, FiClock, FiDollarSign, FiBriefcase } from "react-icons/fi";
 
 function Analytics() {
   const [todayCount, setTodayCount] = useState(0);
@@ -147,9 +148,12 @@ function Analytics() {
             backgroundClip: "text",
             fontSize: "2.5rem",
             fontWeight: "800",
-            marginBottom: "0.5rem"
+            marginBottom: "0.5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem"
           }}>
-            📊 Live Analytics
+            <FiBarChart2 size={32} color="#667eea" /> Live Analytics
           </h2>
           <p style={{ color: "#64748b", fontSize: "0.95rem" }}>
             Real-time insights and performance metrics
@@ -178,22 +182,10 @@ function Analytics() {
           </label>
           <button
             onClick={fetchAnalytics}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.4)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)'; }}
-            style={{
-              padding: "10px 20px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "10px",
-              fontSize: "0.9rem",
-              fontWeight: "600",
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-              transition: "all 0.2s ease"
-            }}
+            className="pro-btn pro-btn-primary"
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
           >
-            🔄 Refresh Now
+            <FiRefreshCw size={16} /> Refresh Now
           </button>
         </div>
       </div>
@@ -223,8 +215,8 @@ function Analytics() {
           opacity: 0.1
         }}></div>
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: "5rem", marginBottom: "0.5rem", animation: "float 3s ease-in-out infinite" }}>
-            🕐
+          <div style={{ marginBottom: "0.5rem", display: "flex", justifyContent: "center" }}>
+            <FiClock size={80} color="white" style={{ opacity: 0.9 }} />
           </div>
           <div style={{ fontSize: "1.2rem", fontWeight: "500", marginBottom: "1rem", opacity: 0.9 }}>
             Students Late Today
@@ -239,7 +231,7 @@ function Analytics() {
             Last updated: {lastFetch.toLocaleTimeString()}
           </div>
           <div style={{ marginTop: "1.5rem", fontSize: "0.85rem", opacity: 0.8, animation: "float 2s ease-in-out infinite" }}>
-            ⬇️ Scroll down for more analytics
+            Scroll down for more analytics
           </div>
         </div>
       </div>
@@ -263,7 +255,7 @@ function Analytics() {
           alignItems: "center",
           gap: "0.5rem"
         }}>
-          💰 Financial Analytics
+          <FiDollarSign size={24} /> Financial Analytics
         </h3>
         <div style={{
           display: "grid",
@@ -282,8 +274,8 @@ function Analytics() {
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)'; e.currentTarget.style.boxShadow = '0 12px 24px rgba(16,185,129,0.15)'; e.currentTarget.style.borderColor = '#10b981'; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#e0f2fe'; }}
           >
-            <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "500", marginBottom: "0.5rem" }}>
-              💰 Total Collected
+            <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "500", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <FiDollarSign size={16} /> Total Collected
             </div>
             <div style={{ fontSize: "2rem", fontWeight: "800", color: "#10b981" }}>
               ₹{(financialData?.totalCollected || 0).toLocaleString()}
@@ -302,8 +294,8 @@ function Analytics() {
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)'; e.currentTarget.style.boxShadow = '0 12px 24px rgba(220,38,38,0.15)'; e.currentTarget.style.borderColor = '#dc2626'; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#e0f2fe'; }}
           >
-            <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "500", marginBottom: "0.5rem" }}>
-              ⏳ Pending Fines
+            <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "500", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <FiClock size={16} /> Pending Fines
             </div>
             <div style={{ fontSize: "2rem", fontWeight: "800", color: "#dc2626" }}>
               ₹{(financialData?.pendingFines || 0).toLocaleString()}
@@ -375,7 +367,7 @@ function Analytics() {
             alignItems: "center",
             gap: "0.5rem"
           }}>
-            🏢 Department Breakdown
+            <FiBriefcase size={24} /> Department Breakdown
           </h3>
           <div style={{
             display: "grid",

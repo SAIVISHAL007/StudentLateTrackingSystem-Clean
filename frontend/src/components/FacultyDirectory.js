@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { FiUsers, FiPlus } from 'react-icons/fi';
 import API from '../services/api';
 import FacultyRegister from './FacultyRegister';
 import { toast } from './Toast';
@@ -75,11 +76,14 @@ function FacultyDirectory({ onNavigate }) {
   return (
     <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div>
-          <h2 style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2.1rem', fontWeight: 800 }}>👥 Faculty Directory</h2>
-          <p style={{ fontSize: '.85rem', color: '#64748b', fontWeight: 500 }}>Manage and review existing faculty accounts.</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <FiUsers size={32} style={{ color: '#667eea' }} />
+          <div>
+            <h2 style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2.1rem', fontWeight: 800, margin: 0 }}>Faculty Directory</h2>
+            <p style={{ fontSize: '.85rem', color: '#64748b', fontWeight: 500, margin: '4px 0 0 0' }}>Manage and review existing faculty accounts.</p>
+          </div>
         </div>
-        <button onClick={() => setShowCreate(s => !s)} style={{ padding: '12px 20px', background: showCreate? '#dc2626':'linear-gradient(135deg,#667eea,#764ba2)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)' }}>{showCreate? 'Close Form' : '➕ New Faculty'}</button>
+        <button onClick={() => setShowCreate(s => !s)} style={{ padding: '12px 20px', background: showCreate? '#dc2626':'linear-gradient(135deg,#667eea,#764ba2)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)', display: 'flex', alignItems: 'center', gap: '8px' }}>{showCreate? 'Close Form' : <><FiPlus size={18} /> New Faculty</>}</button>
       </div>
 
       {showCreate && <div style={{ marginBottom: '2rem' }}><FacultyRegister onNavigate={onNavigate} /></div>}
@@ -92,7 +96,7 @@ function FacultyDirectory({ onNavigate }) {
           <option value='admin'>Admin</option>
           <option value='superadmin'>Superadmin</option>
         </select>
-        <button onClick={fetchFaculties} style={{ padding: '12px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer' }}>🔄 Refresh</button>
+        <button onClick={fetchFaculties} style={{ padding: '12px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
       </div>
 
       {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '12px 16px', borderRadius: '12px', border: '2px solid #fecaca', fontSize: '.8rem', marginBottom: '1rem' }}>{error}</div>}
@@ -112,7 +116,7 @@ function FacultyDirectory({ onNavigate }) {
               <div style={{ fontSize: '.7rem', color: '#1e3a8a', wordBreak: 'break-all' }}>{f.email}</div>
               <div style={{ fontSize: '.65rem', color: '#475569' }}>Branch: {f.branch}</div>
               <div style={{ fontSize: '.65rem', color: '#475569' }}>Active: {f.isActive ? '✅' : '❌'}</div>
-              <div style={{ fontSize: '.65rem', color: '#dc2626', fontWeight: 600, wordBreak: 'break-all' }}>🔑 Password: {f.plaintextPassword || '••••••'}</div>
+              <div style={{ fontSize: '.65rem', color: '#dc2626', fontWeight: 600, wordBreak: 'break-all' }}>Password: {f.plaintextPassword || '••••••'}</div>
               <div style={{ fontSize: '.6rem', color: '#64748b' }}>Last Login: {f.lastLogin ? new Date(f.lastLogin).toLocaleString() : '—'}</div>
             </div>
           ))

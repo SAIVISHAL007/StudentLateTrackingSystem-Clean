@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import API from "../services/api";
 import { toast } from "./Toast";
 import { getCurrentUser } from "../utils/auth";
+import { FiUsers, FiPlus, FiX, FiEdit2, FiSave, FiTrash2, FiRefreshCw } from "react-icons/fi";
 
 function StudentManagement() {
   const currentUser = getCurrentUser();
@@ -14,6 +15,8 @@ function StudentManagement() {
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [sortField, setSortField] = useState("rollNo");
+  const [sortDirection, setSortDirection] = useState("asc");
   const [formData, setFormData] = useState({
     rollNo: "",
     name: "",
@@ -31,10 +34,10 @@ function StudentManagement() {
     setLoading(true);
     try {
       const res = await API.get("/students/all");
-      console.log("✅ Fetched students:", res.data);
+      console.log("Fetched students:", res.data);
       setStudents(res.data.students || []);
     } catch (err) {
-      console.error("❌ Fetch error:", err.response?.data || err.message);
+      console.error("Fetch error:", err.response?.data || err.message);
       toast.error("Failed to fetch students");
     } finally {
       setLoading(false);
@@ -44,6 +47,32 @@ function StudentManagement() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortedStudents = () => {
+    const sorted = [...students].sort((a, b) => {
+      let aVal = a[sortField];
+      let bVal = b[sortField];
+
+      if (typeof aVal === "string") {
+        aVal = aVal.toUpperCase();
+        bVal = bVal.toUpperCase();
+      }
+
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
   };
 
   const handleAddStudent = async (e) => {
@@ -167,24 +196,20 @@ function StudentManagement() {
   return (
     <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
       {/* Header */}
-      <div style={{
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        padding: "2rem",
-        borderRadius: "16px",
-        marginBottom: "2rem",
-        color: "white",
-        boxShadow: "0 10px 30px rgba(102, 126, 234, 0.3)"
-      }}>
-        <h1 style={{ margin: "0 0 0.5rem 0", fontSize: "2rem", fontWeight: "800" }}>
-          👥 Student Master Data
-        </h1>
-        <p style={{ margin: 0, opacity: 0.9 }}>
-          Add, edit, and manage student master data
-        </p>
+      <div className="page-header">
+        <div className="page-header-icon">
+          <FiUsers size={28} />
+        </div>
+        <div>
+          <h1 className="page-title">Student Master Data</h1>
+          <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>
+            Add, edit, and manage student master data
+          </p>
+        </div>
       </div>
 
       {/* Action Buttons */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
+      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem", flexWrap: "wrap", alignItems: "center" }}>
         <button
           onClick={() => {
             if (showAddForm) {
@@ -193,35 +218,21 @@ function StudentManagement() {
               setShowAddForm(true);
             }
           }}
-          style={{
-            padding: "12px 24px",
-            background: showAddForm ? "#dc3545" : "#28a745",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "600",
-            fontSize: "0.95rem"
-          }}
+          className={showAddForm ? "pro-btn pro-btn-danger" : "pro-btn pro-btn-success"}
         >
-          {showAddForm ? "❌ Cancel" : "➕ Add Student"}
+          {showAddForm ? (
+            <><FiX size={18} style={{ marginRight: "8px" }} /> Cancel</>
+          ) : (
+            <><FiPlus size={18} style={{ marginRight: "8px" }} /> Add Student</>
+          )}
         </button>
         <button
           onClick={fetchAllStudents}
           disabled={loading}
-          style={{
-            padding: "12px 24px",
-            background: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontWeight: "600",
-            fontSize: "0.95rem",
-            opacity: loading ? 0.6 : 1
-          }}
+          className="pro-btn pro-btn-primary"
+          style={{ opacity: loading ? 0.6 : 1 }}
         >
-          🔄 Refresh
+          <FiRefreshCw size={18} style={{ marginRight: "8px" }} /> Refresh
         </button>
         <div style={{ marginLeft: "auto", fontSize: "1.1rem", fontWeight: "600", color: "#495057" }}>
           Total: {students.length} students
@@ -230,15 +241,16 @@ function StudentManagement() {
 
       {/* Add/Edit Student Form */}
       {showAddForm && (
-        <form onSubmit={handleAddStudent} style={{
-          background: "#f8f9fa",
+        <form onSubmit={handleAddStudent} className="pro-card" style={{
           padding: "2rem",
-          borderRadius: "12px",
-          marginBottom: "2rem",
-          border: "2px solid #dee2e6"
+          marginBottom: "2rem"
         }}>
-          <h3 style={{ marginTop: 0, color: "#495057" }}>
-            {editingStudent ? "✏️ Edit Student" : "Add New Student"}
+          <h3 style={{ marginTop: 0, color: "#495057", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {editingStudent ? (
+              <><FiEdit2 size={20} /> Edit Student</>
+            ) : (
+              <><FiPlus size={20} /> Add New Student</>
+            )}
           </h3>
           
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
@@ -253,13 +265,7 @@ function StudentManagement() {
                 onChange={handleInputChange}
                 placeholder="e.g., A23126552137"
                 required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ced4da",
-                  borderRadius: "6px",
-                  fontSize: "0.95rem"
-                }}
+                className="pro-input"
               />
             </div>
 
@@ -274,13 +280,7 @@ function StudentManagement() {
                 onChange={handleInputChange}
                 placeholder="e.g., John Doe"
                 required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ced4da",
-                  borderRadius: "6px",
-                  fontSize: "0.95rem"
-                }}
+                className="pro-input"
               />
             </div>
           </div>
@@ -294,13 +294,7 @@ function StudentManagement() {
                 name="year"
                 value={formData.year}
                 onChange={handleInputChange}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ced4da",
-                  borderRadius: "6px",
-                  fontSize: "0.95rem"
-                }}
+                className="pro-select"
               >
                 <option value="1">1st Year</option>
                 <option value="2">2nd Year</option>
@@ -317,13 +311,7 @@ function StudentManagement() {
                 name="semester"
                 value={formData.semester}
                 onChange={handleInputChange}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ced4da",
-                  borderRadius: "6px",
-                  fontSize: "0.95rem"
-                }}
+                className="pro-select"
               >
                 {[1,2,3,4,5,6,7,8].map(s => (
                   <option key={s} value={s}>Sem {s}</option>
@@ -339,13 +327,7 @@ function StudentManagement() {
                 name="branch"
                 value={formData.branch}
                 onChange={handleInputChange}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ced4da",
-                  borderRadius: "6px",
-                  fontSize: "0.95rem"
-                }}
+                className="pro-select"
               >
                 <option value="CSE">CSE</option>
                 <option value="CSM">CSM</option>
@@ -370,13 +352,7 @@ function StudentManagement() {
                 onChange={handleInputChange}
                 placeholder="A"
                 maxLength="2"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ced4da",
-                  borderRadius: "6px",
-                  fontSize: "0.95rem"
-                }}
+                className="pro-input"
               />
             </div>
           </div>
@@ -385,36 +361,25 @@ function StudentManagement() {
             <button
               type="submit"
               disabled={loading}
-              style={{
-                padding: "12px 32px",
-                background: editingStudent ? "#007bff" : "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontWeight: "600",
-                fontSize: "1rem",
-                opacity: loading ? 0.6 : 1
-              }}
+              className={editingStudent ? "pro-btn pro-btn-primary" : "pro-btn pro-btn-success"}
+              style={{ opacity: loading ? 0.6 : 1 }}
             >
-              {loading ? (editingStudent ? "Updating..." : "Adding...") : (editingStudent ? "✅ Update Student" : "✅ Add Student")}
+              {loading ? (
+                editingStudent ? "Updating..." : "Adding..."
+              ) : (
+                <>
+                  <FiSave size={18} style={{ marginRight: "8px" }} />
+                  {editingStudent ? "Update Student" : "Add Student"}
+                </>
+              )}
             </button>
             {editingStudent && (
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                style={{
-                  padding: "12px 32px",
-                  background: "#6c757d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "1rem"
-                }}
+                className="pro-btn pro-btn-secondary"
               >
-                ❌ Cancel
+                <FiX size={18} style={{ marginRight: "8px" }} /> Cancel
               </button>
             )}
           </div>
@@ -434,7 +399,9 @@ function StudentManagement() {
           borderRadius: "12px",
           border: "2px dashed #dee2e6"
         }}>
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📚</div>
+          <div style={{ fontSize: "3rem", marginBottom: "1rem", opacity: 0.5 }}>
+            <FiUsers size={64} color="#6c757d" />
+          </div>
           <h3 style={{ color: "#495057", margin: "0 0 0.5rem 0" }}>No Students Yet</h3>
           <p style={{ color: "#6c757d", margin: 0 }}>
             Click "Add Student" to add your first student record
@@ -442,29 +409,32 @@ function StudentManagement() {
         </div>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            background: "white",
-            borderRadius: "12px",
-            overflow: "hidden",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-          }}>
+          <table className="pro-table">
             <thead>
               <tr style={{ background: "#f8f9fa" }}>
-                <th style={{ padding: "1rem", textAlign: "left", fontWeight: "700", color: "#495057" }}>Roll No</th>
-                <th style={{ padding: "1rem", textAlign: "left", fontWeight: "700", color: "#495057" }}>Name</th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Year</th>
+                <th style={{ padding: "1rem", textAlign: "left", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("rollNo")}>
+                  Roll No {sortField === "rollNo" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th style={{ padding: "1rem", textAlign: "left", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("name")}>
+                  Name {sortField === "name" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("year")}>
+                  Year {sortField === "year" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
                 <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Sem</th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Branch</th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Section</th>
+                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("branch")}>
+                  Branch {sortField === "branch" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("section")}>
+                  Section {sortField === "section" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
                 <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Late Days</th>
                 <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Fines</th>
                 <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {students.map((student, index) => (
+              {getSortedStudents().map((student, index) => (
                 <tr key={student.rollNo} style={{
                   borderTop: "1px solid #dee2e6",
                   background: index % 2 === 0 ? "white" : "#f8f9fa"
@@ -485,33 +455,17 @@ function StudentManagement() {
                     <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
                       <button
                         onClick={() => handleEditStudent(student)}
-                        style={{
-                          padding: "6px 12px",
-                          background: "#007bff",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                          fontSize: "0.85rem",
-                          fontWeight: "600"
-                        }}
+                        className="pro-btn pro-btn-primary"
+                        style={{ padding: "6px 12px", fontSize: "0.85rem" }}
                       >
-                        ✏️ Edit
+                        <FiEdit2 size={14} style={{ marginRight: "6px" }} /> Edit
                       </button>
                       <button
                         onClick={() => handleDeleteStudent(student.rollNo)}
-                        style={{
-                          padding: "6px 12px",
-                          background: "#dc3545",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                          fontSize: "0.85rem",
-                          fontWeight: "600"
-                        }}
+                        className="pro-btn pro-btn-danger"
+                        style={{ padding: "6px 12px", fontSize: "0.85rem" }}
                       >
-                        🗑️ Delete
+                        <FiTrash2 size={14} style={{ marginRight: "6px" }} /> Delete
                       </button>
                     </div>
                   </td>

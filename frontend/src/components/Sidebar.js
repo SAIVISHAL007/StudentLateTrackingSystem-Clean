@@ -1,4 +1,16 @@
 import React, { useState } from "react";
+import { 
+  FiUserCheck, 
+  FiClock, 
+  FiBarChart2, 
+  FiTrendingUp, 
+  FiSettings, 
+  FiUsers, 
+  FiMenu, 
+  FiX,
+  FiBookOpen,
+  FiZap
+} from 'react-icons/fi';
 
 function Sidebar({ currentPage, onPageChange }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -14,31 +26,31 @@ function Sidebar({ currentPage, onPageChange }) {
   const baseItems = [
     {
       id: "mark-late",
-      icon: "✔️",
+      icon: <FiUserCheck size={24} />,
       title: "Mark Student Late",
       description: "Enhanced student selection with filters"
     },
     {
       id: "late-today",
-      icon: "📋",
+      icon: <FiClock size={24} />,
       title: "Late Students Today",
       description: "View today's late students"
     },
     {
       id: "records",
-      icon: "📊",
+      icon: <FiBarChart2 size={24} />,
       title: "Late Records",
       description: "Weekly, monthly & semester reports"
     },
-      {
-        id: "analytics",
-        icon: "📈",
-        title: "Live Analytics",
-        description: "Real-time insights & leaderboards"
-      },
+    {
+      id: "analytics",
+      icon: <FiTrendingUp size={24} />,
+      title: "Live Analytics",
+      description: "Real-time insights & leaderboards"
+    },
     {
       id: "admin",
-      icon: "⚙️",
+      icon: <FiSettings size={24} />,
       title: "Admin Management",
       description: "Semester promotion & data management"
     }
@@ -47,13 +59,13 @@ function Sidebar({ currentPage, onPageChange }) {
   const adminItems = [
     {
       id: "student-management",
-      icon: "👥",
+      icon: <FiUsers size={24} />,
       title: "Student Master Data",
       description: "Add & manage student records"
     },
     {
       id: 'faculty-directory',
-      icon: '👥',
+      icon: <FiUsers size={24} />,
       title: 'Faculty Directory',
       description: 'View & manage faculty accounts'
     }
@@ -65,60 +77,38 @@ function Sidebar({ currentPage, onPageChange }) {
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
-    // Dispatch custom event to notify App component about sidebar state change
     window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { collapsed: !isCollapsed } }));
   };
 
   return (
-    <div style={{
-      position: "fixed",
-      left: 0,
-      top: 0,
-      height: "100vh",
-      width: isCollapsed ? "80px" : "300px",
-      background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
-      color: "white",
-      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-      zIndex: 1000,
-      display: "flex",
-      flexDirection: "column",
-      boxShadow: "4px 0 30px rgba(0,0,0,0.3)",
-      borderRight: "1px solid rgba(255, 255, 255, 0.1)"
+    <div className="professional-sidebar" style={{
+      width: isCollapsed ? "80px" : "300px"
     }}>
       {/* Header */}
-      <div style={{
-        padding: "1.5rem",
-        borderBottom: "2px solid rgba(255, 255, 255, 0.1)",
-        display: "flex",
-        alignItems: "center",
+      <div className="sidebar-header" style={{
         justifyContent: isCollapsed ? "center" : "space-between",
-        background: "rgba(0, 0, 0, 0.2)"
+        display: "flex",
+        alignItems: "center"
       }}>
         {!isCollapsed && (
           <div style={{ animation: "fadeIn 0.5s ease-out" }}>
             <div style={{
               display: "flex",
               alignItems: "center",
-              gap: "0.75rem",
+              gap: "0.875rem",
               marginBottom: "0.5rem"
             }}>
-              <div style={{
-                width: "40px",
-                height: "40px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                borderRadius: "10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.25rem",
-                boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)"
+              <div className="navbar-brand-logo" style={{
+                width: "42px",
+                height: "42px",
+                fontSize: "1.25rem"
               }}>
-                📚
+                <FiBookOpen size={22} />
               </div>
               <h3 style={{ 
                 margin: 0, 
-                fontSize: "1.3rem",
-                fontWeight: "800",
+                fontSize: "1.35rem",
+                fontWeight: "900",
                 color: "#ffffff",
                 letterSpacing: "-0.5px"
               }}>
@@ -130,7 +120,7 @@ function Sidebar({ currentPage, onPageChange }) {
               fontSize: "0.8rem", 
               color: "#94a3b8",
               fontWeight: "500",
-              paddingLeft: "48px"
+              paddingLeft: "50px"
             }}>
               Navigation
             </p>
@@ -139,32 +129,9 @@ function Sidebar({ currentPage, onPageChange }) {
         
         <button
           onClick={toggleSidebar}
-          style={{
-            background: "rgba(255, 255, 255, 0.1)",
-            backdropFilter: "blur(10px)",
-            border: "2px solid rgba(255, 255, 255, 0.2)",
-            color: "white",
-            fontSize: "1.25rem",
-            cursor: "pointer",
-            padding: "0.6rem",
-            borderRadius: "10px",
-            transition: "all 0.3s ease",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "40px",
-            height: "40px"
-          }}
-          onMouseOver={(e) => {
-            e.target.style.background = "rgba(255, 255, 255, 0.2)";
-            e.target.style.transform = "scale(1.1)";
-          }}
-          onMouseOut={(e) => {
-            e.target.style.background = "rgba(255, 255, 255, 0.1)";
-            e.target.style.transform = "scale(1)";
-          }}
+          className="sidebar-toggle-btn"
         >
-          {isCollapsed ? "☰" : "✕"}
+          {isCollapsed ? <FiMenu size={20} /> : <FiX size={20} />}
         </button>
       </div>
 
@@ -179,52 +146,14 @@ function Sidebar({ currentPage, onPageChange }) {
           <div
             key={item.id}
             onClick={() => onPageChange(item.id)}
+            className={`sidebar-menu-item ${currentPage === item.id ? 'active' : ''}`}
             style={{
-              padding: isCollapsed ? "1.25rem 0" : "1.25rem 1rem",
-              margin: "0.5rem 0",
-              borderRadius: "14px",
-              cursor: "pointer",
-              background: currentPage === item.id 
-                ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                : "rgba(255, 255, 255, 0.05)",
-              border: currentPage === item.id
-                ? "2px solid rgba(255, 255, 255, 0.2)"
-                : "2px solid transparent",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              display: "flex",
-              alignItems: "center",
-              gap: isCollapsed ? 0 : "1rem",
               justifyContent: isCollapsed ? "center" : "flex-start",
-              boxShadow: currentPage === item.id 
-                ? "0 8px 20px rgba(102, 126, 234, 0.3)"
-                : "none",
-              animation: `slideInLeft 0.5s ease-out ${index * 0.1}s both`,
-              position: "relative",
-              overflow: "hidden"
-            }}
-            onMouseOver={(e) => {
-              if (currentPage !== item.id) {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "translateX(8px)";
-              } else {
-                e.currentTarget.style.transform = "translateX(4px) scale(1.02)";
-              }
-            }}
-            onMouseOut={(e) => {
-              if (currentPage !== item.id) {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                e.currentTarget.style.borderColor = "transparent";
-                e.currentTarget.style.transform = "translateX(0)";
-              } else {
-                e.currentTarget.style.transform = "translateX(0) scale(1)";
-              }
+              animationDelay: `${index * 0.1}s`
             }}
           >
-            <div style={{
-              fontSize: "1.75rem",
-              filter: currentPage === item.id ? "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" : "none",
-              transition: "all 0.3s ease"
+            <div className="icon-wrapper icon-lg" style={{
+              filter: currentPage === item.id ? "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" : "none"
             }}>
               {item.icon}
             </div>
@@ -277,12 +206,14 @@ function Sidebar({ currentPage, onPageChange }) {
       }}>
         {!isCollapsed && (
           <div style={{ animation: "fadeIn 0.5s ease-out" }}>
-            <p style={{ margin: "0 0 0.25rem 0" }}>© 2025 ANITS</p>
-            <p style={{ margin: 0, color: "#64748b" }}>v2.0.0</p>
+            <p style={{ margin: "0 0 0.25rem 0", fontWeight: "600" }}>© 2026 ANITS</p>
+            <p style={{ margin: 0, color: "#64748b", fontSize: "0.7rem" }}>v2.0.0 Professional</p>
           </div>
         )}
         {isCollapsed && (
-          <div style={{ fontSize: "1rem" }}>⚡</div>
+          <div className="icon-wrapper">
+            <FiZap size={20} />
+          </div>
         )}
       </div>
     </div>

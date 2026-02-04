@@ -1,4 +1,15 @@
+const tailwindcss = require('tailwindcss');
+const autoprefixer = require('autoprefixer');
+
 module.exports = {
+  style: {
+    postcss: {
+      plugins: [
+        tailwindcss,
+        autoprefixer,
+      ],
+    },
+  },
   webpack: {
     configure: (webpackConfig) => {
       // Ignore source map warnings from html5-qrcode

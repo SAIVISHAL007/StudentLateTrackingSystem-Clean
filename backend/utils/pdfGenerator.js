@@ -59,13 +59,16 @@ export const generateRemovalProof = (removalData = {}) => {
         doc.fontSize(11).font('Helvetica-Bold').text('Detailed Removal Records');
         doc.moveDown(0.3);
 
-        // Table header
+        // Table header with better styling
         const tableTop = doc.y;
-        const colWidth = 475 / 3;
-        doc.fontSize(9).font('Helvetica-Bold');
-        doc.text('Roll No', 50, tableTop, { width: colWidth, align: 'left' });
-        doc.text('Student Name', 50 + colWidth, tableTop, { width: colWidth, align: 'left' });
-        doc.text('Date Removed', 50 + colWidth * 2, tableTop, { width: colWidth, align: 'left' });
+        const col1Width = 100;
+        const col2Width = 200;
+        const col3Width = 175;
+        
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#000000');
+        doc.text('Roll No', 50, tableTop, { width: col1Width, align: 'left' });
+        doc.text('Student Name', 50 + col1Width, tableTop, { width: col2Width, align: 'left' });
+        doc.text('Date Removed', 50 + col1Width + col2Width, tableTop, { width: col3Width, align: 'left' });
 
         // Draw line under header
         doc.moveTo(40, tableTop + 18).lineTo(555, tableTop + 18).stroke();
@@ -75,9 +78,15 @@ export const generateRemovalProof = (removalData = {}) => {
         doc.fontSize(8).font('Helvetica');
         removalData.removalRecords.forEach((record, index) => {
           const rowY = doc.y;
-          doc.text(record.rollNo || 'N/A', 50, rowY, { width: colWidth, align: 'left' });
-          doc.text(record.name || 'N/A', 50 + colWidth, rowY, { width: colWidth, align: 'left' });
-          doc.text(record.date ? new Date(record.date).toLocaleString() : 'N/A', 50 + colWidth * 2, rowY, { width: colWidth, align: 'left' });
+          
+          // Ensure data is displayed
+          const rollNo = record.rollNo ? String(record.rollNo).trim() : 'N/A';
+          const studentName = record.name ? String(record.name).trim() : 'N/A';
+          const dateRemoved = record.date ? new Date(record.date).toLocaleString() : 'N/A';
+          
+          doc.text(rollNo, 50, rowY, { width: col1Width, align: 'left' });
+          doc.text(studentName, 50 + col1Width, rowY, { width: col2Width, align: 'left' });
+          doc.text(dateRemoved, 50 + col1Width + col2Width, rowY, { width: col3Width, align: 'left' });
           doc.moveDown(0.6);
 
           // Alternate row background
