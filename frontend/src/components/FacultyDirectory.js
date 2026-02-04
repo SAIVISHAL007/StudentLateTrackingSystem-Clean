@@ -44,7 +44,7 @@ function FacultyDirectory({ onNavigate }) {
   const saveChanges = async () => {
     if (!selected) return;
     setSaving(true); setError('');
-    toast.loading('Updating faculty details...');
+    toast.info('Updating faculty details...');
     try {
       const token = localStorage.getItem('jwt_token');
       await API.patch(`/auth/faculty/${selected.id || selected._id}`, {
