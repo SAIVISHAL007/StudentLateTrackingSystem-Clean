@@ -3,6 +3,7 @@ import PrefetchedStudentForm from "./components/PrefetchedStudentForm";
 import LateList from "./components/LateList";
 import Record from "./components/Record";
 import Analytics from "./components/Analytics";
+import AIInsights from "./components/AIInsights";
 import AdminManagement from "./components/AdminManagement";
 import StudentManagement from "./components/StudentManagement";
 import Sidebar from "./components/Sidebar";
@@ -154,6 +155,8 @@ function App() {
 
       case "analytics":
         return <Analytics />;
+      case "ai-insights":
+        return <AIInsights />;
       case "student-management":
         return (
           <div>

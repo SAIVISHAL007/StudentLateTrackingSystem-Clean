@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.use(async (req, res, next) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Use MONGODB_URI for production deployment
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/studentLateTracking';
