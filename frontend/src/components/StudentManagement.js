@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import API from "../services/api";
 import { toast } from "./Toast";
 import { getCurrentUser } from "../utils/auth";
-import { FiUsers, FiPlus, FiX, FiEdit2, FiSave, FiTrash2, FiRefreshCw } from "react-icons/fi";
+import { FiUsers, FiPlus, FiX, FiEdit2, FiSave, FiTrash2, FiRefreshCw, FiSearch } from "react-icons/fi";
 
 function StudentManagement() {
   const currentUser = getCurrentUser();
@@ -17,6 +17,9 @@ function StudentManagement() {
   const [editingStudent, setEditingStudent] = useState(null);
   const [sortField, setSortField] = useState("rollNo");
   const [sortDirection, setSortDirection] = useState("asc");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const searchRafRef = useRef(null);
   const [formData, setFormData] = useState({
     rollNo: "",
     name: "",
@@ -28,6 +31,14 @@ function StudentManagement() {
 
   useEffect(() => {
     fetchAllStudents();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (searchRafRef.current) {
+        cancelAnimationFrame(searchRafRef.current);
+      }
+    };
   }, []);
 
   const fetchAllStudents = async () => {
@@ -49,6 +60,19 @@ function StudentManagement() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+
+    if (searchRafRef.current) {
+      cancelAnimationFrame(searchRafRef.current);
+    }
+
+    searchRafRef.current = requestAnimationFrame(() => {
+      setSearchQuery(value);
+    });
+  };
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -58,8 +82,21 @@ function StudentManagement() {
     }
   };
 
-  const getSortedStudents = () => {
-    const sorted = [...students].sort((a, b) => {
+  const sortedStudents = useMemo(() => {
+    let filtered = students;
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = students.filter(student =>
+        (student.rollNo || "").toLowerCase().includes(query) ||
+        (student.name || "").toLowerCase().includes(query) ||
+        (student.branch || "").toLowerCase().includes(query) ||
+        (student.section || "").toLowerCase().includes(query) ||
+        (student.year || "").toString().includes(query)
+      );
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
 
@@ -72,8 +109,9 @@ function StudentManagement() {
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
+
     return sorted;
-  };
+  }, [students, searchQuery, sortField, sortDirection]);
 
   const handleAddStudent = async (e) => {
     e.preventDefault();
@@ -208,6 +246,59 @@ function StudentManagement() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div style={{ marginBottom: "2rem" }}>
+        <div style={{ position: "relative", maxWidth: "500px" }}>
+          <FiSearch 
+            style={{ 
+              position: "absolute", 
+              left: "1rem", 
+              top: "50%", 
+              transform: "translateY(-50%)", 
+              color: "#6c757d",
+              fontSize: "1.2rem"
+            }} 
+          />
+          <input
+            type="text"
+            placeholder="Search by roll number, name, branch, section, or year..."
+            value={searchInput}
+            onChange={handleSearchChange}
+            className="pro-input"
+            style={{
+              paddingLeft: "3rem",
+              fontSize: "1rem",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}
+          />
+          {searchInput && (
+            <button
+              onClick={() => {
+                setSearchInput("");
+                setSearchQuery("");
+              }}
+              style={{
+                position: "absolute",
+                right: "1rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                color: "#6c757d",
+                cursor: "pointer",
+                padding: "0.25rem",
+                display: "flex",
+                alignItems: "center",
+                fontSize: "1.2rem"
+              }}
+              title="Clear search"
+            >
+              <FiX />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Action Buttons */}
       <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem", flexWrap: "wrap", alignItems: "center" }}>
         <button
@@ -235,7 +326,11 @@ function StudentManagement() {
           <FiRefreshCw size={18} style={{ marginRight: "8px" }} /> Refresh
         </button>
         <div style={{ marginLeft: "auto", fontSize: "1.1rem", fontWeight: "600", color: "#495057" }}>
-          Total: {students.length} students
+          {searchQuery ? (
+            <>Showing: {sortedStudents.length} of {students.length} students</>
+          ) : (
+            <>Total: {students.length} students</>
+          )}
         </div>
       </div>
 
@@ -434,7 +529,7 @@ function StudentManagement() {
               </tr>
             </thead>
             <tbody>
-              {getSortedStudents().map((student, index) => (
+              {sortedStudents.map((student, index) => (
                 <tr key={student.rollNo} style={{
                   borderTop: "1px solid #dee2e6",
                   background: index % 2 === 0 ? "white" : "#f8f9fa"

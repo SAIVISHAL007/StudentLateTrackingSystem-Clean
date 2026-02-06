@@ -19,6 +19,15 @@ function App() {
   });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handlePageChange = (pageId) => {
     setCurrentPage(pageId);
@@ -59,7 +68,7 @@ function App() {
   // Listen for sidebar toggle events
   useEffect(() => {
     const handleSidebarToggle = (event) => {
-      setSidebarCollapsed(event.detail.collapsed);
+      setSidebarCollapsed(!event.detail.shouldOpen);
     };
 
     const handleNavigate = (event) => {
@@ -197,30 +206,50 @@ function App() {
     <div style={{
       minHeight: "100vh",
       backgroundColor: "#f8f9fa",
-      display: "flex"
+      display: "flex",
+      position: "relative"
     }}>
+      {/* Mobile Sidebar Overlay Backdrop */}
+      {!sidebarCollapsed && isMobile && (
+        <div
+          onClick={() => window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { shouldOpen: false } }))}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 1500,
+            animation: "fadeIn 0.3s ease-out"
+          }}
+        />
+      )}
+
       {/* Sidebar */}
       <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
       
       {/* Main Content */}
       <div style={{
-        marginLeft: sidebarCollapsed ? "70px" : "280px", // Account for sidebar width
+        marginLeft: isMobile ? 0 : (sidebarCollapsed ? "70px" : "280px"),
         flex: 1,
-        transition: "margin-left 0.3s ease"
+        transition: "margin-left 0.3s ease",
+        width: "100%"
       }}>
         <Navbar onLogout={handleLogout} />
         
         <div style={{
-          padding: "2rem",
+          padding: isMobile ? "1rem" : "2rem",
           maxWidth: "1200px",
-          margin: "0 auto"
+          margin: "0 auto",
+          width: "100%"
         }}>
           {renderCurrentPage()}
 
           <footer style={{
             textAlign: "center",
-            marginTop: "4rem",
-            padding: "2rem",
+            marginTop: isMobile ? "2rem" : "4rem",
+            padding: isMobile ? "1rem" : "2rem",
             color: "#6c757d",
             fontSize: "0.9rem"
           }}>

@@ -1,9 +1,19 @@
 import axios from "axios";
 
 // Backend base URL: use REACT_APP_API_URL in production to avoid hardcoding
-const configuredBase = process.env.NODE_ENV === 'production'
-  ? (process.env.REACT_APP_API_URL || "https://backend-aq2ym15ta-chelluri-sai-vishals-projects-3f9c693c.vercel.app/api")
-  : (process.env.REACT_APP_API_URL || "http://localhost:5000/api");
+const getBackendURL = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.REACT_APP_API_URL || "https://backend-aq2ym15ta-chelluri-sai-vishals-projects-3f9c693c.vercel.app/api";
+  }
+  
+  // Development: auto-detect host
+  const host = window.location.hostname;
+  const port = 5000;
+  
+  return `http://${host}:${port}/api`;
+};
+
+const configuredBase = getBackendURL();
 
 const API = axios.create({
   baseURL: configuredBase,

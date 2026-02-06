@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   FiUserCheck, 
   FiClock, 
@@ -13,7 +13,32 @@ import {
 } from 'react-icons/fi';
 
 function Sidebar({ currentPage, onPageChange }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isOpen, setIsOpen] = useState(!isMobile);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setIsOpen(true); // Always open on desktop
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleSidebarToggle = (event) => {
+      if (isMobile) {
+        setIsOpen(event.detail.shouldOpen !== undefined ? event.detail.shouldOpen : !isOpen);
+      }
+    };
+
+    window.addEventListener('sidebarToggle', handleSidebarToggle);
+    return () => window.removeEventListener('sidebarToggle', handleSidebarToggle);
+  }, [isOpen, isMobile]);
   let role = 'faculty';
   try {
     const authRaw = localStorage.getItem('facultyAuth');
@@ -76,21 +101,39 @@ function Sidebar({ currentPage, onPageChange }) {
     : baseItems;
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-    window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { collapsed: !isCollapsed } }));
+    const newOpen = !isOpen;
+    setIsOpen(newOpen);
+    window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { shouldOpen: newOpen } }));
+  };
+
+  const handleMenuItemClick = (pageId) => {
+    onPageChange(pageId);
+    // Auto-close sidebar on mobile after selecting an item
+    if (isMobile) {
+      setIsOpen(false);
+      window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { shouldOpen: false } }));
+    }
   };
 
   return (
     <div className="professional-sidebar" style={{
-      width: isCollapsed ? "80px" : "300px"
+      width: isOpen ? "300px" : "80px",
+      ...(isMobile ? {
+        position: "fixed",
+        left: isOpen ? "0" : "-300px",
+        opacity: isOpen ? "1" : "0",
+        pointerEvents: isOpen ? "auto" : "none",
+        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        zIndex: 2000
+      } : {})
     }}>
       {/* Header */}
       <div className="sidebar-header" style={{
-        justifyContent: isCollapsed ? "center" : "space-between",
+        justifyContent: isOpen ? "space-between" : "center",
         display: "flex",
         alignItems: "center"
       }}>
-        {!isCollapsed && (
+        {isOpen && (
           <div style={{ animation: "fadeIn 0.5s ease-out" }}>
             <div style={{
               display: "flex",
@@ -131,7 +174,7 @@ function Sidebar({ currentPage, onPageChange }) {
           onClick={toggleSidebar}
           className="sidebar-toggle-btn"
         >
-          {isCollapsed ? <FiMenu size={20} /> : <FiX size={20} />}
+          {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
         </button>
       </div>
 
@@ -145,10 +188,10 @@ function Sidebar({ currentPage, onPageChange }) {
         {menuItems.map((item, index) => (
           <div
             key={item.id}
-            onClick={() => onPageChange(item.id)}
+            onClick={() => handleMenuItemClick(item.id)}
             className={`sidebar-menu-item ${currentPage === item.id ? 'active' : ''}`}
             style={{
-              justifyContent: isCollapsed ? "center" : "flex-start",
+              justifyContent: isOpen ? "flex-start" : "center",
               animationDelay: `${index * 0.1}s`
             }}
           >
@@ -157,7 +200,7 @@ function Sidebar({ currentPage, onPageChange }) {
             }}>
               {item.icon}
             </div>
-            {!isCollapsed && (
+            {isOpen && (
               <div style={{ flex: 1 }}>
                 <div style={{
                   fontSize: "1.05rem",
@@ -178,7 +221,7 @@ function Sidebar({ currentPage, onPageChange }) {
                 </div>
               </div>
             )}
-            {currentPage === item.id && !isCollapsed && (
+            {currentPage === item.id && isOpen && (
               <div style={{
                 position: "absolute",
                 right: "1rem",
@@ -204,13 +247,13 @@ function Sidebar({ currentPage, onPageChange }) {
         textAlign: "center",
         fontWeight: "500"
       }}>
-        {!isCollapsed && (
+        {isOpen && (
           <div style={{ animation: "fadeIn 0.5s ease-out" }}>
             <p style={{ margin: "0 0 0.25rem 0", fontWeight: "600" }}>© 2026 ANITS</p>
             <p style={{ margin: 0, color: "#64748b", fontSize: "0.7rem" }}>v2.0.0 Professional</p>
           </div>
         )}
-        {isCollapsed && (
+        {!isOpen && (
           <div className="icon-wrapper">
             <FiZap size={20} />
           </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FiUsers, FiPlus } from 'react-icons/fi';
+import { FiUsers, FiPlus, FiTrash2 } from 'react-icons/fi';
 import API from '../services/api';
 import FacultyRegister from './FacultyRegister';
 import { toast } from './Toast';
@@ -14,6 +14,8 @@ function FacultyDirectory({ onNavigate }) {
   const [selected, setSelected] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', branch: '', role: '', isActive: true, email: '', newPassword: '' });
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchFaculties = useCallback(async () => {
     setLoading(true); setError('');
@@ -71,6 +73,28 @@ function FacultyDirectory({ onNavigate }) {
       setError(errorMsg);
       toast.error(errorMsg);
     } finally { setSaving(false); }
+  };
+
+  const deleteFaculty = async () => {
+    if (!selected) return;
+    setDeleting(true);
+    toast.info('Deleting faculty...');
+    try {
+      const token = localStorage.getItem('jwt_token');
+      await API.delete(`/auth/faculty/${selected.id || selected._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(`Faculty ${selected.name} deleted successfully!`);
+      setShowDeleteConfirm(false);
+      setSelected(null);
+      setEditForm({ name: '', branch: '', role: '', isActive: true, email: '', newPassword: '' });
+      fetchFaculties();
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || 'Failed to delete faculty';
+      toast.error(errorMsg);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -163,8 +187,25 @@ function FacultyDirectory({ onNavigate }) {
               <input name='newPassword' type='password' value={editForm.newPassword} onChange={updateField} placeholder='New password (min 6)' style={{ padding: '10px 14px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }} />
             </div>
             <div style={{ display: 'flex', gap: '.75rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
-              <button type='button' onClick={() => setSelected(null)} style={{ flex: '1 1 120px', padding: '12px 16px', background: '#64748b', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button type='button' disabled={saving} onClick={saveChanges} style={{ flex: '1 1 120px', padding: '12px 16px', background: saving? '#94a3b8':'#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: saving? 'not-allowed':'pointer' }}>{saving? 'Saving...' : '💾 Save Changes'}</button>
+              <button type='button' onClick={() => setSelected(null)} style={{ flex: '1 1 100px', padding: '12px 16px', background: '#64748b', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button type='button' onClick={() => setShowDeleteConfirm(true)} style={{ flex: '0 0 auto', padding: '12px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}><FiTrash2 size={16} /> Delete</button>
+              <button type='button' disabled={saving} onClick={saveChanges} style={{ flex: '1 1 100px', padding: '12px 16px', background: saving? '#94a3b8':'#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: saving? 'not-allowed':'pointer' }}>{saving? 'Saving...' : '💾 Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && selected && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '1rem' }}>
+          <div style={{ width: '100%', maxWidth: '400px', background: 'white', padding: '2rem', borderRadius: '16px', boxShadow: '0 20px 50px rgba(0,0,0,0.4)', animation: 'scaleIn .3s ease-out' }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.3rem', fontWeight: 800, color: '#dc2626' }}>⚠️ Delete Faculty</h3>
+            <p style={{ margin: '0 0 1.5rem 0', fontSize: '.9rem', color: '#475569' }}>
+              Are you sure you want to delete <strong>{selected.name}</strong> ({selected.email})? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '.75rem' }}>
+              <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: '12px 16px', background: '#64748b', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button disabled={deleting} onClick={deleteFaculty} style={{ flex: 1, padding: '12px 16px', background: deleting ? '#fca5a5' : '#dc2626', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer' }}>{deleting ? 'Deleting...' : 'Delete'}</button>
             </div>
           </div>
         </div>

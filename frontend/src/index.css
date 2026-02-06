@@ -256,6 +256,15 @@ input::placeholder {
 @media (max-width: 768px) {
   body {
     font-size: 14px;
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+  }
+  
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
   
   .container {
@@ -292,5 +301,28 @@ input::placeholder {
   .badge {
     font-size: 0.75rem;
     padding: 3px 8px;
+  }
+
+  /* Background attachment for mobile performance */
+  body {
+    background-attachment: scroll;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  button:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -76,14 +76,18 @@ function PrefetchedStudentForm() {
       // Try to mark online first
       try {
         await API.post("/students/mark-late", payload);
-        toast.success(`${selectedStudent.name} marked as late`);
+        toast.success(
+          `Student marked late: ${selectedStudent.name} (${selectedStudent.rollNo}) - Year ${selectedStudent.year}, ${selectedStudent.branch}-${selectedStudent.section || 'A'}`
+        );
         setShowConfirmation(false);
         setSelectedStudent(null);
       } catch (error) {
         // If offline, queue it
         if (error.message === "Network Error" || !navigator.onLine) {
           enqueueLateMark(payload);
-          toast.warning(`Queued: ${selectedStudent.name} (will sync when online)`);
+          toast.warning(
+            `Queued for sync: ${selectedStudent.name} (${selectedStudent.rollNo}) - Will update when online`
+          );
           setShowConfirmation(false);
           setSelectedStudent(null);
         } else {

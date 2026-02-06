@@ -12,7 +12,8 @@ const app = express();
 // CORS configuration with explicit allowlist
 const allowedOrigins = [
   process.env.FRONTEND_ORIGIN,
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'http://localhost:3001'
 ].filter(Boolean);
 
 const corsOptions = {
@@ -20,6 +21,13 @@ const corsOptions = {
     if (!origin) return callback(null, true); // Allow non-browser clients
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (origin.endsWith('.vercel.app')) return callback(null, true); // allow all Vercel deploys
+    
+    // Allow local network IPs during development (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+    if (process.env.NODE_ENV !== 'production') {
+      const isLocalIP = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.1[6-9]\.|172\.2[0-9]\.|172\.3[01]\.)/.test(origin);
+      if (isLocalIP) return callback(null, true);
+    }
+    
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
