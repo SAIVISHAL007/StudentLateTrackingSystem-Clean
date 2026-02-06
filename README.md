@@ -4,7 +4,7 @@
 
 **Latest Version: v2.1.1** | [Release Notes](#-whats-new-in-v211) | [Changelog](#-changelog)
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://frontend-17kiyh5dk-chelluri-sai-vishals-projects-3f9c693c.vercel.app)
+[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://frontend-bice-six-7xa3qoyuae.vercel.app/)
 [![Backend API](https://img.shields.io/badge/API-live-blue?style=for-the-badge)](https://backend-3wax4q7pc-chelluri-sai-vishals-projects-3f9c693c.vercel.app)
 [![Version](https://img.shields.io/badge/version-2.1.1-orange?style=for-the-badge)](https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean/releases/tag/v2.1.1)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/cloud/atlas)
