@@ -9,6 +9,7 @@ const auditLogSchema = new mongoose.Schema({
       'FACULTY_LOGIN',
       'FACULTY_LOGOUT',
       'FACULTY_UPDATE',
+      'FACULTY_DELETE',
       'ADMIN_PASSWORD_RESET',
       'PASSWORD_RESET_REQUEST',
       'PASSWORD_RESET_SUCCESS',
