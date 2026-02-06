@@ -11,6 +11,7 @@
     "check-health": "curl http://localhost:5000/health",
     "check-db": "node scripts/checkStudents.js",
     "seed": "node scripts/seedDatabase.js",
+    "import:students": "node scripts/importStudentsCsv.js",
     "seed:test": "node -r dotenv/config scripts/seedDatabase.js dotenv_config_path=.env.test",
     "add-late": "node scripts/addLateRecords.js",
     "remove-late": "node scripts/removeLateRecords.js",

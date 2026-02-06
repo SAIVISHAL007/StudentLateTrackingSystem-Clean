@@ -9,7 +9,8 @@ import {
   FiMenu, 
   FiX,
   FiBookOpen,
-  FiZap
+  FiZap,
+  FiActivity
 } from 'react-icons/fi';
 
 function Sidebar({ currentPage, onPageChange }) {
@@ -72,6 +73,12 @@ function Sidebar({ currentPage, onPageChange }) {
       icon: <FiTrendingUp size={24} />,
       title: "Live Analytics",
       description: "Real-time insights & leaderboards"
+    },
+    {
+      id: "ai-insights",
+      icon: <FiActivity size={24} />,
+      title: "🤖 AI Insights",
+      description: "ML-powered predictions & pattern analysis"
     },
     {
       id: "admin",

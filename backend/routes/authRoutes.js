@@ -392,4 +392,59 @@ router.post('/faculty/:id/reset-password', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete faculty (admin/superadmin only)
+router.delete('/faculty/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!['admin','superadmin'].includes(req.faculty.role)) {
+      return res.status(403).json({ error: 'Not authorized. Only admin/superadmin can delete faculty.' });
+    }
+    
+    // Prevent self-deletion
+    if (req.params.id === req.faculty._id.toString()) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+    
+    const faculty = await Faculty.findById(req.params.id);
+    if (!faculty) {
+      return res.status(404).json({ error: 'Faculty not found' });
+    }
+    
+    // Create audit log before deletion
+    await AuditLog.create({
+      action: 'FACULTY_DELETE',
+      performedBy: {
+        facultyId: req.faculty._id,
+        facultyName: req.faculty.name,
+        facultyEmail: req.faculty.email,
+        actorRole: req.faculty.role
+      },
+      target: {
+        facultyId: faculty._id,
+        facultyName: faculty.name,
+        facultyEmail: faculty.email
+      },
+      details: { 
+        deletedBranch: faculty.branch,
+        deletedRole: faculty.role 
+      },
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+    
+    // Delete the faculty
+    await Faculty.findByIdAndDelete(req.params.id);
+    
+    res.json({ 
+      message: 'Faculty deleted successfully',
+      deleted: {
+        name: faculty.name,
+        email: faculty.email
+      }
+    });
+  } catch (error) {
+    console.error('Delete faculty error:', error);
+    res.status(500).json({ error: 'Failed to delete faculty', details: error.message });
+  }
+});
+
 export default router;
