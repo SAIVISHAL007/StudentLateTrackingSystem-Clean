@@ -326,3 +326,85 @@ input::placeholder {
     scroll-behavior: auto !important;
   }
 }
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #e2e8f0;
+}
+
+body.dark-mode .professional-navbar {
+  background: rgba(26, 26, 46, 0.95);
+  border-bottom: 1px solid #334155;
+}
+
+body.dark-mode .navbar-title {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body.dark-mode .user-info-badge {
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid #475569;
+}
+
+body.dark-mode .logout-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+body.dark-mode input::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode .card,
+body.dark-mode [style*="background: white"],
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="backgroundColor: white"],
+body.dark-mode [style*="backgroundColor: #fff"] {
+  background: #1e293b !important;
+  color: #e2e8f0;
+}
+
+body.dark-mode button:not(.logout-button):not(.dark-mode-toggle) {
+  opacity: 0.95;
+}
+
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, 
+body.dark-mode h4, body.dark-mode h5, body.dark-mode h6 {
+  color: #f1f5f9;
+}
+
+.dark-mode-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fbbf24;
+  padding: 10px 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.dark-mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+body.dark-mode .dark-mode-toggle {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}

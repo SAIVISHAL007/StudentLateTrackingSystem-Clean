@@ -811,3 +811,83 @@
     min-height: 52px;
   }
 }
+
+/* ========================================
+   DARK MODE STYLES
+   ======================================== */
+
+body.dark-mode .professional-navbar {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .user-info-badge {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .professional-sidebar {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  box-shadow: 
+    8px 0 40px rgba(0, 0, 0, 0.6),
+    4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .sidebar-header {
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+body.dark-mode .sidebar-menu-item {
+  color: #cbd5e1;
+}
+
+body.dark-mode .sidebar-menu-item:hover {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+body.dark-mode .sidebar-menu-item.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.5);
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+body.dark-mode [class*="card"],
+body.dark-mode [style*="borderRadius"] {
+  background-color: #1e293b!important;
+  color: #e2e8f0!important;
+}
+
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3,
+body.dark-mode h4, body.dark-mode h5, body.dark-mode h6 {
+  color: #f1f5f9;
+}
+
+body.dark-mode p {
+  color: #cbd5e1;
+}

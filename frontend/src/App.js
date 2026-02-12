@@ -6,12 +6,14 @@ import Analytics from "./components/Analytics";
 import AIInsights from "./components/AIInsights";
 import AdminManagement from "./components/AdminManagement";
 import StudentManagement from "./components/StudentManagement";
+import StudentProfile from "./components/StudentProfile";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Login from "./components/Login";
 import FacultyRegister from "./components/FacultyRegister";
 import FacultyDirectory from "./components/FacultyDirectory";
 import { isAuthenticated } from "./utils/auth";
+import { useDarkMode } from "./context/DarkModeContext";
 
 function App() {
   // Get last page from localStorage, default to "mark-late"
@@ -21,6 +23,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const { isDarkMode } = useDarkMode();
 
   useEffect(() => {
     const handleResize = () => {
@@ -155,6 +158,8 @@ function App() {
 
       case "analytics":
         return <Analytics />;
+      case "student-profile":
+        return <StudentProfile />;
       case "ai-insights":
         return <AIInsights />;
       case "student-management":
@@ -208,7 +213,7 @@ function App() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: "#f8f9fa",
+      backgroundColor: isDarkMode ? "#0f172a" : "#f8f9fa",
       display: "flex",
       position: "relative"
     }}>
@@ -253,7 +258,7 @@ function App() {
             textAlign: "center",
             marginTop: isMobile ? "2rem" : "4rem",
             padding: isMobile ? "1rem" : "2rem",
-            color: "#6c757d",
+            color: isDarkMode ? "#94a3b8" : "#6c757d",
             fontSize: "0.9rem"
           }}>
             <p style={{ margin: "0" }}>

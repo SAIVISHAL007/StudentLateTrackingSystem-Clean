@@ -66,7 +66,7 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
   try {
     const { rollNo, name, year, semester, branch, section } = req.body;
 
-    console.log(`📝 Marking student late: ${rollNo}${name ? ` - ${name}` : ''}${year ? ` (Year ${year})` : ''}${branch ? ` [${branch}]` : ''}`);
+    console.log(`Marking student late: ${rollNo}${name ? ` - ${name}` : ''}${year ? ` (Year ${year})` : ''}${branch ? ` [${branch}]` : ''}`);
 
     // Check if student exists
     let student = await Student.findOne({ rollNo });
@@ -97,15 +97,36 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
         branch: branch.toUpperCase(),
         section: section.toUpperCase()
       });
-      console.log(`🆕 Creating new student: ${name} (${rollNo}) - Year ${year} Sem ${studentSemester} - ${branch} ${section}`);
+      console.log(`Creating new student: ${name} (${rollNo}) - Year ${year} Sem ${studentSemester} - ${branch} ${section}`);
     } else {
       // For existing students without semester, calculate and set it
       if (!student.semester) {
         student.semester = (student.year * 2) - 1; // Default to first semester of their year
-        console.log(`🔧 Setting semester for existing student: ${student.name} - Year ${student.year} Sem ${student.semester}`);
+        console.log(`Setting semester for existing student: ${student.name} - Year ${student.year} Sem ${student.semester}`);
       }
       // For existing students, use stored data
-      console.log(`✅ Found existing student: ${student.name} (Year ${student.year} Sem ${student.semester}) - ${student.branch} ${student.section}`);
+      console.log(`Found existing student: ${student.name} (Year ${student.year} Sem ${student.semester}) - ${student.branch} ${student.section}`);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const alreadyMarkedToday = (student.lateLogs || []).some(log => {
+        const logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+        return logDate.getTime() === today.getTime();
+      });
+
+      if (alreadyMarkedToday) {
+        return res.status(400).json({
+          error: "Already marked late today",
+          message: "Already marked late today.",
+          student: {
+            rollNo: student.rollNo,
+            name: student.name,
+            lateDays: student.lateDays
+          }
+        });
+      }
     }
 
     // Increment lateDays and add log
@@ -127,11 +148,11 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
       student.excuseDaysUsed = student.lateDays;
       student.status = 'excused';
       const remainingExcuse = EXCUSE_DAYS - student.lateDays;
-      statusMessage = `✅ ${student.name} marked late! (Excuse day ${student.lateDays}/${EXCUSE_DAYS} used)`;
+      statusMessage = `${student.name} marked late. (Excuse day ${student.lateDays}/${EXCUSE_DAYS} used)`;
       if (remainingExcuse > 0) {
         statusMessage += ` - ${remainingExcuse} excuse day(s) remaining.`;
       } else {
-        statusMessage += ` - ⚠️ No more excuse days! Next late will incur fine.`;
+        statusMessage += ` - No more excuse days. Next late will incur fine.`;
         alertType = "warning";
       }
     } else {
@@ -150,10 +171,10 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
         reason: `Late day #${student.lateDays} - Day ${student.lateDays - EXCUSE_DAYS} after excuse period (₹${FINE_PER_DAY}/day)`
       });
       
-      statusMessage = `💸 FINE APPLIED: ${student.name} charged ₹${fineAmount}! (Day ${student.lateDays - EXCUSE_DAYS} after excuse) - Total fines: ₹${student.fines}`;
+      statusMessage = `Fine applied: ${student.name} charged ₹${fineAmount}. (Day ${student.lateDays - EXCUSE_DAYS} after excuse) - Total fines: ₹${student.fines}`;
       
       if (student.alertFaculty) {
-        statusMessage += ` - 🚨 Alert faculty!`;
+        statusMessage += ` - Alert faculty.`;
       }
       
       alertType = "error";
@@ -164,7 +185,7 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
       writeConcern: { w: 'majority', j: true }
     });
     
-    console.log(`✅ Successfully marked ${student.name} (${rollNo}) as late - Fine: ₹${fineAmount}`);
+    console.log(`Successfully marked ${student.name} (${rollNo}) as late - Fine: ₹${fineAmount}`);
     
     res.json({
       ...student._doc,
@@ -279,19 +300,41 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
 // Get all students (for admin management)
 router.get("/all", checkDbConnection, async (req, res) => {
   try {
-    const { year } = req.query;
+    const { year, page, limit } = req.query;
     let query = {};
     
     if (year && year !== 'all') {
       query.year = parseInt(year);
     }
     
-    const students = await Student.find(query)
+    const baseQuery = Student.find(query)
       .select("rollNo name year semester branch section lateDays status fines")
       .sort({ year: 1, semester: 1, section: 1, rollNo: 1 })
       .lean();
-    
-    res.json({ students, totalCount: students.length });
+
+    const shouldPaginate = page !== undefined || limit !== undefined;
+
+    if (!shouldPaginate) {
+      const students = await baseQuery;
+      return res.json({ students, totalCount: students.length });
+    }
+
+    const pageNum = Math.max(parseInt(page || "1", 10), 1);
+    const limitNum = Math.min(Math.max(parseInt(limit || "50", 10), 1), 200);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [students, totalCount] = await Promise.all([
+      baseQuery.skip(skip).limit(limitNum),
+      Student.countDocuments(query)
+    ]);
+
+    return res.json({
+      students,
+      totalCount,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(totalCount / limitNum)
+    });
   } catch (err) {
     console.error('❌ Get all students error:', err);
     res.status(500).json({ 
@@ -477,6 +520,7 @@ router.post("/pay-fine", checkDbConnection, async (req, res) => {
 router.get("/records/:period", async (req, res) => {
   try {
     const { period } = req.params;
+    const { page, limit } = req.query;
     const now = new Date();
     let startDate;
 
@@ -506,13 +550,15 @@ router.get("/records/:period", async (req, res) => {
         $gte: startDate,
         $lte: now
       }
-    }).select("rollNo name year semester branch section lateDays lateLogs fines status excuseDaysUsed limitExceeded alertFaculty consecutiveLateDays");
+    })
+    .select("rollNo name year semester branch section lateDays lateLogs fines status excuseDaysUsed limitExceeded alertFaculty consecutiveLateDays")
+    .lean();
 
     console.log(`📊 Records for ${period}: Found ${students.length} students with late logs`);
 
     // Filter late logs to only include those in the period
     const studentsWithFilteredLogs = students.map(student => ({
-      ...student._doc,
+      ...student,
       lateLogs: student.lateLogs.filter(log => 
         log.date >= startDate && log.date <= now
       ),
@@ -523,12 +569,32 @@ router.get("/records/:period", async (req, res) => {
 
     console.log(`📋 After filtering by period: ${studentsWithFilteredLogs.length} students with late records`);
 
-    res.json({
+    const shouldPaginate = page !== undefined || limit !== undefined;
+    if (!shouldPaginate) {
+      return res.json({
+        period,
+        startDate,
+        endDate: now,
+        students: studentsWithFilteredLogs,
+        totalRecords: studentsWithFilteredLogs.length
+      });
+    }
+
+    const pageNum = Math.max(parseInt(page || "1", 10), 1);
+    const limitNum = Math.min(Math.max(parseInt(limit || "50", 10), 1), 200);
+    const start = (pageNum - 1) * limitNum;
+    const end = start + limitNum;
+    const paged = studentsWithFilteredLogs.slice(start, end);
+
+    return res.json({
       period,
       startDate,
       endDate: now,
-      students: studentsWithFilteredLogs,
-      totalRecords: studentsWithFilteredLogs.length
+      students: paged,
+      totalRecords: studentsWithFilteredLogs.length,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(studentsWithFilteredLogs.length / limitNum)
     });
   } catch (err) {
     console.error('❌ Error fetching records:', err);
@@ -783,6 +849,7 @@ router.get("/student/:rollNo", checkDbConnection, async (req, res) => {
       rollNo: student.rollNo,
       name: student.name,
       year: student.year,
+      semester: student.semester,
       branch: student.branch,
       section: student.section,
       lateDays: student.lateDays,
@@ -1304,7 +1371,7 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
 // Supports partial filtering - can filter by just year, or year+branch, or all three
 router.get("/filter", async (req, res) => {
   try {
-    const { year, branch, semester } = req.query;
+    const { year, branch, semester, section } = req.query;
     
     // Year is required, branch and semester are optional for live filtering
     if (!year) {
@@ -1323,9 +1390,17 @@ router.get("/filter", async (req, res) => {
     // Build query dynamically
     const query = { year: queryYear };
     
+    // Exclude graduated students from active student lists
+    query.status = { $ne: 'graduated' };
+    
     // Add branch filter if provided
     if (branch) {
       query.branch = branch.toUpperCase();
+    }
+
+    // Add section filter if provided
+    if (section) {
+      query.section = section.toUpperCase();
     }
     
     // Add semester filter if provided
@@ -1339,7 +1414,7 @@ router.get("/filter", async (req, res) => {
       query.semester = querySemester;
     }
     
-    // Filter students with dynamic query
+    // Filter students with dynamic query (including lateDays for frontend)
     const students = await Student.find(query)
     .select("rollNo name year semester branch section lateDays fines status")
     .sort({ branch: 1, rollNo: 1 })
@@ -1349,7 +1424,12 @@ router.get("/filter", async (req, res) => {
       success: true,
       count: students.length,
       students,
-      filters: { year: queryYear, branch: branch || 'all', semester: semester || 'all' }
+      filters: {
+        year: queryYear,
+        branch: branch || 'all',
+        semester: semester || 'all',
+        section: section || 'all'
+      }
     });
   } catch (err) {
     console.error("Filter students error:", err);

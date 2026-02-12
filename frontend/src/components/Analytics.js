@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 import { toast } from "./Toast";
-import { FiBarChart2, FiRefreshCw, FiClock, FiDollarSign, FiBriefcase } from "react-icons/fi";
+import { FiBarChart2, FiRefreshCw, FiClock, FiDollarSign, FiBriefcase, FiAlertTriangle, FiTrendingUp, FiAward, FiArrowUp, FiArrowDown, FiMinus } from "react-icons/fi";
 
 function Analytics() {
   const [todayCount, setTodayCount] = useState(0);
@@ -19,37 +19,33 @@ function Analytics() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastFetch, setLastFetch] = useState(new Date());
 
-  const fetchAnalytics = useCallback(async () => {
+  const fetchAnalytics = useCallback(async (showToast = false) => {
     try {
-      // Fetch today's late count
-      const todayRes = await API.get("/students/late-today");
+      const [todayRes, leaderboardRes, financialRes] = await Promise.all([
+        API.get("/students/late-today"),
+        API.get("/students/analytics/leaderboard").catch((err) => {
+          console.warn("Leaderboard fetch failed:", err.message);
+          return { data: { mostLate: [], leastLate: [], mostImproved: [] } };
+        }),
+        API.get("/students/analytics/financial").catch((err) => {
+          console.warn("Financial data fetch failed:", err.message);
+          return {
+            data: {
+              totalCollected: 0,
+              projectedRevenue: 0,
+              pendingFines: 0,
+              paymentRate: 0,
+              avgFinePerStudent: 0
+            }
+          };
+        })
+      ]);
+
       const newCount = todayRes.data.totalCount || 0;
       setPreviousCount(todayCount);
       setTodayCount(newCount);
-
-      // Fetch leaderboard data
-      try {
-        const leaderboardRes = await API.get("/students/analytics/leaderboard");
-        setLeaderboard(leaderboardRes.data);
-      } catch (err) {
-        console.warn("Leaderboard fetch failed:", err.message);
-        setLeaderboard({ mostLate: [], leastLate: [], mostImproved: [] });
-      }
-
-      // Fetch financial analytics
-      try {
-        const financialRes = await API.get("/students/analytics/financial");
-        setFinancialData(financialRes.data);
-      } catch (err) {
-        console.warn("Financial data fetch failed:", err.message);
-        setFinancialData({
-          totalCollected: 0,
-          projectedRevenue: 0,
-          pendingFines: 0,
-          paymentRate: 0,
-          avgFinePerStudent: 0
-        });
-      }
+      setLeaderboard(leaderboardRes.data);
+      setFinancialData(financialRes.data);
 
       // Calculate department breakdown from late today data
       try {
@@ -64,7 +60,7 @@ function Analytics() {
       setLastFetch(new Date());
       setLoading(false);
       
-      if (!loading) {
+      if (showToast && !loading) {
         toast.success('Analytics refreshed successfully');
       }
     } catch (err) {
@@ -76,12 +72,12 @@ function Analytics() {
   }, [todayCount, loading]);
 
   useEffect(() => {
-    fetchAnalytics();
+    fetchAnalytics(false);
     
     // Auto-refresh every 30 seconds
     let interval;
     if (autoRefresh) {
-      interval = setInterval(fetchAnalytics, 30000);
+      interval = setInterval(() => fetchAnalytics(false), 30000);
     }
     
     return () => {
@@ -105,9 +101,9 @@ function Analytics() {
 
   const getTrendIndicator = () => {
     const diff = todayCount - previousCount;
-    if (diff === 0) return <span style={{ color: '#64748b' }}>➖ No change</span>;
-    if (diff > 0) return <span style={{ color: '#dc2626' }}>⬆️ +{diff} from last refresh</span>;
-    return <span style={{ color: '#10b981' }}>⬇️ {diff} from last refresh</span>;
+    if (diff === 0) return <span style={{ color: '#64748b', display: "flex", alignItems: "center", gap: "0.4rem" }}><FiMinus /> No change</span>;
+    if (diff > 0) return <span style={{ color: '#dc2626', display: "flex", alignItems: "center", gap: "0.4rem" }}><FiArrowUp /> +{diff} from last refresh</span>;
+    return <span style={{ color: '#10b981', display: "flex", alignItems: "center", gap: "0.4rem" }}><FiArrowDown /> {diff} from last refresh</span>;
   };
 
   if (loading) {
@@ -120,7 +116,7 @@ function Analytics() {
         fontSize: "1.2rem",
         color: "#64748b"
       }}>
-        ⏳ Loading analytics...
+        Loading analytics...
       </div>
     );
   }
@@ -181,7 +177,7 @@ function Analytics() {
             Auto-refresh (30s)
           </label>
           <button
-            onClick={fetchAnalytics}
+            onClick={() => fetchAnalytics(true)}
             className="pro-btn pro-btn-primary"
             style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
           >
@@ -442,12 +438,12 @@ function Analytics() {
             alignItems: "center",
             gap: "0.5rem"
           }}>
-            ⚠️ Most Late Students
+            <FiAlertTriangle size={20} /> Most Late Students
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {leaderboard.mostLate.length === 0 ? (
               <div style={{ textAlign: "center", padding: "2rem 1rem", color: "#92400e", fontSize: "0.9rem", background: "rgba(255,255,255,0.5)", borderRadius: "12px" }}>
-                📊 No data available yet. Mark students late to see analytics.
+                No data available yet. Mark students late to see analytics.
               </div>
             ) : (
             leaderboard.mostLate.slice(0, 5).map((student, index) => (
@@ -519,7 +515,7 @@ function Analytics() {
             alignItems: "center",
             gap: "0.5rem"
           }}>
-            📈 Most Improved
+            <FiTrendingUp size={20} /> Most Improved
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {leaderboard.mostImproved.length === 0 ? (
@@ -631,7 +627,7 @@ function Analytics() {
                   fontWeight: "700",
                   fontSize: "1.1rem"
                 }}>
-                  {index === 0 ? "👑" : index + 1}
+                  {index === 0 ? <FiAward size={20} /> : index + 1}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: "600", color: "#1e293b", fontSize: "0.95rem" }}>

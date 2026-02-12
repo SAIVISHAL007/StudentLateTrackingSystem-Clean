@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FiBookOpen, FiUser, FiClock, FiLogOut, FiMenu } from 'react-icons/fi';
+import { FiBookOpen, FiUser, FiClock, FiLogOut, FiMenu, FiMoon, FiSun } from 'react-icons/fi';
 import { getCurrentUser, logout, getUserDisplayName, getLoginDuration } from "../utils/auth";
+import { useDarkMode } from '../context/DarkModeContext';
 
 function Navbar({ onLogout }) {
   const user = getCurrentUser();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -76,6 +78,13 @@ function Navbar({ onLogout }) {
           )}
         </div>
         <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
+          <button
+            onClick={toggleDarkMode}
+            className="dark-mode-toggle"
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDarkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
+          </button>
           {user ? (
             <>
               {!isMobile && (
