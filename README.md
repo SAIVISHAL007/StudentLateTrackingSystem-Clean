@@ -6,7 +6,7 @@ Recent updates: dark mode support, active/inactive faculty status indicators, en
 
 **Latest Version: v3.0.0** | [Release Notes](#-whats-new-in-v300) | [Changelog](#-changelog)
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://frontend-bice-six-7xa3qoyuae.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://studentlatetracker.vercel.app/)
 [![Backend API](https://img.shields.io/badge/API-live-blue?style=for-the-badge)](https://backend-3wax4q7pc-chelluri-sai-vishals-projects-3f9c693c.vercel.app)
 [![Version](https://img.shields.io/badge/version-3.0.0-orange?style=for-the-badge)](https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean/releases/tag/v3.0.0)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/cloud/atlas)
