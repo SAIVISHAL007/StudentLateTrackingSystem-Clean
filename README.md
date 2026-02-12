@@ -105,7 +105,6 @@ This system provides:
 
 ### ✨ Major Optimizations & Refinements
 - **Simplified Late Marking Process** 🚀
-  - Removed reason tracking fields per faculty feedback
   - Streamlined confirmation dialog for faster workflow
   - Cleaner, more intuitive marking interface
 
