@@ -18,16 +18,10 @@ function LateList() {
  useEffect(() => {
  const fetchLateStudents = async () => {
  try {
- console.log(' Fetching late students for today...');
  const res = await API.get("/students/late-today", { timeout: 15000 });
- 
- console.log(' API Response:', res.data);
  
  // Handle both old and new response formats
  const studentsData = res.data.students || res.data;
- 
- console.log(` Processing ${studentsData.length} students late today`);
- console.log(' Students data:', studentsData);
  
  setStudents(studentsData);
  setLoading(false);

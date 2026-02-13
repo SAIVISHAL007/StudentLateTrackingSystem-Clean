@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { FiAlertTriangle, FiLogIn, FiAward } from "react-icons/fi";
+import { FiAlertTriangle, FiLogIn, FiUsers } from "react-icons/fi";
 import API from "../services/api";
+import StudentDashboard from "./StudentDashboard";
 import "./Login.css";
 
 function Login({ onLogin }) {
@@ -10,6 +11,7 @@ function Login({ onLogin }) {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showStudentDashboard, setShowStudentDashboard] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,6 +72,41 @@ function Login({ onLogin }) {
 
   return (
     <div className="login-container">
+      {/* Student Dashboard Button */}
+      <button
+        onClick={() => setShowStudentDashboard(true)}
+        style={{
+          position: 'absolute',
+          top: '1.5rem',
+          right: '1.5rem',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          border: 'none',
+          padding: '0.75rem 1.5rem',
+          borderRadius: '12px',
+          fontSize: '0.95rem',
+          fontWeight: 700,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          boxShadow: '0 6px 20px rgba(102, 126, 234, 0.35)',
+          transition: 'all 0.3s',
+          zIndex: 100
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.45)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.35)';
+        }}
+      >
+        <FiUsers size={20} />
+        Late Students Today
+      </button>
+
       {/* Floating Particle Background */}
       <div className="login-particles">
         <div className="particle particle-1"></div>
@@ -83,7 +120,16 @@ function Login({ onLogin }) {
         {/* Logo/Header Section */}
         <div className="login-header">
           <div className="login-logo no-select">
-            <FiAward size={48} />
+            <img 
+              src="/logo.png" 
+              alt="ANITS Logo" 
+              style={{
+                width: "120px",
+                height: "120px",
+                objectFit: "contain",
+                filter: "drop-shadow(0 4px 12px rgba(102, 126, 234, 0.3))"
+              }}
+            />
           </div>
           <h1 className="login-title no-select">
             Faculty Login
@@ -162,6 +208,11 @@ function Login({ onLogin }) {
           </div>
         </form>
       </div>
+
+      {/* Student Dashboard Modal */}
+      {showStudentDashboard && (
+        <StudentDashboard onClose={() => setShowStudentDashboard(false)} />
+      )}
     </div>
   );
 }

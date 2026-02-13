@@ -23,9 +23,7 @@ function Record() {
  const fetchRecords = async (period) => {
  setLoading(true);
  try {
- console.log(` Fetching ${period} records...`);
  const res = await API.get(`/students/records/${period}`);
- console.log(` Records response:`, res.data);
  setRecordData(res.data);
  } catch (err) {
  console.error(' Error fetching records:', err);

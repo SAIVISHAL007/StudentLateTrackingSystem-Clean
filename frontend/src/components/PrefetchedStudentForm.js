@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 import { enqueueLateMark } from "../utils/offlineQueue";
 import { toast } from "./Toast";
-import { FiCalendar, FiBriefcase, FiBookOpen, FiZap, FiX, FiTrendingUp, FiBell } from "react-icons/fi";
+import { FiCalendar, FiBriefcase, FiBookOpen, FiZap, FiX, FiTrendingUp, FiBell, FiSearch } from "react-icons/fi";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function PrefetchedStudentForm() {
   const [year, setYear] = useState("");
   const [branch, setBranch] = useState("");
   const [section, setSection] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -286,6 +287,37 @@ function PrefetchedStudentForm() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <label style={{ display: "flex", marginBottom: "0.5rem", fontWeight: "600", alignItems: "center", gap: "0.5rem" }}>
+          <FiSearch size={16} /> Search Students
+        </label>
+        <input
+          type="text"
+          placeholder={year ? "Search by name or roll number..." : "Select a year to enable search"}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          disabled={!year}
+          style={{
+            width: "100%",
+            padding: "0.75rem",
+            borderRadius: "0.5rem",
+            border: "2px solid #e5e7eb",
+            fontSize: "1rem",
+            transition: "border-color 0.2s",
+            backgroundColor: !year ? "#f3f4f6" : "#ffffff",
+            cursor: !year ? "not-allowed" : "text"
+          }}
+          onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+          onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
+        />
+        {searchQuery && (
+          <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+            Showing results for "{searchQuery}"
+          </p>
+        )}
+      </div>
+
       {/* Students List */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "2rem" }}>
@@ -302,7 +334,16 @@ function PrefetchedStudentForm() {
           gap: window.innerWidth <= 768 ? "0.75rem" : "1rem",
           marginBottom: "2rem"
         }}>
-          {students.map(student => (
+          {students
+            .filter(student => {
+              if (!searchQuery.trim()) return true;
+              const query = searchQuery.toLowerCase();
+              return (
+                student.name.toLowerCase().includes(query) ||
+                student.rollNo.toLowerCase().includes(query)
+              );
+            })
+            .map(student => (
             <div
               key={student._id}
               onClick={() => handleStudentSelect(student)}

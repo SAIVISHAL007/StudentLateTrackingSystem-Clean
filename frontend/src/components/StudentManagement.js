@@ -45,7 +45,6 @@ function StudentManagement() {
     setLoading(true);
     try {
       const res = await API.get("/students/all");
-      console.log("Fetched students:", res.data);
       setStudents(res.data.students || []);
     } catch (err) {
       console.error("Fetch error:", err.response?.data || err.message);

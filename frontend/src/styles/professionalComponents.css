@@ -12,7 +12,8 @@
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
-  padding: 1.25rem 2rem;
+  padding: 0.5rem 1.25rem;
+  min-height: 84px;
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.08),
     0 4px 16px rgba(0, 0, 0, 0.05),
@@ -22,6 +23,8 @@
   border-radius: 20px;
   animation: slideInDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .professional-navbar:hover {
@@ -656,12 +659,12 @@
 
 @media (max-width: 768px) {
   .professional-navbar {
-    padding: 1rem 1.25rem;
+    padding: 0.25rem 0.6rem;
+    min-height: 50px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
   }
 
   .professional-sidebar {

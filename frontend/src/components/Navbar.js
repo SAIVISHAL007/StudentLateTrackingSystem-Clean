@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiBookOpen, FiUser, FiClock, FiLogOut, FiMenu, FiMoon, FiSun } from 'react-icons/fi';
+import { FiUser, FiClock, FiLogOut, FiMenu, FiMoon, FiSun } from 'react-icons/fi';
 import { getCurrentUser, logout, getUserDisplayName, getLoginDuration } from "../utils/auth";
 import { useDarkMode } from '../context/DarkModeContext';
 
@@ -29,8 +29,13 @@ function Navbar({ onLogout }) {
 
   return (
     <nav className="professional-navbar">
-      <div className="flex-between">
-        <div style={{ display: "flex", alignItems: "center", gap: "1.125rem" }}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "auto 1fr auto",
+        alignItems: "center",
+        gap: "1rem"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           {isMobile && (
             <button
               onClick={toggleSidebar}
@@ -57,27 +62,36 @@ function Navbar({ onLogout }) {
               <FiMenu size={26} />
             </button>
           )}
-          <div className="navbar-brand-logo">
-            <FiBookOpen size={26} />
-          </div>
-          {!isMobile && (
-            <div>
-              <h2 className="navbar-title">
-                Student Late Tracker
-              </h2>
-              <p style={{ 
-                margin: 0, 
-                color: "#64748b", 
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                letterSpacing: "0.3px"
-              }}>
-                Real-time Attendance Management
-              </p>
-            </div>
-          )}
         </div>
-        <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            height: isMobile ? "64px" : "96px",
+            padding: isMobile ? "0.25rem 0.5rem" : "0.35rem 0.85rem",
+            borderRadius: "14px",
+            background: "rgba(102, 126, 234, 0.06)",
+            boxShadow: "0 0 24px rgba(102, 126, 234, 0.2)",
+            maxWidth: "100%"
+          }}>
+            <img
+              src="/brandingHeader.png"
+              alt="ANITS Header"
+              style={{
+                height: "100%",
+                width: "auto",
+                objectFit: "contain",
+                maxWidth: "100%",
+                filter: "drop-shadow(0 3px 10px rgba(102, 126, 234, 0.2))"
+              }}
+            />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center", justifyContent: "flex-end" }}>
           <button
             onClick={toggleDarkMode}
             className="dark-mode-toggle"
@@ -89,27 +103,27 @@ function Navbar({ onLogout }) {
             <>
               {!isMobile && (
                 <div className="user-info-badge">
-                  <span style={{ 
-                    color: "#1e40af", 
-                    fontSize: "0.975rem", 
+                  <span style={{
+                    color: "#1e40af",
+                    fontSize: "0.875rem",
                     fontWeight: "700",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.625rem"
-                  }}>
-                    <FiUser size={18} />
-                    {getUserDisplayName()}
-                  </span>
-                  <span style={{ 
-                    color: "#3b82f6", 
-                    fontSize: "0.8rem",
-                    fontWeight: "600",
-                    marginTop: "0.375rem",
                     display: "flex",
                     alignItems: "center",
                     gap: "0.5rem"
                   }}>
-                    <FiClock size={14} />
+                    <FiUser size={16} />
+                    {getUserDisplayName()}
+                  </span>
+                  <span style={{
+                    color: "#3b82f6",
+                    fontSize: "0.75rem",
+                    fontWeight: "600",
+                    marginTop: "0.25rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.4rem"
+                  }}>
+                    <FiClock size={12} />
                     {getLoginDuration()}
                   </span>
                 </div>
@@ -118,32 +132,19 @@ function Navbar({ onLogout }) {
                 onClick={handleLogout}
                 className="logout-button"
                 style={{
-                  padding: isMobile ? "10px 14px" : "auto"
+                  padding: isMobile ? "8px 12px" : "0.625rem 1.25rem",
+                  fontSize: isMobile ? "inherit" : "0.875rem"
                 }}
               >
                 {isMobile ? <FiLogOut size={20} /> : (
                   <>
-                    <FiLogOut size={18} />
+                    <FiLogOut size={16} />
                     Logout
                   </>
                 )}
               </button>
             </>
-          ) : (
-            !isMobile && (
-              <span style={{ 
-                color: "#64748b", 
-                fontSize: "0.95rem",
-                fontWeight: "500",
-                padding: "0.875rem 1.5rem",
-                background: "#f8fafc",
-                borderRadius: "12px",
-                border: "1px solid #e2e8f0"
-              }}>
-                Track attendance and manage late arrivals
-              </span>
-            )
-          )}
+          ) : null}
         </div>
       </div>
     </nav>
