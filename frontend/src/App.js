@@ -262,7 +262,7 @@ function App() {
             fontSize: "0.9rem"
           }}>
             <p style={{ margin: "0" }}>
-              Prototype project built by Chelluri Sai Vishal - CSE(AI&ML) dept
+              Prototype project built by C.S.V - CSE(AI&ML) dept
             </p>
           </footer>
         </div>

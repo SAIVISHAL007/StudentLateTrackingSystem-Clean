@@ -2,6 +2,7 @@ import React, {useState,useEffect, useRef } from "react";
 import { FiBarChart2, FiSettings } from "react-icons/fi";
 import API from "../services/api";
 import { getCurrentUser } from "../utils/auth";
+import AuditTrail from "./AuditTrail";
 
 function AdminManagement() {
  const [stats,setStats]=useState(null);
@@ -37,6 +38,9 @@ function AdminManagement() {
  const [studentsWithFines, setStudentsWithFines] = useState([]);
  const [selectedStudents, setSelectedStudents] = useState([]);
  const [showFinesList, setShowFinesList] = useState(false);
+
+ // State for tab navigation
+ const [activeTab, setActiveTab] = useState("management"); // "management" or "audit"
 
  const initializedRef = useRef(false);
 
@@ -661,6 +665,53 @@ function AdminManagement() {
  <p style={{ color: "#64748b", fontSize: "1.05rem", fontWeight: 500, margin: 0 }}>System statistics and management operations</p>
  </div>
  </div>
+
+ {/* Tab Navigation */}
+ <div style={{
+ display: "flex",
+ gap: "0.5rem",
+ marginBottom: "2rem",
+ borderBottom: "2px solid #e5e7eb",
+ paddingBottom: "1rem"
+ }}>
+ <button
+ onClick={() => setActiveTab("management")}
+ style={{
+ padding: "0.8rem 1.5rem",
+ background: activeTab === "management" ? "linear-gradient(135deg,#667eea 0%,#764ba2 100%)" : "transparent",
+ color: activeTab === "management" ? "white" : "#999",
+ border: "none",
+ borderRadius: "8px 8px 0 0",
+ cursor: "pointer",
+ fontWeight: activeTab === "management" ? "700" : "500",
+ fontSize: "0.95rem",
+ transition: 
+"all 0.3s"
+ }}
+ >
+ 📊 Management
+ </button>
+ <button
+ onClick={() => setActiveTab("audit")}
+ style={{
+ padding: "0.8rem 1.5rem",
+ background: activeTab === "audit" ? "linear-gradient(135deg,#667eea 0%,#764ba2 100%)" : "transparent",
+ color: activeTab === "audit" ? "white" : "#999",
+ border: "none",
+ borderRadius: "8px 8px 0 0",
+ cursor: "pointer",
+ fontWeight: activeTab === "audit" ? "700" : "500",
+ fontSize: "0.95rem",
+ transition: "all 0.3s"
+ }}
+ >
+ 📋 Audit Trail
+ </button>
+ </div>
+
+ {/* Tab Content - Management */}
+ {activeTab === "management" && (
+ <div>
 
  {/* System Statistics */}
  <div style={{
@@ -1503,6 +1554,15 @@ function AdminManagement() {
  <div style={{ fontSize: "2rem", marginBottom: "1rem" }}></div>
  <p>Processing operation...</p>
  </div>
+ </div>
+ )}
+ </div>
+ )}
+
+ {/* Tab Content - Audit Trail */}
+ {activeTab === "audit" && (
+ <div>
+ <AuditTrail />
  </div>
  )}
  </div>

@@ -1,7 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
 import Student from "../models/student.js";
-import { generateRemovalProof } from "../utils/pdfGenerator.js";
+import AuditLog from "../models/auditLog.js";
+import { generateRemovalProof, generateAuditTrailPDF } from "../utils/pdfGenerator.js";
 
 const router = express.Router();
 
@@ -1146,7 +1147,8 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
       removedCount: 0,
       affectedStudents: new Set(),
       fineReductionTotal: 0,
-      failures: []
+      failures: [],
+      auditLogs: [] // Track audit logs to create
     };
 
     // Group records by rollNo for efficiency
@@ -1224,18 +1226,36 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
 
       await student.save();
 
-      // Audit log (console for prototype)
-      console.log('[Bulk Removal]', JSON.stringify({
-        rollNo,
-        removedForStudent,
-        reason,
-        authorizedBy,
-        changes: {
-          lateDays: { from: originalLateDays, to: student.lateDays },
-          fines: { from: originalFines, to: student.fines },
-          status: { from: originalStatus, to: student.status }
-        }
-      }, null, 2));
+      // Create audit log for this removal
+      const auditEntry = new AuditLog({
+        action: 'LATE_RECORD_REMOVED',
+        performedBy: {
+          facultyEmail: req.body.authorizedByEmail || 'unknown',
+          facultyName: req.body.authorizedBy || 'unknown',
+          actorRole: req.body.authorizedByRole || 'faculty'
+        },
+        targetStudent: {
+          rollNo: student.rollNo,
+          name: student.name,
+          branch: student.branch
+        },
+        details: {
+          recordsRemoved: removedForStudent,
+          removedDates: dates,
+          changes: {
+            lateDays: { from: originalLateDays, to: student.lateDays },
+            fines: { from: originalFines, to: student.fines },
+            status: { from: originalStatus, to: student.status }
+          }
+        },
+        reason: reason,
+        ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+        userAgent: req.get('user-agent') || 'unknown',
+        timestamp: new Date()
+      });
+      
+      await auditEntry.save();
+      summary.auditLogs.push(auditEntry._id);
     }
 
     console.log('Bulk removal successful:', {
@@ -1534,6 +1554,118 @@ router.put("/student/:rollNo", checkDbConnection, async (req, res) => {
   } catch (err) {
     console.error("❌ Update student error:", err);
     res.status(500).json({ error: "Failed to update student", details: err.message });
+  }
+});
+
+// Get audit trail for late record removals
+router.get("/audit-logs/removal-history", checkDbConnection, async (req, res) => {
+  try {
+    const { rollNo, limit = 50, skip = 0 } = req.query;
+    
+    const query = { 
+      action: 'LATE_RECORD_REMOVED'
+    };
+    
+    // Optional: filter by specific student
+    if (rollNo) {
+      query['targetStudent.rollNo'] = rollNo;
+    }
+    
+    // Get total count
+    const totalCount = await AuditLog.countDocuments(query);
+    
+    // Fetch audit logs with pagination
+    const logs = await AuditLog.find(query)
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .lean();
+    
+    res.json({
+      message: 'Removal audit logs retrieved',
+      totalCount,
+      logs,
+      pagination: {
+        skip: parseInt(skip),
+        limit: parseInt(limit),
+        hasMore: parseInt(skip) + parseInt(limit) < totalCount
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).json({ error: 'Failed to fetch audit logs', details: error.message });
+  }
+});
+
+// Get audit statistics
+router.get("/audit-logs/statistics", checkDbConnection, async (req, res) => {
+  try {
+    const stats = await AuditLog.aggregate([
+      { $match: { action: 'LATE_RECORD_REMOVED' } },
+      {
+        $group: {
+          _id: '$performedBy.facultyName',
+          totalRemovals: { $sum: 1 },
+          totalRecordsRemoved: { $sum: '$details.recordsRemoved' },
+          totalFinesRefunded: { $sum: { $sum: '$details.changes.fines' } },
+          lastAction: { $max: '$timestamp' }
+        }
+      },
+      { $sort: { totalRemovals: -1 } }
+    ]);
+    
+    res.json({
+      message: 'Audit statistics retrieved',
+      stats
+    });
+  } catch (error) {
+    console.error('Error fetching audit statistics:', error);
+    res.status(500).json({ error: 'Failed to fetch audit statistics', details: error.message });
+  }
+});
+
+// Export audit trail as PDF
+router.get("/audit-logs/export-pdf", checkDbConnection, async (req, res) => {
+  try {
+    const { rollNo, limit = 100 } = req.query;
+    
+    const query = { 
+      action: 'LATE_RECORD_REMOVED'
+    };
+    
+    // Optional: filter by specific student
+    if (rollNo) {
+      query['targetStudent.rollNo'] = rollNo;
+    }
+    
+    // Get total count
+    const totalCount = await AuditLog.countDocuments(query);
+    
+    // Fetch audit logs (limit to prevent huge PDFs)
+    const logs = await AuditLog.find(query)
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit))
+      .lean();
+    
+    // Get generated by info from request (if authenticated)
+    const generatedBy = req.facultyName || 'System Administrator';
+    
+    // Generate PDF
+    const pdfBuffer = await generateAuditTrailPDF({
+      logs,
+      totalCount,
+      generatedBy
+    });
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="audit-trail-${new Date().toISOString().split('T')[0]}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating audit trail PDF:', error);
+    res.status(500).json({ error: 'Failed to generate PDF', details: error.message });
   }
 });
 
