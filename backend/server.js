@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import { forceHTTPS, securityHeaders, sanitizeRequest, sanitizeErrors } from "./middleware/security.js";
 
 dotenv.config();
 
@@ -40,6 +41,11 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Security middleware
+app.use(forceHTTPS);
+app.use(securityHeaders);
+app.use(sanitizeRequest);
+
 // Increase payload limit for base64 images
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -59,6 +65,9 @@ app.use(async (req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/ai", aiRoutes);
+
+// Error handling middleware (must be last)
+app.use(sanitizeErrors);
 
 // Use MONGODB_URI for production deployment
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/studentLateTracking';

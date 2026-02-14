@@ -33,9 +33,13 @@ const facultySchema = new mongoose.Schema({
     required: [true, "Password is required"],
     minlength: [6, "Password must be at least 6 characters"]
   },
-  plaintextPassword: {
+  passwordResetToken: {
     type: String,
-    select: false // Hidden by default for security
+    select: false
+  },
+  passwordResetExpires: {
+    type: Date,
+    select: false
   },
   role: {
     type: String,
@@ -46,7 +50,6 @@ const facultySchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  // Removed passwordResetOTP/passwordResetExpires (OTP workflow deprecated)
   lastLogin: Date,
   loginHistory: [{
     timestamp: { type: Date, default: Date.now },
@@ -66,8 +69,6 @@ facultySchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
   try {
-    // Store plaintext for admin viewing (security note: not best practice but required)
-    this.plaintextPassword = this.password;
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
@@ -80,7 +81,5 @@ facultySchema.pre('save', async function(next) {
 facultySchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
-
-// Removed OTP helper methods.
 
 export default mongoose.model("Faculty", facultySchema);

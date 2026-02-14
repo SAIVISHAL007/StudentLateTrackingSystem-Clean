@@ -1,9 +1,26 @@
 /**
  * Simple structured logger with correlation IDs
  * Logs all requests with unique correlation ID for tracing
+ * SECURITY: Does not log sensitive data (passwords, tokens, etc.)
  */
 
 import { randomUUID } from 'crypto';
+
+// Sanitize sensitive fields from objects before logging
+const sanitizeForLog = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  const sanitized = { ...obj };
+  const sensitiveFields = ['password', 'newPassword', 'oldPassword', 'token', 'jwt', 'authorization', 'plaintextPassword'];
+  
+  for (const field of sensitiveFields) {
+    if (sanitized[field]) {
+      sanitized[field] = '[REDACTED]';
+    }
+  }
+  
+  return sanitized;
+};
 
 const logger = {
   info: (message, meta = {}) => {
@@ -11,7 +28,7 @@ const logger = {
       level: 'info',
       timestamp: new Date().toISOString(),
       message,
-      ...meta
+      ...sanitizeForLog(meta)
     }));
   },
   
@@ -20,7 +37,7 @@ const logger = {
       level: 'error',
       timestamp: new Date().toISOString(),
       message,
-      ...meta
+      ...sanitizeForLog(meta)
     }));
   },
   
@@ -29,7 +46,7 @@ const logger = {
       level: 'warn',
       timestamp: new Date().toISOString(),
       message,
-      ...meta
+      ...sanitizeForLog(meta)
     }));
   }
 };
@@ -63,4 +80,4 @@ const requestLogger = (req, res, next) => {
   next();
 };
 
-export { logger, requestLogger };
+export { logger, requestLogger, sanitizeForLog };

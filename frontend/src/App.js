@@ -41,16 +41,12 @@ function App() {
 
   const handleLogin = (username) => {
     setAuthenticated(true);
-    console.log(`Faculty ${username} logged in successfully`);
-    console.log('JWT Token:', localStorage.getItem('jwt_token') ? 'Present' : 'Missing');
-    console.log('Auth Data:', localStorage.getItem('facultyAuth'));
   };
 
   const handleLogout = () => {
     setAuthenticated(false);
     localStorage.setItem('lastPage', "mark-late"); // Reset to default page on logout
     setCurrentPage("mark-late");
-    console.log("User logged out");
   };
 
   // Check authentication status on app load
@@ -61,7 +57,6 @@ function App() {
     
     // If old session storage exists but no JWT, clear it (migration)
     if (oldAuth && !hasJWT) {
-      console.log('Clearing old authentication data...');
       sessionStorage.removeItem('facultyAuth');
       setAuthenticated(false);
     } else {

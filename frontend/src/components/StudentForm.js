@@ -134,7 +134,6 @@ function StudentForm() {
       if (navigator.onLine) {
         flushQueue(API).then(result => {
           if (result.flushed > 0) {
-            console.log(`Flushed ${result.flushed} queued item(s)`);
             setQueueCount(getQueue().length);
           }
         });

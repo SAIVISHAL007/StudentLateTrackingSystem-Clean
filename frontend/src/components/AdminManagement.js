@@ -414,16 +414,6 @@ function AdminManagement() {
  return;
  }
  
- console.log('Sending bulk removal request:', {
- selectedKeys: selectedLateRecords,
- recordsCount: records.length,
- records,
- reason: lateRemovalForm.reason,
- authorizedBy: lateRemovalForm.authorizedBy,
- authorizedByEmail: currentUser?.email || "",
- authorizedByRole: currentUser?.role || "faculty"
- });
- 
  // Call bulk endpoint
  const res = await API.post('/students/bulk-remove-late-records', { 
  records,

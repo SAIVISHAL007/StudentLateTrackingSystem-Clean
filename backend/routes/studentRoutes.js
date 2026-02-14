@@ -67,8 +67,6 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
   try {
     const { rollNo, name, year, semester, branch, section } = req.body;
 
-    console.log(`Marking student late: ${rollNo}${name ? ` - ${name}` : ''}${year ? ` (Year ${year})` : ''}${branch ? ` [${branch}]` : ''}`);
-
     // Check if student exists
     let student = await Student.findOne({ rollNo });
 
@@ -98,15 +96,12 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
         branch: branch.toUpperCase(),
         section: section.toUpperCase()
       });
-      console.log(`Creating new student: ${name} (${rollNo}) - Year ${year} Sem ${studentSemester} - ${branch} ${section}`);
     } else {
       // For existing students without semester, calculate and set it
       if (!student.semester) {
         student.semester = (student.year * 2) - 1; // Default to first semester of their year
-        console.log(`Setting semester for existing student: ${student.name} - Year ${student.year} Sem ${student.semester}`);
       }
       // For existing students, use stored data
-      console.log(`Found existing student: ${student.name} (Year ${student.year} Sem ${student.semester}) - ${student.branch} ${student.section}`);
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -186,8 +181,6 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
       writeConcern: { w: 'majority', j: true }
     });
     
-    console.log(`Successfully marked ${student.name} (${rollNo}) as late - Fine: ₹${fineAmount}`);
-    
     res.json({
       ...student._doc,
       message: statusMessage,
@@ -237,8 +230,6 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
     const limit = parseInt(req.query.limit) || 50; // Default 50 students per page
     const skip = (page - 1) * limit;
     
-    console.log(`📋 Fetching students late today (${today.toDateString()}) - Page ${page}, Limit ${limit}`);
-    
     // Find students with late logs from today with optimized query and pagination
     const students = await Student.find({
       "lateLogs.date": {
@@ -267,8 +258,6 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
         log.date >= today && log.date < tomorrow
       )
     }));
-    
-    console.log(`✅ Found ${studentsWithTodayLogs.length} students late today (Page ${page}/${Math.ceil(totalCount/limit)})`);
     
     res.json({
       date: today.toDateString(),
@@ -372,8 +361,6 @@ router.get("/search", checkDbConnection, async (req, res) => {
       query.year = parseInt(year);
     }
     
-    console.log(`🔍 Searching students with query: ${q}, year: ${year || 'all'}`);
-    
     const students = await Student.find(query)
       .select("rollNo name year branch section lateDays status fines limitExceeded excuseDaysUsed alertFaculty")
       .sort({ lateDays: -1, rollNo: 1 })
@@ -404,16 +391,12 @@ router.get("/search", checkDbConnection, async (req, res) => {
 // Get all students with pending fines
 router.get("/with-fines", checkDbConnection, async (req, res) => {
   try {
-    console.log('📋 Fetching students with pending fines...');
-    
     const students = await Student.find({
       fines: { $gt: 0 }
     })
     .select("rollNo name year branch section fines lateDays status")
     .sort({ fines: -1, rollNo: 1 })
     .lean();
-    
-    console.log(`✅ Found ${students.length} students with pending fines`);
     
     res.json({
       count: students.length,
@@ -441,8 +424,6 @@ router.post("/pay-fine", checkDbConnection, async (req, res) => {
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: "Valid payment amount is required" });
     }
-
-    console.log(`💰 Processing fine payment for ${rollNo}: ₹${amount}`);
 
     const student = await Student.findOne({ rollNo });
 
@@ -492,8 +473,6 @@ router.post("/pay-fine", checkDbConnection, async (req, res) => {
     }
 
     await student.save();
-
-    console.log(`✅ Payment processed: ${student.name} paid ₹${amount}. Remaining fines: ₹${student.fines}`);
 
     res.json({
       success: true,
@@ -555,8 +534,6 @@ router.get("/records/:period", async (req, res) => {
     .select("rollNo name year semester branch section lateDays lateLogs fines status excuseDaysUsed limitExceeded alertFaculty consecutiveLateDays")
     .lean();
 
-    console.log(`📊 Records for ${period}: Found ${students.length} students with late logs`);
-
     // Filter late logs to only include those in the period
     const studentsWithFilteredLogs = students.map(student => ({
       ...student,
@@ -567,8 +544,6 @@ router.get("/records/:period", async (req, res) => {
         log.date >= startDate && log.date <= now
       ).length
     })).filter(student => student.lateCountInPeriod > 0);
-
-    console.log(`📋 After filtering by period: ${studentsWithFilteredLogs.length} students with late records`);
 
     const shouldPaginate = page !== undefined || limit !== undefined;
     if (!shouldPaginate) {
@@ -629,9 +604,6 @@ router.post("/promote-semester", async (req, res) => {
         studentsPromoted: 0 
       });
     }
-
-    console.log(`📚 Starting semester promotion for ${studentCount} students...`);
-    console.log(`Filter: ${JSON.stringify(filter)}`);
 
     // Fetch all students to promote (we need to calculate year changes individually)
     const students = await Student.find(filter).select('rollNo year semester').lean();
@@ -721,9 +693,6 @@ router.post("/promote-semester", async (req, res) => {
       }
     }
 
-    console.log(`✅ Promoted ${promotedCount} students, Graduated ${graduatedCount} students`);
-    console.log(`📊 Year transitions: ${yearChangedCount} students moved to next year`);
-
     res.json({
       message: `Successfully promoted ${promotedCount} students${graduatedCount > 0 ? ` and graduated ${graduatedCount} students` : ''}!`,
       studentsPromoted: promotedCount,
@@ -751,6 +720,94 @@ router.post("/promote-semester", async (req, res) => {
   }
 });
 
+// Demote students to previous semester (to fix accidental promotions)
+router.post("/demote-semester", async (req, res) => {
+  try {
+    const { 
+      currentYear = null,     // Year to find students in (e.g., 4)
+      currentSemester = null, // Semester to find students in (e.g., 7)
+      targetYear = null,      // Year to demote to (e.g., 2)
+      targetSemester = null,  // Semester to demote to (e.g., 4)
+      rollNumbers = []        // Optional: specific roll numbers to demote
+    } = req.body;
+
+    if (!targetYear || !targetSemester) {
+      return res.status(400).json({ 
+        error: "Target year and semester are required",
+        example: { targetYear: 2, targetSemester: 4 }
+      });
+    }
+
+    // Build filter - find students to demote
+    let filter = {};
+    if (currentYear) filter.year = currentYear;
+    if (currentSemester) filter.semester = currentSemester;
+    if (rollNumbers.length > 0) filter.rollNo = { $in: rollNumbers };
+
+    // Check if there are students matching criteria
+    const studentCount = await Student.countDocuments(filter);
+    
+    if (studentCount === 0) {
+      return res.status(404).json({ 
+        error: "No students found matching criteria",
+        filter: filter,
+        studentsAftered: 0 
+      });
+    }
+
+    // Fetch students to demote
+    const students = await Student.find(filter).select('rollNo year semester').lean();
+    
+    let demotedCount = 0;
+    const demotionDetails = [];
+
+    // Process each student
+    for (const student of students) {
+      const fromYear = student.year;
+      const fromSemester = student.semester;
+
+      // Update to target semester/year
+      await Student.updateOne(
+        { rollNo: student.rollNo },
+        {
+          $set: {
+            semester: targetSemester,
+            year: targetYear,
+            // Keep status as-is to preserve historical context
+            // But reset current semester flags
+            limitExceeded: false,
+            alertFaculty: false
+          }
+        }
+      );
+      
+      demotedCount++;
+      demotionDetails.push({
+        rollNo: student.rollNo,
+        action: 'demoted',
+        from: `Y${fromYear}S${fromSemester}`,
+        to: `Y${targetYear}S${targetSemester}`
+      });
+    }
+
+    res.json({
+      message: `Successfully demoted ${demotedCount} students to Y${targetYear}S${targetSemester}!`,
+      studentsDemoted: demotedCount,
+      totalAffected: studentCount,
+      details: demotionDetails.length <= 100 ? demotionDetails : { 
+        note: 'Too many students to show details',
+        sample: demotionDetails.slice(0, 10)
+      }
+    });
+  } catch (err) {
+    console.error('❌ Semester demotion error:', err);
+    res.status(500).json({ 
+      error: "Failed to demote students",
+      details: err.message 
+    });
+  }
+});
+
 // Reset all student data (for prototype testing)
 router.post("/reset-all-data", async (req, res) => {
   try {
@@ -763,8 +820,6 @@ router.post("/reset-all-data", async (req, res) => {
         studentsReset: 0 
       });
     }
-
-    console.log(`🔄 Starting data reset for ${studentCount} students...`);
 
     const result = await Student.updateMany(
       {},
@@ -786,8 +841,6 @@ router.post("/reset-all-data", async (req, res) => {
         writeConcern: { w: 'majority', j: true }
       }
     );
-
-    console.log(`✅ Reset data for ${result.modifiedCount} students successfully`);
 
     res.json({
       message: `Successfully reset data for ${result.modifiedCount} students!`,
@@ -955,8 +1008,6 @@ router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
       });
     }
 
-    console.log(`🗑️ Attempting to remove late record: ${rollNo} on ${date}`);
-
     // Find the student
     const student = await Student.findOne({ rollNo });
     if (!student) {
@@ -1049,8 +1100,6 @@ router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
       writeConcern: { w: 'majority', j: true }
     });
 
-    console.log(`✅ Successfully removed late record for ${student.name} (${rollNo})`);
-
     // Create audit log entry
     const auditInfo = {
       action: 'LATE_RECORD_REMOVED',
@@ -1067,8 +1116,6 @@ router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
         status: { from: originalStatus, to: student.status }
       }
     };
-
-    console.log('📋 Audit Log:', JSON.stringify(auditInfo, null, 2));
 
     res.json({
       message: `Successfully removed ${matchingLogs.length} late record(s) for ${student.name} on ${targetDate.toDateString()}`,
@@ -1120,24 +1167,14 @@ router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
 // Bulk remove late records: accepts array of { rollNo, date, reason, authorizedBy }
 router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => {
   try {
-    console.log('Bulk removal request received:', {
-      body: req.body,
-      recordsType: typeof req.body.records,
-      recordsIsArray: Array.isArray(req.body.records),
-      recordsLength: req.body.records?.length
-    });
-    
     const { records, reason, authorizedBy } = req.body;
     if (!Array.isArray(records) || records.length === 0) {
-      console.error('Invalid records:', { records, isArray: Array.isArray(records), length: records?.length });
       return res.status(400).json({ error: 'Records array required' });
     }
     if (!reason || reason.trim().length < 10) {
-      console.error('Invalid reason:', { reason, length: reason?.length });
       return res.status(400).json({ error: 'Reason must be at least 10 characters' });
     }
     if (!authorizedBy || !authorizedBy.trim()) {
-      console.error('Invalid authorizedBy:', { authorizedBy });
       return res.status(400).json({ error: 'authorizedBy required' });
     }
 
@@ -1258,12 +1295,6 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
       summary.auditLogs.push(auditEntry._id);
     }
 
-    console.log('Bulk removal successful:', {
-      removedRecords: summary.removedCount,
-      affectedStudents: summary.affectedStudents.size,
-      fineReduction: summary.fineReductionTotal
-    });
-
     res.json({
       message: 'Bulk removal processed',
       summary: {
@@ -1278,7 +1309,6 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
     });
   } catch (error) {
     console.error('❌ Bulk remove error:', error);
-    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Bulk removal failed', details: error.message, stack: error.stack });
   }
 });
@@ -1539,7 +1569,6 @@ router.put("/student/:rollNo", checkDbConnection, async (req, res) => {
 
     await student.save();
 
-    console.log(`✅ Updated student ${oldRollNo} -> ${newRollNo}: ${name}`);
     res.json({ 
       message: "Student updated successfully",
       student: {

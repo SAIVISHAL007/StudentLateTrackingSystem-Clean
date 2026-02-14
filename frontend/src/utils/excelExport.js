@@ -80,7 +80,6 @@ export const exportToExcel = (students, filename, filters = {}) => {
     // Write file
     XLSX.writeFile(workbook, fullFilename);
     
-    console.log(`Excel export successful: ${fullFilename}`);
     return true;
   } catch (error) {
     console.error('Excel export error:', error);
@@ -200,7 +199,6 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
     // Write file
     XLSX.writeFile(workbook, fullFilename);
     
-    console.log(`Excel export successful: ${fullFilename}`);
     return true;
   } catch (error) {
     console.error('Excel export error:', error);

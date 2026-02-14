@@ -2,7 +2,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import Faculty from "../models/faculty.js";
 import AuditLog from "../models/auditLog.js";
-// Removed OTP email service; manual admin resets only.
+import { authLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -182,7 +182,8 @@ router.patch('/faculty/:id', authMiddleware, async (req, res) => {
 });
 
 // Login faculty
-router.post("/login", async (req, res) => {
+// Login endpoint with rate limiting
+router.post("/login", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     
@@ -324,7 +325,7 @@ router.get('/faculty', authMiddleware, async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [items, total] = await Promise.all([
-      Faculty.find(q).select('name email branch role isActive createdAt lastLogin plaintextPassword').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+      Faculty.find(q).select('name email branch role isActive createdAt lastLogin').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
       Faculty.countDocuments(q)
     ]);
 
@@ -346,7 +347,7 @@ router.get('/faculty/:id', authMiddleware, async (req, res) => {
     if (!['admin','superadmin'].includes(req.faculty.role)) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    const faculty = await Faculty.findById(req.params.id).select('name email branch role isActive createdAt lastLogin loginHistory plaintextPassword').lean();
+    const faculty = await Faculty.findById(req.params.id).select('name email branch role isActive createdAt lastLogin loginHistory').lean();
     if (!faculty) return res.status(404).json({ error: 'Faculty not found' });
     res.json({ faculty });
   } catch (error) {
@@ -367,8 +368,12 @@ router.post('/faculty/:id/reset-password', authMiddleware, async (req, res) => {
     }
     const faculty = await Faculty.findById(req.params.id);
     if (!faculty) return res.status(404).json({ error: 'Faculty not found' });
+    
+    // Update password (will be hashed by pre-save hook)
     faculty.password = newPassword;
     await faculty.save();
+    
+    // Create audit log
     await AuditLog.create({
       action: 'ADMIN_PASSWORD_RESET',
       performedBy: {
@@ -382,12 +387,17 @@ router.post('/faculty/:id/reset-password', authMiddleware, async (req, res) => {
         facultyName: faculty.name,
         facultyEmail: faculty.email
       },
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
+      ipAddress: req.ip || req.connection?.remoteAddress,
+      userAgent: req.get('user-agent'),
+      timestamp: new Date()
     });
-    res.json({ message: 'Password reset successfully' });
+    
+    res.json({ 
+      message: 'Password reset successful',
+      faculty: { name: faculty.name, email: faculty.email }
+    });
   } catch (error) {
-    console.error('Admin password reset error:', error);
+    console.error('Password reset error:', error);
     res.status(500).json({ error: 'Failed to reset password', details: error.message });
   }
 });
