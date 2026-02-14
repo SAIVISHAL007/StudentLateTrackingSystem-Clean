@@ -44,6 +44,9 @@ function AdminManagement() {
 
  // State for tab navigation
  const [activeTab, setActiveTab] = useState("management"); // "management", "audit", or "fines"
+ 
+ // Check if user is admin or superadmin
+ const isAdminOrSuperadmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin');
 
  const initializedRef = useRef(false);
 
