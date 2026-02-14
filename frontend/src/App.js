@@ -10,8 +10,8 @@ import StudentProfile from "./components/StudentProfile";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Login from "./components/Login";
-import FacultyRegister from "./components/FacultyRegister";
 import FacultyDirectory from "./components/FacultyDirectory";
+import StudentPortal from "./components/StudentPortal";
 import { isAuthenticated } from "./utils/auth";
 import { useDarkMode } from "./context/DarkModeContext";
 
@@ -163,10 +163,10 @@ function App() {
             <StudentManagement />
           </div>
         );
-      case "register-faculty":
-        return <FacultyRegister onNavigate={setCurrentPage} />;
       case "faculty-directory":
         return <FacultyDirectory onNavigate={setCurrentPage} />;
+      case "student-portal":
+        return <StudentPortal />;
       case "admin":
         return (
           <div>

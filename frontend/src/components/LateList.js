@@ -4,6 +4,7 @@ import API from "../services/api";
 import { formatDate, isToday } from "../utils/dateUtils";
 import { downloadTextReport, formatStudentDataForExport, getTimestamp } from "../utils/exportUtils";
 import { exportTodayLateToExcel } from "../utils/excelExport";
+import { toast } from "./Toast";
 
 function LateList() {
  const [students, setStudents] = useState([]);
@@ -86,7 +87,7 @@ function LateList() {
 
  const handleExportExcel = () => {
  if (filteredStudents.length === 0) {
- alert("No data to export");
+ toast.error('❌ No data to export');
  return;
  }
  
@@ -99,15 +100,15 @@ function LateList() {
  const success = exportTodayLateToExcel(filteredStudents, filters);
  
  if (success) {
- alert(`Excel export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
+ toast.success(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
  } else {
- alert(" Export failed. Please try again.");
+ toast.error('❌ Export failed. Please try again.');
  }
  };
 
  const handleExportReport = () => {
  if (filteredStudents.length === 0) {
- alert(" No data to export");
+ toast.error('❌ No data to export');
  return;
  }
  

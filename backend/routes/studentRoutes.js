@@ -216,6 +216,8 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
   }
 });
 
+// ========================================
+
 // Get students who were late today (with pagination support)
 router.get("/late-today", checkDbConnection, async (req, res) => {
   try {
@@ -1695,6 +1697,45 @@ router.get("/audit-logs/export-pdf", checkDbConnection, async (req, res) => {
   } catch (error) {
     console.error('Error generating audit trail PDF:', error);
     res.status(500).json({ error: 'Failed to generate PDF', details: error.message });
+  }
+});
+
+// Manual backup endpoint - exports all database collections as JSON
+router.get("/export-backup", async (req, res) => {
+  try {
+    // Fetch all collections
+    const students = await Student.find({}).lean();
+    const auditLogs = await AuditLog.find({}).lean();
+    
+    // Import Faculty model dynamically to avoid circular dependencies
+    const Faculty = mongoose.model('Faculty');
+    const faculty = await Faculty.find({}).select('-password').lean(); // Exclude passwords
+    
+    // Create backup object with timestamp
+    const backup = {
+      timestamp: new Date().toISOString(),
+      exportedBy: req.facultyName || 'System Administrator',
+      collections: {
+        students: students,
+        auditLogs: auditLogs,
+        faculty: faculty
+      },
+      counts: {
+        students: students.length,
+        auditLogs: auditLogs.length,
+        faculty: faculty.length
+      }
+    };
+    
+    // Set response headers
+    const filename = `database-backup-${new Date().toISOString().split('T')[0]}.json`;
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    res.json(backup);
+  } catch (error) {
+    console.error('Error creating database backup:', error);
+    res.status(500).json({ error: 'Failed to create backup', details: error.message });
   }
 });
 

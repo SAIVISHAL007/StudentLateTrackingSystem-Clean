@@ -3,11 +3,14 @@ import { FiBarChart2, FiSettings } from "react-icons/fi";
 import API from "../services/api";
 import { getCurrentUser } from "../utils/auth";
 import AuditTrail from "./AuditTrail";
+import FineManagement from "./FineManagement";
+import { toast } from "./Toast";
 
 function AdminManagement() {
  const [stats,setStats]=useState(null);
  const [loading,setLoading]=useState(false);
  const [exportLoading, setExportLoading] = useState(false);
+ const [backupLoading, setBackupLoading] = useState(false);
  
  // Get current logged-in user
  const currentUser = getCurrentUser();
@@ -40,7 +43,7 @@ function AdminManagement() {
  const [showFinesList, setShowFinesList] = useState(false);
 
  // State for tab navigation
- const [activeTab, setActiveTab] = useState("management"); // "management" or "audit"
+ const [activeTab, setActiveTab] = useState("management"); // "management", "audit", or "fines"
 
  const initializedRef = useRef(false);
 
@@ -335,7 +338,7 @@ function AdminManagement() {
  const handleExportLateRecords = () => {
  const filtered = getFilteredRecords();
  if (filtered.length === 0) {
- alert(" No records to export");
+ toast.error('❌ No records to export');
  return;
  }
  
@@ -351,7 +354,7 @@ function AdminManagement() {
  r.lateDayNumber,
  r.fineAmount
  ])
- ].map(row => row.join(',')).join('\\n');
+ ].map(row => row.join(',')).join('\n');
  
  const blob = new Blob([csvContent], { type: 'text/csv' });
  const url = URL.createObjectURL(blob);
@@ -360,7 +363,35 @@ function AdminManagement() {
  a.download = `late_records_${periodFilter}_${new Date().toISOString().split('T')[0]}.csv`;
  a.click();
  URL.revokeObjectURL(url);
- alert(`Exported ${filtered.length} records to CSV`);
+ toast.success(`✅ Exported ${filtered.length} records to CSV`);
+ };
+
+ const handleBackupDownload = async () => {
+ if (!window.confirm('Download complete database backup?\n\nThis will export all students, late records, and faculty data as JSON.')) {
+ return;
+ }
+ 
+ setBackupLoading(true);
+ try {
+ const response = await API.get('/students/export-backup', {
+ responseType: 'blob'
+ });
+ 
+ const blob = new Blob([response.data], { type: 'application/json' });
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement('a');
+ a.href = url;
+ a.download = `database-backup-${new Date().toISOString().split('T')[0]}.json`;
+ a.click();
+ URL.revokeObjectURL(url);
+ 
+ alert('✅ Backup downloaded successfully!');
+ } catch (error) {
+ console.error('Backup download error:', error);
+ alert('❌ Failed to download backup: ' + (error.response?.data?.error || error.message));
+ } finally {
+ setBackupLoading(false);
+ }
  };
 
  const handleBulkRemoveLateRecords = async () => {
@@ -697,6 +728,22 @@ function AdminManagement() {
  >
  📋 Audit Trail
  </button>
+ <button
+ onClick={() => setActiveTab("fines")}
+ style={{
+ padding: "0.8rem 1.5rem",
+ background: activeTab === "fines" ? "linear-gradient(135deg,#667eea 0%,#764ba2 100%)" : "transparent",
+ color: activeTab === "fines" ? "white" : "#999",
+ border: "none",
+ borderRadius: "8px 8px 0 0",
+ cursor: "pointer",
+ fontWeight: activeTab === "fines" ? "700" : "500",
+ fontSize: "0.95rem",
+ transition: "all 0.3s"
+ }}
+ >
+ 💰 Fine Management
+ </button>
  </div>
 
  {/* Tab Content - Management */}
@@ -755,6 +802,7 @@ function AdminManagement() {
  ) : (
  <p style={{ color: "#3b82f6", fontSize: "1rem", fontWeight: 500 }}>Loading statistics...</p>
  )}
+ <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
  <button
  onClick={fetchSystemStats}
  disabled={loading}
@@ -771,7 +819,26 @@ function AdminManagement() {
  boxShadow: "0 4px 15px rgba(102,126,234,0.3)",
  opacity: loading ? .6 : 1
  }}
- > Refresh Stats</button>
+ >🔄 Refresh Stats</button>
+ 
+ <button
+ onClick={handleBackupDownload}
+ disabled={backupLoading}
+ style={{
+ padding: "12px 24px",
+ background: "linear-gradient(135deg,#10b981 0%,#059669 100%)",
+ color: "white",
+ border: "none",
+ borderRadius: "12px",
+ cursor: backupLoading ? "not-allowed" : "pointer",
+ fontSize: ".95rem",
+ fontWeight: 600,
+ transition: "all .3s",
+ boxShadow: "0 4px 15px rgba(16,185,129,0.3)",
+ opacity: backupLoading ? .6 : 1
+ }}
+ >{backupLoading ? '⏳ Downloading...' : '💾 Download Database Backup'}</button>
+ </div>
  </div>
 
  {/* Management Actions */}
@@ -1553,6 +1620,13 @@ function AdminManagement() {
  {activeTab === "audit" && (
  <div>
  <AuditTrail />
+ </div>
+ )}
+
+ {/* Tab Content - Fine Management */}
+ {activeTab === "fines" && (
+ <div>
+ <FineManagement />
  </div>
  )}
  </div>

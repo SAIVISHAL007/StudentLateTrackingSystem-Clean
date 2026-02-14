@@ -263,6 +263,63 @@ router.post("/login", authLimiter, async (req, res) => {
   }
 });
 
+// Student portal login (simplified - no password, just roll number for read-only access)
+router.post("/student-login", authLimiter, async (req, res) => {
+  try {
+    const { rollNo } = req.body;
+    
+    if (!rollNo) {
+      return res.status(400).json({ error: "Roll number is required" });
+    }
+    
+    // Import Student model dynamically
+    const { default: Student } = await import("../models/student.js");
+    
+    // Find student by roll number
+    const student = await Student.findOne({ rollNo: rollNo.trim().toUpperCase() });
+    if (!student) {
+      return res.status(404).json({ error: "Student not found. Check your roll number." });
+    }
+    
+    // Create JWT token for student (read-only access)
+    const token = jwt.sign(
+      { studentId: student._id, rollNo: student.rollNo, type: 'student' },
+      JWT_SECRET,
+      { expiresIn: '24h' } // Students get 24-hour sessions
+    );
+    
+    // Log student login in audit
+    await AuditLog.create({
+      action: 'STUDENT_LOGIN',
+      details: {
+        rollNo: student.rollNo,
+        name: student.name
+      },
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+    
+    res.json({
+      message: "Student login successful",
+      token,
+      student: {
+        rollNo: student.rollNo,
+        name: student.name,
+        year: student.year,
+        semester: student.semester,
+        branch: student.branch,
+        section: student.section,
+        lateDays: student.lateDays,
+        fines: student.fines
+      }
+    });
+    
+  } catch (error) {
+    console.error('Student login error:', error);
+    res.status(500).json({ error: "Login failed", details: error.message });
+  }
+});
+
 // Removed OTP-based forgot/reset password endpoints; password resets are performed by admin/superadmin only.
 
 // Get current faculty profile

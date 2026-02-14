@@ -101,24 +101,31 @@ function Navbar({ onLogout }) {
           </button>
           {user ? (
             <>
-              {!isMobile && (
-                <div className="user-info-badge">
-                  <span style={{
-                    color: "#1e40af",
-                    fontSize: "0.875rem",
-                    fontWeight: "700",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem"
-                  }}>
-                    <FiUser size={16} />
-                    {getUserDisplayName()}
-                  </span>
+              <div className="user-info-badge" style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.25rem",
+                padding: isMobile ? "0.5rem 0.75rem" : "0.625rem 1rem",
+                background: "rgba(102, 126, 234, 0.08)",
+                borderRadius: "8px",
+                border: "1px solid rgba(102, 126, 234, 0.15)"
+              }}>
+                <span style={{
+                  color: "#1e40af",
+                  fontSize: isMobile ? "0.7rem" : "0.875rem",
+                  fontWeight: "700",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.4rem"
+                }}>
+                  <FiUser size={isMobile ? 14 : 16} />
+                  {isMobile ? getUserDisplayName().split(' ')[0] : getUserDisplayName()}
+                </span>
+                {!isMobile && (
                   <span style={{
                     color: "#3b82f6",
                     fontSize: "0.75rem",
                     fontWeight: "600",
-                    marginTop: "0.25rem",
                     display: "flex",
                     alignItems: "center",
                     gap: "0.4rem"
@@ -126,8 +133,8 @@ function Navbar({ onLogout }) {
                     <FiClock size={12} />
                     {getLoginDuration()}
                   </span>
-                </div>
-              )}
+                )}
+              </div>
               <button
                 onClick={handleLogout}
                 className="logout-button"

@@ -107,6 +107,41 @@ function Login({ onLogin }) {
         Late Students Today
       </button>
 
+      {/* Student Portal Button */}
+      <button
+        onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'student-portal' } }))}
+        style={{
+          position: 'absolute',
+          top: '5rem',
+          right: '1.5rem',
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          color: 'white',
+          border: 'none',
+          padding: '0.75rem 1.5rem',
+          borderRadius: '12px',
+          fontSize: '0.95rem',
+          fontWeight: 700,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          boxShadow: '0 6px 20px rgba(16, 185, 129, 0.35)',
+          transition: 'all 0.3s',
+          zIndex: 100
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.45)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.35)';
+        }}
+      >
+        <FiLogIn size={20} />
+        Student Portal
+      </button>
+
       {/* Floating Particle Background */}
       <div className="login-particles">
         <div className="particle particle-1"></div>

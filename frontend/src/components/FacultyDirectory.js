@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { FiUsers, FiPlus, FiTrash2, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import API from '../services/api';
-import FacultyRegister from './FacultyRegister';
 import { toast } from './Toast';
 
 function FacultyDirectory({ onNavigate }) {
@@ -16,6 +15,12 @@ function FacultyDirectory({ onNavigate }) {
  const [saving, setSaving] = useState(false);
  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
  const [deleting, setDeleting] = useState(false);
+ 
+ // Registration form state
+ const [registerForm, setRegisterForm] = useState({ name: '', branch: 'CSE', email: '', password: '' });
+ const [registering, setRegistering] = useState(false);
+ const [registerError, setRegisterError] = useState('');
+ const [registerMessage, setRegisterMessage] = useState('');
 
  const fetchFaculties = useCallback(async () => {
  setLoading(true); setError('');
@@ -97,6 +102,55 @@ function FacultyDirectory({ onNavigate }) {
  }
  };
 
+ // Registration handlers
+ const branches = ['CSE','CSM','CSD','CSC','ECE','EEE','MECH','CIVIL','IT','ADMIN'];
+ 
+ const handleRegisterChange = (e) => {
+ const { name, value } = e.target;
+ setRegisterForm(prev => ({ ...prev, [name]: value }));
+ if (registerError) setRegisterError('');
+ };
+
+ const validateEmailFormat = (email) => /^[a-z]+\.[a-z]+@anits\.edu\.in$/.test(email);
+
+ const handleRegisterSubmit = async (e) => {
+ e.preventDefault();
+ setRegisterError(''); setRegisterMessage('');
+
+ if (!registerForm.name.trim() || !registerForm.branch || !registerForm.email.trim() || !registerForm.password.trim()) {
+ setRegisterError('All fields are required'); return;
+ }
+ if (!validateEmailFormat(registerForm.email.trim().toLowerCase())) {
+ setRegisterError('Email must match name.branch@anits.edu.in'); return;
+ }
+ if (registerForm.password.length < 6) { setRegisterError('Password must be at least 6 characters'); return; }
+
+ setRegistering(true);
+ try {
+ const token = localStorage.getItem('jwt_token');
+ if (!token) { setRegisterError('You must login as admin first'); setRegistering(false); return; }
+ const res = await API.post('/auth/register', {
+ name: registerForm.name.trim(),
+ branch: registerForm.branch,
+ email: registerForm.email.trim().toLowerCase(),
+ password: registerForm.password
+ }, {
+ headers: { Authorization: `Bearer ${token}` }
+ });
+ toast.success(res.data.message || 'Faculty registered successfully!');
+ setRegisterForm({ name: '', branch: 'CSE', email: '', password: '' });
+ setShowCreate(false);
+ fetchFaculties(); // Refresh the list
+ } catch (err) {
+ const apiErr = err.response?.data;
+ if (apiErr?.details) {
+ setRegisterError(`${apiErr.error}: ${Array.isArray(apiErr.details) ? apiErr.details.join(', ') : apiErr.details}`);
+ } else {
+ setRegisterError(apiErr?.error || 'Registration failed');
+ }
+ } finally { setRegistering(false); }
+ };
+
  return (
  <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -107,10 +161,8 @@ function FacultyDirectory({ onNavigate }) {
  <p style={{ fontSize: '.85rem', color: '#64748b', fontWeight: 500, margin: '4px 0 0 0' }}>Manage and review existing faculty accounts.</p>
  </div>
  </div>
- <button onClick={() => setShowCreate(s => !s)} style={{ padding: '12px 20px', background: showCreate? '#dc2626':'linear-gradient(135deg,#667eea,#764ba2)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)', display: 'flex', alignItems: 'center', gap: '8px' }}>{showCreate? 'Close Form' : <><FiPlus size={18} /> New Faculty</>}</button>
+ <button onClick={() => setShowCreate(!showCreate)} style={{ padding: '12px 20px', background: 'linear-gradient(135deg,#667eea,#764ba2)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)', display: 'flex', alignItems: 'center', gap: '8px' }}><FiPlus size={18} /> New Faculty</button>
  </div>
-
- {showCreate && <div style={{ marginBottom: '2rem' }}><FacultyRegister onNavigate={onNavigate} /></div>}
 
  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
  <input value={search} onChange={e => setSearch(e.target.value)} placeholder='Search name or email...' style={{ flex: '1 1 240px', padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '.9rem' }} />
@@ -210,6 +262,59 @@ function FacultyDirectory({ onNavigate }) {
  <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: '12px 16px', background: '#64748b', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
  <button disabled={deleting} onClick={deleteFaculty} style={{ flex: 1, padding: '12px 16px', background: deleting ? '#fca5a5' : '#dc2626', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer' }}>{deleting ? 'Deleting...' : 'Delete'}</button>
  </div>
+ </div>
+ </div>
+ )}
+
+ {/* Registration Modal */}
+ {showCreate && (
+ <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '1rem' }} onClick={() => setShowCreate(false)}>
+ <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '560px', background: 'white', padding: '2rem', borderRadius: '20px', boxShadow: '0 20px 50px rgba(0,0,0,0.35)', animation: 'scaleIn .3s ease-out', maxHeight: '90vh', overflowY: 'auto' }}>
+ <h3 style={{ margin: '0 0 .5rem 0', fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg,#667eea,#764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Register New Faculty</h3>
+ <p style={{ fontSize: '.8rem', color: '#64748b', marginBottom: '1.5rem' }}>Create a new faculty account. Only admins can perform this action.</p>
+
+ <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+ <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+ <label style={{ fontSize: '.75rem', fontWeight: 600 }}>Full Name</label>
+ <input name='name' value={registerForm.name} onChange={handleRegisterChange} placeholder='e.g., John Doe' style={{ padding: '11px 15px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }} />
+ </div>
+ 
+ <div style={{ display: 'flex', gap: '.75rem' }}>
+ <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+ <label style={{ fontSize: '.75rem', fontWeight: 600 }}>Branch</label>
+ <select name='branch' value={registerForm.branch} onChange={handleRegisterChange} style={{ padding: '11px 15px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }}>
+ {branches.map(b => <option key={b} value={b}>{b}</option>)}
+ </select>
+ </div>
+ <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+ <label style={{ fontSize: '.75rem', fontWeight: 600 }}>Role</label>
+ <select name='role' value={registerForm.role || 'faculty'} onChange={handleRegisterChange} style={{ padding: '11px 15px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }}>
+ <option value='faculty'>Faculty</option>
+ <option value='admin'>Admin</option>
+ <option value='superadmin'>Superadmin</option>
+ </select>
+ </div>
+ </div>
+
+ <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+ <label style={{ fontSize: '.75rem', fontWeight: 600 }}>Email</label>
+ <input name='email' value={registerForm.email} onChange={handleRegisterChange} placeholder='firstname.lastname@anits.edu.in' style={{ padding: '11px 15px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }} />
+ <div style={{ fontSize: '.65rem', color: '#64748b' }}>Format: name.branch@anits.edu.in</div>
+ </div>
+
+ <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+ <label style={{ fontSize: '.75rem', fontWeight: 600 }}>Password</label>
+ <input type='password' name='password' value={registerForm.password} onChange={handleRegisterChange} placeholder='Minimum 6 characters' style={{ padding: '11px 15px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '.85rem' }} />
+ </div>
+
+ {registerError && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 14px', borderRadius: '10px', border: '2px solid #fecaca', fontSize: '.75rem' }}>{registerError}</div>}
+ {registerMessage && <div style={{ background: '#d1fae5', color: '#065f46', padding: '10px 14px', borderRadius: '10px', border: '2px solid #10b981', fontSize: '.75rem' }}>{registerMessage}</div>}
+
+ <div style={{ display: 'flex', gap: '.75rem', marginTop: '.5rem' }}>
+ <button type='button' onClick={() => setShowCreate(false)} style={{ flex: 1, padding: '12px 16px', background: '#64748b', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+ <button type='submit' disabled={registering} style={{ flex: 1, padding: '12px 16px', background: registering? '#94a3b8':'linear-gradient(135deg,#667eea,#764ba2)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: registering? 'not-allowed':'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)' }}>{registering? 'Creating...' : 'Create Account'}</button>
+ </div>
+ </form>
  </div>
  </div>
  )}

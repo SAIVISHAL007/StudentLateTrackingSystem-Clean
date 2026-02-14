@@ -4,6 +4,7 @@ import API from "../services/api";
 import { formatDate } from "../utils/dateUtils";
 import { downloadTextReport, formatLateRecordsForExport, getTimestamp } from "../utils/exportUtils";
 import { exportLateRecordsToExcel } from "../utils/excelExport";
+import { toast } from "./Toast";
 
 function Record() {
  const [selectedPeriod, setSelectedPeriod] = useState("weekly");
@@ -92,14 +93,14 @@ function Record() {
 
  const handleExportExcel = () => {
  if (!recordData || !recordData.students || recordData.students.length === 0) {
- alert(" No data to export");
+ toast.error('❌ No data to export');
  return;
  }
  
  const filteredStudents = getFilteredStudents(recordData.students);
  
  if (filteredStudents.length === 0) {
- alert(" No students match your filters");
+ toast.error('❌ No students match your filters');
  return;
  }
  
@@ -119,9 +120,9 @@ function Record() {
  const success = exportLateRecordsToExcel(filteredStudents, filename, filters, periodInfo);
  
  if (success) {
- alert(`Excel export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
+ toast.success(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
  } else {
- alert(" Export failed. Please try again.");
+ toast.error('❌ Export failed. Please try again.');
  }
  };
 
