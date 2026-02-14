@@ -102,45 +102,45 @@ const buildBulkOps = (rows) =>
 
 const summarizeErrors = (errors, max = 10) => {
   if (errors.length === 0) return;
-  console.log(`\n⚠️  ${errors.length} invalid rows (showing up to ${max}):`);
+  console.log(`\n[Warning] ${errors.length} invalid rows (showing up to ${max}):`);
   errors.slice(0, max).forEach((entry) => {
     console.log(`   Row ${entry.rowIndex}: ${entry.errors.join(", ")}`);
   });
 };
 
 const runImport = async () => {
-  console.log("\n📥 Student Import (CSV)\n");
+  console.log("\n[Import] Student CSV Import\n");
   console.log(`File: ${filePath}`);
   console.log(`Dry Run: ${dryRun ? "Yes" : "No"}`);
   console.log(`Batch Size: ${batchSize}`);
 
   const rows = loadCsv(filePath);
-  console.log(`\n📄 Rows found: ${rows.length}`);
+  console.log(`\n[Parse] Rows found: ${rows.length}`);
 
   const normalized = rows.map((row, index) => normalizeRow(row, index + 2));
   const validRows = normalized.filter((row) => row.errors.length === 0);
   const invalidRows = normalized.filter((row) => row.errors.length > 0);
 
-  console.log(`✅ Valid rows: ${validRows.length}`);
-  console.log(`❌ Invalid rows: ${invalidRows.length}`);
+  console.log(`[Validation] Valid rows: ${validRows.length}`);
+  console.log(`[Validation] Invalid rows: ${invalidRows.length}`);
   summarizeErrors(invalidRows);
 
   if (dryRun) {
-    console.log("\n🧪 Dry run complete. No data written.");
+    console.log("\n[DryRun] Complete. No data written.");
     return;
   }
 
   if (validRows.length === 0) {
-    console.log("\n⚠️  No valid rows to import. Aborting.");
+    console.log("\n[Warning] No valid rows to import. Aborting.");
     return;
   }
 
-  console.log("\n🔌 Connecting to MongoDB...");
+  console.log("\n[Database] Connecting to MongoDB...");
   await mongoose.connect(MONGODB_URI, {
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000
   });
-  console.log("✅ MongoDB Connected");
+  console.log("[Database] MongoDB Connected");
 
   let processed = 0;
   let upserted = 0;
@@ -155,19 +155,19 @@ const runImport = async () => {
     upserted += result.upsertedCount || 0;
     modified += result.modifiedCount || 0;
 
-    console.log(`✅ Batch ${i / batchSize + 1}: ${batch.length} records processed`);
+    console.log(`[Batch] ${i / batchSize + 1}: ${batch.length} records processed`);
   }
 
-  console.log("\n📊 Import Summary:");
+  console.log("\n[Summary] Import Statistics:");
   console.log(`   Processed: ${processed}`);
   console.log(`   Upserted: ${upserted}`);
   console.log(`   Updated: ${modified}`);
-  console.log("\n✅ Import completed successfully.");
+  console.log("\n[Success] Import completed successfully.");
 
   await mongoose.disconnect();
 };
 
 runImport().catch((error) => {
-  console.error("\n❌ Import failed:", error.message);
+  console.error("\n[Error] Import failed:", error.message);
   process.exit(1);
 });

@@ -93,14 +93,14 @@ function Record() {
 
  const handleExportExcel = () => {
  if (!recordData || !recordData.students || recordData.students.length === 0) {
- toast.error('❌ No data to export');
+ toast.error('No data to export');
  return;
  }
  
  const filteredStudents = getFilteredStudents(recordData.students);
  
  if (filteredStudents.length === 0) {
- toast.error('❌ No students match your filters');
+ toast.error('No students match your filters');
  return;
  }
  
@@ -120,9 +120,9 @@ function Record() {
  const success = exportLateRecordsToExcel(filteredStudents, filename, filters, periodInfo);
  
  if (success) {
- toast.success(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
+ toast.success(`Export successful!\n\nExported: ${filteredStudents.length} students\nPeriod: ${periodInfo.period}\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
  } else {
- toast.error('❌ Export failed. Please try again.');
+ toast.error('Export failed. Please try again.');
  }
  };
 

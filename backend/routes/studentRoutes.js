@@ -478,7 +478,7 @@ router.post("/pay-fine", checkDbConnection, async (req, res) => {
 
     res.json({
       success: true,
-      message: `✅ Payment of ₹${amount} recorded successfully!`,
+      message: `✅Payment of ₹${amount} recorded successfully!`,
       student: {
         rollNo: student.rollNo,
         name: student.name,
@@ -1740,4 +1740,5 @@ router.get("/export-backup", async (req, res) => {
 });
 
 export default router;
+
 

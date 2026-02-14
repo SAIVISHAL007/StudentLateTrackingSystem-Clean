@@ -93,11 +93,11 @@ const connectDB = async () => {
     });
     isConnected = true;
     isConnecting = false;
-    console.log("✅ MongoDB Connected Successfully");
-    console.log(`🌐 Connected to database: ${mongoose.connection.name}`);
+    console.log("[MongoDB] Connected successfully");
+    console.log(`[Database] Connected to: ${mongoose.connection.name}`);
   } catch (err) {
     isConnecting = false;
-    console.error("❌ DB Connection Error:", err);
+    console.error("[Database Error]", err);
     if (process.env.NODE_ENV !== 'production') {
       process.exit(1);
     }
@@ -142,7 +142,7 @@ process.once('SIGUSR2', async () => {
     await mongoose.connection.close();
     console.log('✅ MongoDB connection closed before restart');
   } catch (err) {
-    console.error('❌ Error closing MongoDB during restart:', err);
+    console.error('[Error] Closing MongoDB during restart failed:', err);
   } finally {
     // Re-send SIGUSR2 to let nodemon proceed with restart
     process.kill(process.pid, 'SIGUSR2');
@@ -151,13 +151,13 @@ process.once('SIGUSR2', async () => {
 
 // Handle SIGTERM (deployment platforms / process managers)
 process.on('SIGTERM', async () => {
-  console.log('\n🛑 Received SIGTERM - shutting down gracefully...');
+  console.log('[Shutdown] SIGTERM received - shutting down gracefully...');
   try {
     await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed');
+    console.log('[Shutdown] MongoDB connection closed');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error during SIGTERM shutdown:', err);
+    console.error('[Shutdown Error]', err);
     process.exit(1);
   }
 });
@@ -336,7 +336,7 @@ app.get("/health", async (req, res) => {
 // For local development, start the server
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`[Server] Running on port ${PORT}`));
 }
 
 // Export for Vercel serverless

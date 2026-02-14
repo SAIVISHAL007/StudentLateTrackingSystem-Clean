@@ -592,12 +592,12 @@ function Analytics() {
             alignItems: "center",
             gap: "0.5rem"
           }}>
-            ⭐ Best Performers
+            <FiAward size={24} style={{ color: "#fbbf24", marginBottom: "0.5rem" }} /> Best Performers
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {leaderboard.leastLate.length === 0 ? (
               <div style={{ textAlign: "center", padding: "2rem 1rem", color: "#3730a3", fontSize: "0.9rem", background: "rgba(255,255,255,0.5)", borderRadius: "12px" }}>
-                ⭐ No students yet. Best performers will appear here.
+                <FiAward /> No students yet. Best performers will appear here.
               </div>
             ) : (
             leaderboard.leastLate.slice(0, 5).map((student, index) => (

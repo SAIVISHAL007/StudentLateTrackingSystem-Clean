@@ -87,7 +87,7 @@ function LateList() {
 
  const handleExportExcel = () => {
  if (filteredStudents.length === 0) {
- toast.error('❌ No data to export');
+ toast.error('No data to export');
  return;
  }
  
@@ -100,15 +100,15 @@ function LateList() {
  const success = exportTodayLateToExcel(filteredStudents, filters);
  
  if (success) {
- toast.success(`✅ Excel export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
+ toast.success(`Export successful!\n\nExported: ${filteredStudents.length} students\nFilters: ${filters.year}, ${filters.branch}, ${filters.section}`);
  } else {
- toast.error('❌ Export failed. Please try again.');
+ toast.error('Export failed. Please try again.');
  }
  };
 
  const handleExportReport = () => {
  if (filteredStudents.length === 0) {
- toast.error('❌ No data to export');
+ toast.error('No data to export');
  return;
  }
  

@@ -1,5 +1,5 @@
 import React, {useState,useEffect, useRef } from "react";
-import { FiBarChart2, FiSettings } from "react-icons/fi";
+import { FiBarChart2, FiSettings, FiClipboard, FiDollarSign } from "react-icons/fi";
 import API from "../services/api";
 import { getCurrentUser } from "../utils/auth";
 import AuditTrail from "./AuditTrail";
@@ -44,9 +44,6 @@ function AdminManagement() {
 
  // State for tab navigation
  const [activeTab, setActiveTab] = useState("management"); // "management", "audit", or "fines"
- 
- // Check if user is admin or superadmin
- const isAdminOrSuperadmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin');
 
  const initializedRef = useRef(false);
 
@@ -341,7 +338,7 @@ function AdminManagement() {
  const handleExportLateRecords = () => {
  const filtered = getFilteredRecords();
  if (filtered.length === 0) {
- toast.error('❌ No records to export');
+ toast.error('No records to export');
  return;
  }
  
@@ -366,7 +363,7 @@ function AdminManagement() {
  a.download = `late_records_${periodFilter}_${new Date().toISOString().split('T')[0]}.csv`;
  a.click();
  URL.revokeObjectURL(url);
- toast.success(`✅ Exported ${filtered.length} records to CSV`);
+ toast.success(`Exported ${filtered.length} records to CSV`);
  };
 
  const handleBackupDownload = async () => {
@@ -388,10 +385,10 @@ function AdminManagement() {
  a.click();
  URL.revokeObjectURL(url);
  
- alert('✅ Backup downloaded successfully!');
+ toast.success('Backup downloaded successfully!');
  } catch (error) {
  console.error('Backup download error:', error);
- alert('❌ Failed to download backup: ' + (error.response?.data?.error || error.message));
+ toast.error('Failed to download backup: ' + (error.response?.data?.error || error.message));
  } finally {
  setBackupLoading(false);
  }
@@ -709,11 +706,10 @@ function AdminManagement() {
  cursor: "pointer",
  fontWeight: activeTab === "management" ? "700" : "500",
  fontSize: "0.95rem",
- transition: 
-"all 0.3s"
+ transition: "all 0.3s"
  }}
  >
- 📊 Management
+ <FiBarChart2 /> Management
  </button>
  <button
  onClick={() => setActiveTab("audit")}
@@ -729,7 +725,7 @@ function AdminManagement() {
  transition: "all 0.3s"
  }}
  >
- 📋 Audit Trail
+ <FiClipboard /> Audit Trail
  </button>
  <button
  onClick={() => setActiveTab("fines")}
@@ -745,7 +741,7 @@ function AdminManagement() {
  transition: "all 0.3s"
  }}
  >
- 💰 Fine Management
+ <FiDollarSign /> Fine Management
  </button>
  </div>
 

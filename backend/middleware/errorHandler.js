@@ -56,7 +56,7 @@ const errorHandler = (err, req, res, next) => {
   
   // Log error for debugging
   if (statusCode >= 500) {
-    console.error('❌ Server Error:', {
+    console.error('[Server Error]', {
       message: error.message,
       stack: error.stack,
       path: req.path,
