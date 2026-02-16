@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import compression from "compression";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
@@ -10,6 +11,18 @@ import { forceHTTPS, securityHeaders, sanitizeRequest, sanitizeErrors } from "./
 dotenv.config();
 
 const app = express();
+
+// Enable gzip compression for responses
+app.use(compression({
+  level: 6, // Compression level (0-9, 6 is balanced)
+  threshold: 1024, // Only compress responses larger than 1KB
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
 
 // CORS configuration with explicit allowlist
 const allowedOrigins = [

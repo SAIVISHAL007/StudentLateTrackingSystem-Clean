@@ -261,6 +261,9 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
       )
     }));
     
+    // PERFORMANCE: Add cache headers for late-today (30 seconds)
+    res.set('Cache-Control', 'private, max-age=30');
+
     res.json({
       date: today.toDateString(),
       count: studentsWithTodayLogs.length,
@@ -288,8 +291,7 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
   }
 });
 
-// Search students (optimized with text index)
-// Get all students (for admin management)
+// Get all students (for admin management) - optimized with mandatory pagination
 router.get("/all", checkDbConnection, async (req, res) => {
   try {
     const { year, page, limit } = req.query;
@@ -299,33 +301,32 @@ router.get("/all", checkDbConnection, async (req, res) => {
       query.year = parseInt(year);
     }
     
-    const baseQuery = Student.find(query)
-      .select("rollNo name year semester branch section lateDays status fines")
-      .sort({ year: 1, semester: 1, section: 1, rollNo: 1 })
-      .lean();
-
-    const shouldPaginate = page !== undefined || limit !== undefined;
-
-    if (!shouldPaginate) {
-      const students = await baseQuery;
-      return res.json({ students, totalCount: students.length });
-    }
-
+    // PERFORMANCE: Always use pagination with reasonable defaults
     const pageNum = Math.max(parseInt(page || "1", 10), 1);
-    const limitNum = Math.min(Math.max(parseInt(limit || "50", 10), 1), 200);
+    const limitNum = Math.min(Math.max(parseInt(limit || "100", 10), 1), 500); // Default 100, max 500
     const skip = (pageNum - 1) * limitNum;
 
+    // PERFORMANCE: Use parallel queries and select only needed fields
     const [students, totalCount] = await Promise.all([
-      baseQuery.skip(skip).limit(limitNum),
+      Student.find(query)
+        .select("rollNo name year semester branch section lateDays status fines")
+        .sort({ year: 1, semester: 1, section: 1, rollNo: 1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(), // PERFORMANCE: lean() returns plain JS objects (faster)
       Student.countDocuments(query)
     ]);
+
+    // Add cache headers for frequently accessed data
+    res.set('Cache-Control', 'private, max-age=60'); // Cache for 1 minute
 
     return res.json({
       students,
       totalCount,
       page: pageNum,
       limit: limitNum,
-      totalPages: Math.ceil(totalCount / limitNum)
+      totalPages: Math.ceil(totalCount / limitNum),
+      hasMore: skip + students.length < totalCount
     });
   } catch (err) {
     console.error('❌ Get all students error:', err);
@@ -372,6 +373,9 @@ router.get("/search", checkDbConnection, async (req, res) => {
     
     const totalCount = await Student.countDocuments(query);
     
+    // PERFORMANCE: Add cache headers for search results (45 seconds)
+    res.set('Cache-Control', 'private, max-age=45');
+
     res.json({
       query: q,
       year: year || 'all',
@@ -393,16 +397,38 @@ router.get("/search", checkDbConnection, async (req, res) => {
 // Get all students with pending fines
 router.get("/with-fines", checkDbConnection, async (req, res) => {
   try {
-    const students = await Student.find({
-      fines: { $gt: 0 }
-    })
-    .select("rollNo name year branch section fines lateDays status")
-    .sort({ fines: -1, rollNo: 1 })
-    .lean();
+    // PERFORMANCE: Add pagination
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 200);
+    const skip = (page - 1) * limit;
+    
+    // Parallel queries for better performance
+    const [students, totalCount, totalFinesResult] = await Promise.all([
+      Student.find({ fines: { $gt: 0 } })
+        .select("rollNo name year branch section fines lateDays status")
+        .sort({ fines: -1, rollNo: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Student.countDocuments({ fines: { $gt: 0 } }),
+      Student.aggregate([
+        { $match: { fines: { $gt: 0 } } },
+        { $group: { _id: null, total: { $sum: "$fines" } } }
+      ])
+    ]);
+    
+    const totalFines = totalFinesResult.length > 0 ? totalFinesResult[0].total : 0;
+    
+    // PERFORMANCE: Add cache headers (60 seconds)
+    res.set('Cache-Control', 'private, max-age=60');
     
     res.json({
       count: students.length,
-      totalFines: students.reduce((sum, s) => sum + s.fines, 0),
+      totalCount,
+      totalFines,
+      page,
+      limit,
+      hasMore: page * limit < totalCount,
       students
     });
   } catch (err) {
@@ -526,53 +552,108 @@ router.get("/records/:period", async (req, res) => {
         return res.status(400).json({ error: "Invalid period. Use weekly, monthly, or semester" });
     }
 
-    // Find students with late logs in the specified period
-    const students = await Student.find({
-      "lateLogs.date": {
-        $gte: startDate,
-        $lte: now
-      }
-    })
-    .select("rollNo name year semester branch section lateDays lateLogs fines status excuseDaysUsed limitExceeded alertFaculty consecutiveLateDays")
-    .lean();
-
-    // Filter late logs to only include those in the period
-    const studentsWithFilteredLogs = students.map(student => ({
-      ...student,
-      lateLogs: student.lateLogs.filter(log => 
-        log.date >= startDate && log.date <= now
-      ),
-      lateCountInPeriod: student.lateLogs.filter(log => 
-        log.date >= startDate && log.date <= now
-      ).length
-    })).filter(student => student.lateCountInPeriod > 0);
-
+    // PERFORMANCE: Use aggregation pipeline instead of in-memory filtering
+    const pageNum = Math.max(parseInt(page || "1", 10), 1);
+    const limitNum = Math.min(Math.max(parseInt(limit || "50", 10), 1), 200);
     const shouldPaginate = page !== undefined || limit !== undefined;
+    
+    const pipeline = [
+      // Match students with lateLogs in the period
+      {
+        $match: {
+          "lateLogs.date": {
+            $gte: startDate,
+            $lte: now
+          }
+        }
+      },
+      // Project fields and filter lateLogs
+      {
+        $project: {
+          rollNo: 1,
+          name: 1,
+          year: 1,
+          semester: 1,
+          branch: 1,
+          section: 1,
+          lateDays: 1,
+          fines: 1,
+          status: 1,
+          excuseDaysUsed: 1,
+          limitExceeded: 1,
+          alertFaculty: 1,
+          consecutiveLateDays: 1,
+          lateLogs: {
+            $filter: {
+              input: "$lateLogs",
+              as: "log",
+              cond: {
+                $and: [
+                  { $gte: ["$$log.date", startDate] },
+                  { $lte: ["$$log.date", now] }
+                ]
+              }
+            }
+          }
+        }
+      },
+      // Add lateCountInPeriod field
+      {
+        $addFields: {
+          lateCountInPeriod: { $size: "$lateLogs" }
+        }
+      },
+      // Only return students with late logs in period
+      {
+        $match: {
+          lateCountInPeriod: { $gt: 0 }
+        }
+      },
+      // Sort by lateCountInPeriod descending
+      {
+        $sort: { lateCountInPeriod: -1, rollNo: 1 }
+      }
+    ];
+    
+    // Add pagination stages if requested
+    if (shouldPaginate) {
+      pipeline.push({ $skip: (pageNum - 1) * limitNum });
+      pipeline.push({ $limit: limitNum });
+    }
+    
+    // Execute aggregation and get total count in parallel
+    const [students, countResult] = await Promise.all([
+      Student.aggregate(pipeline),
+      Student.aggregate([
+        ...pipeline.slice(0, -2), // Remove skip and limit for count
+        { $count: "total" }
+      ])
+    ]);
+    
+    const totalRecords = countResult.length > 0 ? countResult[0].total : 0;
+    
+    // PERFORMANCE: Add cache headers (90 seconds for records)
+    res.set('Cache-Control', 'private, max-age=90');
+    
     if (!shouldPaginate) {
       return res.json({
         period,
         startDate,
         endDate: now,
-        students: studentsWithFilteredLogs,
-        totalRecords: studentsWithFilteredLogs.length
+        students,
+        totalRecords
       });
     }
-
-    const pageNum = Math.max(parseInt(page || "1", 10), 1);
-    const limitNum = Math.min(Math.max(parseInt(limit || "50", 10), 1), 200);
-    const start = (pageNum - 1) * limitNum;
-    const end = start + limitNum;
-    const paged = studentsWithFilteredLogs.slice(start, end);
 
     return res.json({
       period,
       startDate,
       endDate: now,
-      students: paged,
-      totalRecords: studentsWithFilteredLogs.length,
+      students,
+      totalRecords,
       page: pageNum,
       limit: limitNum,
-      totalPages: Math.ceil(studentsWithFilteredLogs.length / limitNum)
+      totalPages: Math.ceil(totalRecords / limitNum)
     });
   } catch (err) {
     console.error('❌ Error fetching records:', err);
@@ -1319,6 +1400,7 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
   router.get("/analytics/leaderboard", checkDbConnection, async (req, res) => {
     try {
       // Most Late Students (top 10)
+      // PERFORMANCE: Use indexed queries with limits
       const mostLate = await Student.find({ lateDays: { $gt: 0 } })
         .sort({ lateDays: -1 })
         .limit(10)
@@ -1332,30 +1414,50 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
         .select('rollNo name year branch lateDays')
         .lean();
 
-      // Most Improved (students with declining late trend - simplified)
-      // For demo: find students who were late but haven't been late recently
-      const allStudents = await Student.find({ lateDays: { $gt: 0 } })
-        .select('rollNo name year branch lateDays lateLogs')
-        .lean();
+      // PERFORMANCE OPTIMIZATION: Use aggregation pipeline for most improved
+      // This is much faster than loading all students and filtering in memory
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const mostImproved = await Student.aggregate([
+        // Only students with lates
+        { $match: { lateDays: { $gt: 0 } } },
+        // Unwind late logs to analyze them
+        { $unwind: { path: "$lateLogs", preserveNullAndEmptyArrays: true } },
+        // Group to count recent lates
+        {
+          $group: {
+            _id: "$_id",
+            rollNo: { $first: "$rollNo" },
+            name: { $first: "$name" },
+            year: { $first: "$year" },
+            branch: { $first: "$branch" },
+            lateDays: { $first: "$lateDays" },
+            recentLates: {
+              $sum: {
+                $cond: [
+                  { $gte: ["$lateLogs.date", sevenDaysAgo] },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        },
+        // Only those with no recent lates
+        { $match: { recentLates: 0 } },
+        // Improvement score = total late days (since no recent)
+        { $addFields: { improvement: "$lateDays" } },
+        // Sort by improvement
+        { $sort: { improvement: -1 } },
+        // Top 10
+        { $limit: 10 },
+        // Project only needed fields
+        { $project: { rollNo: 1, name: 1, year: 1, branch: 1, lateDays: 1, improvement: 1 } }
+      ]);
 
-      const mostImproved = allStudents
-        .map(student => {
-          const logs = student.lateLogs || [];
-          if (logs.length === 0) return null;
-
-          // Check if no lates in last 7 days
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          const recentLates = logs.filter(log => new Date(log.date) > sevenDaysAgo).length;
-
-          // Calculate improvement (total lates - recent activity = improvement)
-          const improvement = recentLates === 0 && student.lateDays > 0 ? student.lateDays : 0;
-
-          return improvement > 0 ? { ...student, improvement } : null;
-        })
-        .filter(s => s !== null)
-        .sort((a, b) => b.improvement - a.improvement)
-        .slice(0, 10);
+      // Add cache headers
+      res.set('Cache-Control', 'private, max-age=300'); // Cache for 5 minutes
 
       res.json({
         mostLate,
@@ -1368,43 +1470,63 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
     }
   });
 
-  // Analytics - Financial
+  // Analytics - Financial (Optimized with aggregation)
   router.get("/analytics/financial", checkDbConnection, async (req, res) => {
     try {
-      // Get all students with financial data
-      const students = await Student.find({}).select('fines fineHistory').lean();
-
-      // Calculate total collected (sum of all fine history)
-      let totalCollected = 0;
-      let pendingFines = 0;
-
-      students.forEach(student => {
-        // Pending fines
-        pendingFines += student.fines || 0;
-
-        // Total collected from fine history
-        if (student.fineHistory && student.fineHistory.length > 0) {
-          student.fineHistory.forEach(history => {
-            if (history.action === 'paid') {
-              totalCollected += history.amount || 0;
-            }
-          });
+      // PERFORMANCE: Use aggregation pipeline instead of loading all students
+      const financialStats = await Student.aggregate([
+        {
+          $facet: {
+            // Pending fines total
+            pendingFines: [
+              { $group: { _id: null, total: { $sum: "$fines" } } }
+            ],
+            // Count students with fines
+            studentsWithFines: [
+              { $match: { fines: { $gt: 0 } } },
+              { $count: "count" }
+            ],
+            // Average fine (for students with fines > 0)
+            avgFine: [
+              { $match: { fines: { $gt: 0 } } },
+              { $group: { _id: null, avg: { $avg: "$fines" } } }
+            ],
+            // Fine history totals (collected payments)
+            fineHistory: [
+              { $unwind:{ path: "$fineHistory", preserveNullAndEmptyArrays: false } },
+              {
+                $group: {
+                  _id: null,
+                  collected: {
+                    $sum: {
+                      $cond: [
+                        { $eq: ["$fineHistory.paid", true] },
+                        "$fineHistory.amount",
+                        0
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
         }
-      });
+      ]);
 
-      // Projected revenue (pending + collected)
+      const stats = financialStats[0];
+      const pendingFines = stats.pendingFines[0]?.total || 0;
+      const totalCollected = stats.fineHistory[0]?.collected || 0;
+      const studentsWithFinesCount = stats.studentsWithFines[0]?.count || 0;
+      const avgFinePerStudent = Math.round(stats.avgFine[0]?.avg || 0);
+
+      // Projected revenue and payment rate
       const projectedRevenue = totalCollected + pendingFines;
-
-      // Payment rate (collected / projected * 100)
       const paymentRate = projectedRevenue > 0 
         ? Math.round((totalCollected / projectedRevenue) * 100) 
         : 0;
 
-      // Average fine per student (only count students with fines > 0)
-      const studentsWithFines = students.filter(s => (s.fines || 0) > 0);
-      const avgFinePerStudent = studentsWithFines.length > 0
-        ? Math.round(pendingFines / studentsWithFines.length)
-        : 0;
+      // Add cache headers
+      res.set('Cache-Control', 'private, max-age=180'); // Cache for 3 minutes
 
       res.json({
         totalCollected,
