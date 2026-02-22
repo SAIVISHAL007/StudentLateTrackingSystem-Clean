@@ -8,7 +8,40 @@ import * as XLSX from 'xlsx';
  */
 export const exportToExcel = (students, filename, filters = {}) => {
   try {
-    // Prepare data for Excel
+    // Helper function to get today's late marking info
+    const getTodayMarkedBy = (lateLogs) => {
+      if (!lateLogs || lateLogs.length === 0) return 'N/A';
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const todayLog = lateLogs.find(log => {
+        const logDate = new Date(log.date);
+        return logDate >= today && logDate < tomorrow;
+      });
+      
+      return todayLog?.markedByName || 'Unknown';
+    };
+    
+    const getTodayMarkedTime = (lateLogs) => {
+      if (!lateLogs || lateLogs.length === 0) return 'N/A';
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const todayLog = lateLogs.find(log => {
+        const logDate = new Date(log.date);
+        return logDate >= today && logDate < tomorrow;
+      });
+      
+      return todayLog ? new Date(todayLog.date).toLocaleTimeString() : 'N/A';
+    };
+    
+    // Prepare data for Excel with faculty authorization info
     const excelData = students.map((student, index) => ({
       'S.No': index + 1,
       'Roll Number': student.rollNo || 'N/A',
@@ -24,7 +57,9 @@ export const exportToExcel = (students, filename, filters = {}) => {
       'Alert Faculty': student.alertFaculty ? 'Yes' : 'No',
       'Last Late Date': student.lateLogs && student.lateLogs.length > 0 
         ? new Date(student.lateLogs[student.lateLogs.length - 1].date).toLocaleDateString()
-        : 'Never'
+        : 'Never',
+      'Marked By (Today)': getTodayMarkedBy(student.lateLogs),
+      'Marked Time (Today)': getTodayMarkedTime(student.lateLogs)
     }));
 
     // Create workbook and worksheet
@@ -45,7 +80,9 @@ export const exportToExcel = (students, filename, filters = {}) => {
       { wch: 12 }, // Status
       { wch: 14 }, // Total Fines
       { wch: 12 }, // Alert Faculty
-      { wch: 15 }  // Last Late Date
+      { wch: 15 }, // Last Late Date
+      { wch: 25 }, // Marked By (Today)
+      { wch: 18 }  // Marked Time (Today)
     ];
     worksheet['!cols'] = colWidths;
 
@@ -125,7 +162,7 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
 
-    // Create detailed late logs sheet
+    // Create detailed late logs sheet with FACULTY information
     const lateLogsData = [];
     students.forEach(student => {
       if (student.lateLogs && student.lateLogs.length > 0) {
@@ -139,6 +176,8 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
             'Section': student.section || 'N/A',
             'Date': new Date(log.date).toLocaleDateString(),
             'Time': new Date(log.date).toLocaleTimeString(),
+            'Marked By': log.markedByName || 'Unknown Faculty',
+            'Faculty Email': log.markedByEmail || 'N/A',
             'Notes': log.notes || ''
           });
         });
@@ -149,7 +188,7 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
       const logsSheet = XLSX.utils.json_to_sheet(lateLogsData);
       logsSheet['!cols'] = [
         { wch: 15 }, { wch: 25 }, { wch: 6 }, { wch: 10 }, 
-        { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 30 }
+        { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 25 }, { wch: 30 }
       ];
       XLSX.utils.book_append_sheet(workbook, logsSheet, 'Late Logs');
     }

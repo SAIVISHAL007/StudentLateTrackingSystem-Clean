@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { 
  FiUserCheck, 
  FiClock, 
- FiBarChart2, 
  FiTrendingUp, 
  FiSettings, 
  FiUsers, 
@@ -56,16 +55,10 @@ function Sidebar({ currentPage, onPageChange }) {
  description: "Enhanced student selection with filters"
  },
  {
- id: "late-today",
+ id: "late-management",
  icon: <FiClock size={24} />,
- title: "Late Students Today",
- description: "View today's late students"
- },
- {
- id: "records",
- icon: <FiBarChart2 size={24} />,
- title: "Late Records",
- description: "Weekly, monthly & semester reports"
+ title: "Late Management",
+ description: "Today's late students & records (tabbed view)"
  },
  {
  id: "analytics",

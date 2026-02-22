@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import API from "../services/api";
 import { toast } from "./Toast";
 import { getCurrentUser } from "../utils/auth";
@@ -19,7 +19,17 @@ function StudentManagement() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  
+  // PERFORMANCE: Pagination state  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const pageSize = 100; // Load 100 students at a time
+  
+  // PERFORMANCE: Debounce timer
+  const searchDebounceRef = useRef(null);
   const searchRafRef = useRef(null);
+  
   const [formData, setFormData] = useState({
     rollNo: "",
     name: "",
@@ -29,47 +39,67 @@ function StudentManagement() {
     section: "A"
   });
 
-  useEffect(() => {
-    fetchAllStudents();
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (searchRafRef.current) {
-        cancelAnimationFrame(searchRafRef.current);
-      }
-    };
-  }, []);
-
-  const fetchAllStudents = async () => {
+  // PERFORMANCE: Define fetchAllStudents before useEffect to avoid "used before defined" error
+  const fetchAllStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await API.get("/students/all");
+      // PERFORMANCE: Fetch with pagination
+      const res = await API.get("/students/all", {
+        params: {
+          page: currentPage,
+          limit: pageSize
+        }
+      });
       setStudents(res.data.students || []);
+      setTotalCount(res.data.totalCount || 0);
+      setHasMore(res.data.hasMore || false);
     } catch (err) {
       console.error("Fetch error:", err.response?.data || err.message);
       toast.error("Failed to fetch students");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize]);
+
+  useEffect(() => {
+    fetchAllStudents();
+  }, [currentPage, fetchAllStudents]); // Refetch when page changes
+
+  useEffect(() => {
+    return () => {
+      if (searchRafRef.current) {
+        cancelAnimationFrame(searchRafRef.current);
+      }
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // PERFORMANCE: Debounced search handler (500ms delay)
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
 
+    // Clear existing timers
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
     if (searchRafRef.current) {
       cancelAnimationFrame(searchRafRef.current);
     }
 
-    searchRafRef.current = requestAnimationFrame(() => {
-      setSearchQuery(value);
-    });
+    // Debounce search query update by 500ms
+    searchDebounceRef.current = setTimeout(() => {
+      searchRafRef.current = requestAnimationFrame(() => {
+        setSearchQuery(value);
+      });
+    }, 500);
   };
 
   const handleSort = (field) => {
@@ -567,6 +597,66 @@ function StudentManagement() {
               ))}
             </tbody>
           </table>
+          
+          {/* PERFORMANCE: Pagination Controls */}
+          {students.length > 0 && (
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "1.5rem 1rem",
+              background: "#f8f9fa",
+              borderRadius: "0 0 12px 12px",
+              marginTop: "1rem",
+              borderTop: "2px solid #dee2e6"
+            }}>
+              <div style={{ color: "#6c757d", fontSize: "0.95rem" }}>
+                Showing <strong>{students.length}</strong> of <strong>{totalCount}</strong> students
+                {searchQuery && <span> (filtered)</span>}
+              </div>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1 || loading}
+                  className="pro-btn pro-btn-secondary"
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "0.9rem",
+                    opacity: (currentPage === 1 || loading) ? 0.5 : 1,
+                    cursor: (currentPage === 1 || loading) ? "not-allowed" : "pointer"
+                  }}
+                >
+                  Previous
+                </button>
+                
+                <span style={{
+                  padding: "8px 16px",
+                  background: "white",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "8px",
+                  fontWeight: "600",
+                  color: "#495057",
+                  fontSize: "0.95rem"
+                }}>
+                  Page {currentPage}
+                </span>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={!hasMore || loading}
+                  className="pro-btn pro-btn-secondary"
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "0.9rem",
+                    opacity: (!hasMore || loading) ? 0.5 : 1,
+                    cursor: (!hasMore || loading) ? "not-allowed" : "pointer"
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

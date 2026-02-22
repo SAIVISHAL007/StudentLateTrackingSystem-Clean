@@ -1,5 +1,5 @@
 import React, {useState,useEffect, useRef } from "react";
-import { FiBarChart2, FiSettings, FiClipboard, FiDollarSign } from "react-icons/fi";
+import { FiBarChart2, FiSettings, FiClipboard, FiDollarSign, FiDownload } from "react-icons/fi";
 import API from "../services/api";
 import { getCurrentUser } from "../utils/auth";
 import AuditTrail from "./AuditTrail";
@@ -835,8 +835,8 @@ function AdminManagement() {
  transition: "all .3s",
  boxShadow: "0 4px 15px rgba(16,185,129,0.3)",
  opacity: backupLoading ? .6 : 1
- }}
- >{backupLoading ? '⏳ Downloading...' : '💾 Download Database Backup'}</button>
+ }}>
+ {backupLoading ? <><FiDownload style={{ marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} /> Downloading...</> : <><FiDownload style={{ marginRight: '0.5rem' }} /> Download Database</>}</button>
  </div>
  </div>
 

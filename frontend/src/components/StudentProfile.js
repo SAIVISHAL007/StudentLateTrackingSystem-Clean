@@ -235,6 +235,15 @@ function StudentProfile() {
                 <p style={{ margin: '0', opacity: 0.8, fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: 600 }}>Section</p>
                 <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.5rem', fontWeight: 800 }}>{studentDetails.section}</p>
               </div>
+              <div>
+                <p style={{ margin: '0', opacity: 0.8, fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: 600 }}>Faculty</p>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.5rem', fontWeight: 800 }}>
+                  {studentDetails.lateLogs && studentDetails.lateLogs.length > 0 
+                    ? (studentDetails.lateLogs[0].markedByName || 'N/A')
+                    : 'N/A'
+                  }
+                </p>
+              </div>
             </div>
           </div>
 

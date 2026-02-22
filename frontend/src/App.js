@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { FiSettings } from "react-icons/fi";
 import PrefetchedStudentForm from "./components/PrefetchedStudentForm";
-import LateList from "./components/LateList";
-import Record from "./components/Record";
+import CombinedLateView from "./components/CombinedLateView";
 import Analytics from "./components/Analytics";
 import AIInsights from "./components/AIInsights";
 import AdminManagement from "./components/AdminManagement";
@@ -95,61 +95,8 @@ function App() {
           </div>
         );
 
-      case "late-today":
-        return (
-          <div>
-            <div style={{
-              textAlign: "center",
-              marginBottom: "3rem"
-            }}>
-              <h1 style={{
-                color: "#343a40",
-                fontSize: "2.5rem",
-                fontWeight: "700",
-                marginBottom: "0.5rem",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)"
-              }}>
-                Late Students Today
-              </h1>
-              <p style={{
-                color: "#6c757d",
-                fontSize: "1.1rem",
-                margin: "0"
-              }}>
-                View and manage today's late arrivals
-              </p>
-            </div>
-            <LateList />
-          </div>
-        );
-
-      case "records":
-        return (
-          <div>
-            <div style={{
-              textAlign: "center",
-              marginBottom: "3rem"
-            }}>
-              <h1 style={{
-                color: "#343a40",
-                fontSize: "2.5rem",
-                fontWeight: "700",
-                marginBottom: "0.5rem",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)"
-              }}>
-                Attendance Records
-              </h1>
-              <p style={{
-                color: "#6c757d",
-                fontSize: "1.1rem",
-                margin: "0"
-              }}>
-                Analyze attendance patterns and generate reports
-              </p>
-            </div>
-            <Record />
-          </div>
-        );
+      case "late-management":
+        return <CombinedLateView />;
 
       case "analytics":
         return <Analytics />;
@@ -181,7 +128,7 @@ function App() {
                 marginBottom: "0.5rem",
                 textShadow: "0 2px 4px rgba(0,0,0,0.1)"
               }}>
-                ⚙️ Admin Management
+                <FiSettings style={{ marginRight: '0.5rem', display: 'inline' }} /> Management
               </h1>
               <p style={{
                 color: "#6c757d",
@@ -212,7 +159,7 @@ function App() {
       display: "flex",
       position: "relative"
     }}>
-      {/* Mobile Sidebar Overlay Backdrop */}
+      {/* Mobile Sidebar Overlay Backdrop - ONLY show if sidebar is open */}
       {!sidebarCollapsed && isMobile && (
         <div
           onClick={() => window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { shouldOpen: false } }))}

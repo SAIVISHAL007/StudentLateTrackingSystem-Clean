@@ -847,7 +847,7 @@ function PrefetchedStudentForm() {
                     backgroundColor: "#f9fafb",
                     borderRadius: "0.75rem"
                   }}>
-                    <p style={{ margin: 0 }}>✓ No late records for this student</p>
+                    <p style={{ margin: 0 }}>No late records for this student</p>
                   </div>
                 )}
               </>

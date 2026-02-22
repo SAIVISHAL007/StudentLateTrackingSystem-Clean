@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { FiList, FiDownload, FiFileText, FiCalendar, FiBarChart2, FiUser } from "react-icons/fi";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { FiList, FiDownload, FiFileText, FiCalendar, FiBarChart2, FiUser, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import API from "../services/api";
 import { formatDate } from "../utils/dateUtils";
 import { downloadTextReport, formatLateRecordsForExport, getTimestamp } from "../utils/exportUtils";
@@ -13,12 +13,15 @@ function Record() {
  const [selectedSection, setSelectedSection] = useState("all");
  const [recordData, setRecordData] = useState(null);
  const [loading, setLoading] = useState(false);
+ const [currentPage, setCurrentPage] = useState(1);
+ const ITEMS_PER_PAGE = 30; // Show 30 students per page to reduce DOM elements
 
  useEffect(() => {
  fetchRecords(selectedPeriod);
  setSelectedYear("all"); // Reset year filter when period changes
  setSelectedBranch("all");
  setSelectedSection("all");
+ setCurrentPage(1); // Reset page to 1 when period changes
  }, [selectedPeriod]);
 
  const fetchRecords = async (period) => {
@@ -73,7 +76,8 @@ function Record() {
  return labels[year] || `Year ${year}`;
  };
 
- const getFilteredStudents = (students) => {
+ // PERFORMANCE: Memoize getFilteredStudents with useCallback to prevent dependency warnings
+ const getFilteredStudents = useCallback((students) => {
  if (!Array.isArray(students)) return [];
  return students.filter(student => {
  const matchesYear = selectedYear === "all" || student.year?.toString() === selectedYear;
@@ -81,7 +85,17 @@ function Record() {
  const matchesSection = selectedSection === "all" || student.section?.toUpperCase() === selectedSection.toUpperCase();
  return matchesYear && matchesBranch && matchesSection;
  });
- };
+ }, [selectedYear, selectedBranch, selectedSection]);
+
+ // PERFORMANCE: Memoize filtered and paginated students to avoid recalculations
+ const { filteredStudents, paginatedStudents, totalPages } = useMemo(() => {
+ const filtered = getFilteredStudents(recordData?.students || []);
+ const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+ const start = (currentPage - 1) * ITEMS_PER_PAGE;
+ const end = start + ITEMS_PER_PAGE;
+ const paginated = filtered.slice(start, end);
+ return { filteredStudents: filtered, paginatedStudents: paginated, totalPages };
+ }, [recordData?.students, currentPage, ITEMS_PER_PAGE, getFilteredStudents]);
 
  const getYearOptions = () => [
  { value: "all", label: "All Years"},
@@ -97,8 +111,7 @@ function Record() {
  return;
  }
  
- const filteredStudents = getFilteredStudents(recordData.students);
- 
+ // Export all filtered students (not just current page)
  if (filteredStudents.length === 0) {
  toast.error('No students match your filters');
  return;
@@ -132,7 +145,12 @@ function Record() {
  return;
  }
  
- const filteredStudents = getFilteredStudents(recordData.students);
+ // Export all filtered students (not just current page)
+ if (filteredStudents.length === 0) {
+ alert(" No students match your filters");
+ return;
+ }
+ 
  const exportData = formatLateRecordsForExport(filteredStudents, selectedPeriod);
  const timestamp = getTimestamp();
  const yearFilter = selectedYear === "all" ? "All Years" : `Year ${selectedYear}`;
@@ -273,10 +291,15 @@ function Record() {
  color: "#6c757d",
  textAlign: "right"
  }}>
- <div>Latest dates:</div>
- {student.lateLogs.slice(-2).map((log, index) => (
- <div key={index} style={{ fontSize: "0.75rem" }}>
- {formatDate(log.date)}
+ <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>Latest Info:</div>
+ {student.lateLogs && student.lateLogs.slice(-2).map((log, index) => (
+ <div key={index} style={{ fontSize: "0.75rem", lineHeight: "1.4" }}>
+ <div>{formatDate(log.date)}</div>
+ {log.markedByName && (
+ <div style={{ color: "#495057", fontSize: "0.7rem", fontStyle: "italic" }}>
+ By: {log.markedByName}
+ </div>
+ )}
  </div>
  ))}
  </div>
@@ -301,10 +324,10 @@ function Record() {
  <div style={{
  marginBottom: "2.5rem",
  display: "flex",
- justifyContent: "space-between",
+ justifyContent: "flex-start",
  alignItems: "center",
  flexWrap: "wrap",
- gap: "1.5rem"
+ gap: "2rem"
  }}>
  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
  <div style={{
@@ -347,7 +370,7 @@ function Record() {
  
  {/* Export Buttons */}
  {recordData && recordData.students && recordData.students.length > 0 && (
- <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+ <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginLeft: "auto" }}>
  <button
  onClick={handleExportExcel}
  style={{
@@ -695,7 +718,6 @@ function Record() {
 
  {/* Students Display */}
  {(() => {
- const filteredStudents = getFilteredStudents(recordData.students);
  
  if (filteredStudents.length === 0) {
  return (
@@ -722,9 +744,9 @@ function Record() {
  );
  }
 
- // If showing all years, group by year
+ // If showing all years, group by year using PAGINATED students only
  if (selectedYear === "all") {
- const groupedStudents = groupStudentsByYear(filteredStudents);
+ const groupedStudents = groupStudentsByYear(paginatedStudents);
  return (
  <div>
  {Object.entries(groupedStudents)
@@ -732,7 +754,7 @@ function Record() {
  </div>
  );
  } else {
- // Show specific year students in a simple list
+ // Show specific year students in a simple list (PAGINATED)
  return (
  <div style={{
  backgroundColor: "#ffffff",
@@ -758,7 +780,7 @@ function Record() {
  display: "grid",
  gap: "1rem"
  }}>
- {filteredStudents.map(student => (
+ {paginatedStudents.map(student => (
  <div key={student._id} style={{
  padding: "1rem",
  backgroundColor: "#f8f9fa",
@@ -864,10 +886,15 @@ function Record() {
  color: "#6c757d",
  textAlign: "right"
  }}>
- <div>Latest dates:</div>
- {student.lateLogs.slice(-2).map((log, index) => (
- <div key={index} style={{ fontSize: "0.75rem" }}>
- {formatDate(log.date)}
+ <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>Latest Info:</div>
+ {student.lateLogs && student.lateLogs.slice(-2).map((log, index) => (
+ <div key={index} style={{ fontSize: "0.75rem", lineHeight: "1.4" }}>
+ <div>{formatDate(log.date)}</div>
+ {log.markedByName && (
+ <div style={{ color: "#495057", fontSize: "0.7rem", fontStyle: "italic" }}>
+ By: {log.markedByName}
+ </div>
+ )}
  </div>
  ))}
  </div>
@@ -878,6 +905,99 @@ function Record() {
  );
  }
  })()}
+ 
+ {/* Pagination Controls */}
+ {filteredStudents.length > 0 && totalPages > 1 && (
+ <div style={{
+ display: "flex",
+ justifyContent: "center",
+ alignItems: "center",
+ gap: "1rem",
+ marginTop: "2rem",
+ padding: "1.5rem",
+ backgroundColor: "#ffffff",
+ borderRadius: "12px",
+ boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+ flexWrap: "wrap"
+ }}>
+ <button
+ onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+ disabled={currentPage === 1}
+ style={{
+ padding: "8px 12px",
+ border: "1px solid #cbd5e1",
+ background: currentPage === 1 ? "#e2e8f0" : "#ffffff",
+ borderRadius: "8px",
+ cursor: currentPage === 1 ? "not-allowed" : "pointer",
+ display: "flex",
+ alignItems: "center",
+ gap: "0.5rem",
+ transition: "all 0.3s ease",
+ color: currentPage === 1 ? "#9ca3af" : "#1e293b"
+ }}
+ onMouseOver={(e) => {
+ if (currentPage > 1) {
+ e.target.style.background = "#f1f5f9";
+ e.target.style.borderColor = "#94a3b8";
+ }
+ }}
+ onMouseOut={(e) => {
+ e.target.style.background = currentPage === 1 ? "#e2e8f0" : "#ffffff";
+ e.target.style.borderColor = "#cbd5e1";
+ }}
+ >
+ <FiChevronLeft size={16} /> Previous
+ </button>
+
+ <div style={{
+ display: "flex",
+ alignItems: "center",
+ gap: "0.5rem",
+ fontSize: "0.9rem",
+ color: "#64748b",
+ fontWeight: "500"
+ }}>
+ Page <strong style={{ color: "#1e293b", marginLeft: "0.25rem", marginRight: "0.25rem" }}>{currentPage}</strong> of <strong style={{ color: "#1e293b", marginLeft: "0.25rem" }}>{totalPages}</strong>
+ </div>
+
+ <button
+ onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+ disabled={currentPage === totalPages}
+ style={{
+ padding: "8px 12px",
+ border: "1px solid #cbd5e1",
+ background: currentPage === totalPages ? "#e2e8f0" : "#ffffff",
+ borderRadius: "8px",
+ cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+ display: "flex",
+ alignItems: "center",
+ gap: "0.5rem",
+ transition: "all 0.3s ease",
+ color: currentPage === totalPages ? "#9ca3af" : "#1e293b"
+ }}
+ onMouseOver={(e) => {
+ if (currentPage < totalPages) {
+ e.target.style.background = "#f1f5f9";
+ e.target.style.borderColor = "#94a3b8";
+ }
+ }}
+ onMouseOut={(e) => {
+ e.target.style.background = currentPage === totalPages ? "#e2e8f0" : "#ffffff";
+ e.target.style.borderColor = "#cbd5e1";
+ }}
+ >
+ Next <FiChevronRight size={16} />
+ </button>
+
+ <div style={{
+ fontSize: "0.85rem",
+ color: "#94a3b8",
+ fontWeight: "500"
+ }}>
+ Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredStudents.length)} of {filteredStudents.length}
+ </div>
+ </div>
+ )}
  </>
  )}
 

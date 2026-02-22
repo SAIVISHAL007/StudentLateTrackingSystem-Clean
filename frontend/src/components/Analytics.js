@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 import { toast } from "./Toast";
-import { FiBarChart2, FiRefreshCw, FiClock, FiDollarSign, FiBriefcase, FiAlertTriangle, FiTrendingUp, FiAward, FiArrowUp, FiArrowDown, FiMinus } from "react-icons/fi";
+import { FiBarChart2, FiRefreshCw, FiClock, FiDollarSign, FiBriefcase, FiAlertTriangle, FiTrendingUp, FiAward, FiArrowUp, FiArrowDown, FiMinus, FiPieChart } from "react-icons/fi";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 function Analytics() {
   const [todayCount, setTodayCount] = useState(0);
@@ -355,16 +356,160 @@ function Analytics() {
           marginBottom: "2rem"
         }}>
           <h3 style={{
-            fontSize: "1.5rem",
+            fontSize: "1.5rem", 
             fontWeight: "700",
             color: "#9a3412",
-            marginBottom: "1.5rem",
+            marginBottom: "1.5rem", 
             display: "flex",
             alignItems: "center",
             gap: "0.5rem"
           }}>
             <FiBriefcase size={24} /> Department Breakdown
           </h3>
+          
+          {/* Branch-wise Visual Charts */}
+          {departmentStats.length > 0 && (
+            <div style={{ marginBottom: "2rem" }}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+                gap: "2rem",
+                marginBottom: "2rem"
+              }}>
+                {/* Bar Chart - Late Students by Branch */}
+                <div style={{
+                  background: "white",
+                  padding: "1.5rem",
+                  borderRadius: "16px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
+                }}>
+                  <h4 style={{
+                    fontSize: "1.1rem",
+                    fontWeight: "700",
+                    color: "#1e293b",
+                    marginBottom: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <FiBarChart2 /> Late Students by Branch
+                  </h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={departmentStats}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '0.85rem' }} />
+                      <YAxis stroke="#64748b" style={{ fontSize: '0.85rem' }} />
+                      <Tooltip 
+                        contentStyle={{
+                          background: 'white',
+                          border: '2px solid #e2e8f0',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="late" fill="#dc2626" name="Late Students" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="total" fill="#0ea5e9" name="Total Students" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Pie Chart - Fines Distribution */}
+                <div style={{
+                  background: "white",
+                  padding: "1.5rem",
+                  borderRadius: "16px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
+                }}>
+                  <h4 style={{
+                    fontSize: "1.1rem",
+                    fontWeight: "700",
+                    color: "#1e293b",
+                    marginBottom: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <FiPieChart /> Fines Distribution by Branch
+                  </h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={departmentStats}
+                        dataKey="fines"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label={(entry) => `${entry.name}: ₹${entry.fines}`}
+                        labelStyle={{ fontSize: '0.75rem', fontWeight: '600' }}
+                      >
+                        {departmentStats.map((entry, index) => {
+                          const colors = ['#dc2626', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
+                          return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                        })}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{
+                          background: 'white',
+                          border: '2px solid #e2e8f0',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                        formatter={(value) => `₹${value}`}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Line Chart - Late Rate Comparison */}
+              <div style={{
+                background: "white",
+                padding: "1.5rem",
+                borderRadius: "16px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                marginBottom: "1.5rem"
+              }}>
+                <h4 style={{
+                  fontSize: "1.1rem",
+                  fontWeight: "700",
+                  color: "#1e293b",
+                  marginBottom: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem"
+                }}>
+                  <FiTrendingUp /> Late Rate Comparison Across Branches
+                </h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart 
+                    data={departmentStats.map(dept => ({
+                      ...dept,
+                      lateRate: dept.total > 0 ? ((dept.late / dept.total) * 100).toFixed(1) : 0
+                    }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '0.85rem' }} />
+                    <YAxis stroke="#64748b" style={{ fontSize: '0.85rem' }} label={{ value: 'Late Rate (%)', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      contentStyle={{
+                        background: 'white',
+                        border: '2px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                      }}
+                      formatter={(value) => `${value}%`}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="lateRate" stroke="#dc2626" strokeWidth={3} name="Late Rate (%)" dot={{ fill: '#dc2626', r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+          
+          {/* Department Cards Grid */}
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",

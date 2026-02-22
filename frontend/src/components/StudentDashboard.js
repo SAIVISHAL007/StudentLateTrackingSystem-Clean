@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { FiSearch, FiArrowUp, FiArrowDown, FiClock, FiCalendar, FiX } from 'react-icons/fi';
 import API from '../services/api';
 
@@ -6,12 +6,38 @@ function StudentDashboard({ onClose }) {
   const [lateStudents, setLateStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState('time'); // 'time', 'name', 'rollNo', 'year'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
+  
+  // PERFORMANCE: Debounce timer
+  const searchDebounceRef = useRef(null);
 
   useEffect(() => {
     fetchLateStudentsToday();
   }, []);
+  
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
+  
+  // PERFORMANCE: Debounced search handler (400ms delay for dashboard)
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    
+    searchDebounceRef.current = setTimeout(() => {
+      setSearchQuery(value);
+    }, 400);
+  };
 
   const fetchLateStudentsToday = async () => {
     try {
@@ -212,8 +238,8 @@ function StudentDashboard({ onClose }) {
               <input
                 type="text"
                 placeholder="Search by name, roll number, or branch..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={handleSearchChange}
                 style={{
                   width: '100%',
                   padding: '0.75rem 0.75rem 0.75rem 2.75rem',

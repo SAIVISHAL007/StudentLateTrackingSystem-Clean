@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Student from "../models/student.js";
 import AuditLog from "../models/auditLog.js";
 import { generateRemovalProof, generateAuditTrailPDF } from "../utils/pdfGenerator.js";
+import { authMiddleware } from "./authRoutes.js";
 
 const router = express.Router();
 
@@ -63,9 +64,14 @@ const checkDbConnection = (req, res, next) => {
 
 
 // Mark student late
-router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, res) => {
+router.post("/mark-late", authMiddleware, checkDbConnection, validateMarkLateData, async (req, res) => {
   try {
     const { rollNo, name, year, semester, branch, section } = req.body;
+    
+    // Get faculty information from authenticated request
+    const facultyName = req.faculty?.name || 'Unknown Faculty';
+    const facultyEmail = req.faculty?.email || '';
+    const facultyId = req.faculty?._id;
 
     // Check if student exists
     let student = await Student.findOne({ rollNo });
@@ -101,21 +107,30 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
       if (!student.semester) {
         student.semester = (student.year * 2) - 1; // Default to first semester of their year
       }
-      // For existing students, use stored data
-
+      
+      // IMPROVED DUPLICATE CHECK: Check if already marked late today by any faculty
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
 
       const alreadyMarkedToday = (student.lateLogs || []).some(log => {
         const logDate = new Date(log.date);
-        logDate.setHours(0, 0, 0, 0);
-        return logDate.getTime() === today.getTime();
+        return logDate >= today && logDate < tomorrow;
       });
 
       if (alreadyMarkedToday) {
+        const todayLog = student.lateLogs.find(log => {
+          const logDate = new Date(log.date);
+          return logDate >= today && logDate < tomorrow;
+        });
+        
         return res.status(400).json({
           error: "Already marked late today",
-          message: "Already marked late today.",
+          message: `${student.name} was already marked late today at ${new Date(todayLog.date).toLocaleTimeString()}.`,
+          markedBy: todayLog.markedByName || 'Unknown',
+          markedAt: todayLog.date,
+          canEdit: (Date.now() - new Date(todayLog.date).getTime()) < 600000, // 10 minutes
           student: {
             rollNo: student.rollNo,
             name: student.name,
@@ -125,9 +140,14 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
       }
     }
 
-    // Increment lateDays and add log
+    // Increment lateDays and add log WITH FACULTY TRACKING
     student.lateDays += 1;
-    student.lateLogs.push({ date: new Date() });
+    student.lateLogs.push({ 
+      date: new Date(),
+      markedBy: facultyId,
+      markedByName: facultyName,
+      markedByEmail: facultyEmail
+    });
 
     // UNIFIED FINE STRUCTURE (NEW):
     // - Days 1-2: Excuse days (no fine) ₹0
@@ -216,6 +236,129 @@ router.post("/mark-late", checkDbConnection, validateMarkLateData, async (req, r
   }
 });
 
+// Undo/Edit late marking within time window (10 minutes)
+router.delete("/undo-late/:rollNo", authMiddleware, checkDbConnection, async (req, res) => {
+  try {
+    const { rollNo } = req.params;
+    const facultyName = req.faculty?.name || 'Unknown Faculty';
+    const facultyEmail = req.faculty?.email || '';
+    
+    // PERFORMANCE: Fetch student with necessary fields only
+    const student = await Student.findOne({ rollNo }).select('name rollNo lateLogs lateDays fines excuseDaysUsed status fineHistory alertFaculty consecutiveLateDays').lean();
+    
+    if (!student || !student.lateLogs || student.lateLogs.length === 0) {
+      return res.status(400).json({ 
+        error: "No late marking found",
+        message: "This student has no late markings."
+      });
+    }
+    
+    // Find today's late log (most recent)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayLogIndex = student.lateLogs.findIndex(log => {
+      const logDate = new Date(log.date);
+      return logDate >= today && logDate < tomorrow;
+    });
+    
+    if (todayLogIndex === -1) {
+      return res.status(400).json({ 
+        error: "No late marking found for today",
+        message: "This student was not marked late today."
+      });
+    }
+    
+    const todayLog = student.lateLogs[todayLogIndex];
+    const minutesSinceMarking = (Date.now() - new Date(todayLog.date).getTime()) / 60000;
+    const EDIT_WINDOW_MINUTES = 10;
+    
+    // Check if within edit window
+    if (minutesSinceMarking > EDIT_WINDOW_MINUTES) {
+      return res.status(403).json({ 
+        error: "Edit window expired",
+        message: `Late marking can only be undone within ${EDIT_WINDOW_MINUTES} minutes. ${Math.floor(minutesSinceMarking)} minutes have passed.`,
+        markedAt: todayLog.date,
+        markedBy: todayLog.markedByName
+      });
+    }
+    
+    const EXCUSE_DAYS = 2;
+    const FINE_PER_DAY = 5;
+    const newLateDays = Math.max(0, student.lateDays - 1);
+    
+    // Calculate new fields
+    let updateObj = {
+      lateDays: newLateDays,
+      $pull: { lateLogs: { _id: todayLog._id } } // Remove by _id (atomic operation)
+    };
+    
+    if (newLateDays >= EXCUSE_DAYS) {
+      updateObj.fines = Math.max(0, student.fines - FINE_PER_DAY);
+      updateObj.status = 'fined';
+      updateObj.alertFaculty = newLateDays > 5;
+      updateObj.consecutiveLateDays = newLateDays - EXCUSE_DAYS;
+    } else {
+      updateObj.excuseDaysUsed = Math.max(0, student.excuseDaysUsed - 1);
+      updateObj.status = newLateDays === 0 ? 'normal' : 'excused';
+      updateObj.alertFaculty = false;
+      updateObj.consecutiveLateDays = 0;
+    }
+    
+    // Handle fine history removal if needed
+    if (student.fineHistory && student.fineHistory.length > 0 && newLateDays >= EXCUSE_DAYS) {
+      updateObj.fineHistory = student.fineHistory.slice(0, -1);
+    }
+    
+    // PERFORMANCE: Use findOneAndUpdate (atomic) and create audit log asynchronously
+    const updatedStudent = await Student.findOneAndUpdate(
+      { rollNo },
+      updateObj,
+      { new: true }
+    ).select('rollNo name lateDays status fines').lean();
+    
+    // Create audit log asynchronously (don't wait)
+    if (updatedStudent) {
+      AuditLog.create({
+        action: 'LATE_MARKING_UNDONE',
+        performedBy: {
+          facultyName: facultyName,
+          facultyEmail: facultyEmail
+        },
+        target: {
+          studentRollNo: rollNo,
+          studentName: student.name
+        },
+        details: {
+          originalMarkedBy: todayLog.markedByName,
+          originalMarkedAt: todayLog.date,
+          minutesElapsed: Math.floor(minutesSinceMarking)
+        },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      }).catch(err => console.warn('Audit log error (non-critical):', err.message));
+    }
+    
+    res.json({
+      success: true,
+      message: `Late marking for ${student.name} has been undone.`,
+      student: updatedStudent,
+      undoneBy: facultyName,
+      originalMarkedBy: todayLog.markedByName,
+      minutesElapsed: Math.floor(minutesSinceMarking)
+    });
+    
+  } catch (err) {
+    console.error('❌ Error undoing late marking:', err);
+    res.status(500).json({ 
+      error: "Failed to undo late marking",
+      details: err.message 
+    });
+  }
+});
+
 // ========================================
 
 // Get students who were late today (with pagination support)
@@ -261,8 +404,9 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
       )
     }));
     
-    // PERFORMANCE: Add cache headers for late-today (30 seconds)
-    res.set('Cache-Control', 'private, max-age=30');
+    // PERFORMANCE: Set no-cache for late-today (data changes frequently)
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
 
     res.json({
       date: today.toDateString(),
@@ -567,7 +711,7 @@ router.get("/records/:period", async (req, res) => {
           }
         }
       },
-      // Project fields and filter lateLogs
+      // Project fields and filter lateLogs to include faculty information
       {
         $project: {
           rollNo: 1,
@@ -584,14 +728,29 @@ router.get("/records/:period", async (req, res) => {
           alertFaculty: 1,
           consecutiveLateDays: 1,
           lateLogs: {
-            $filter: {
-              input: "$lateLogs",
+            $map: {
+              input: {
+                $filter: {
+                  input: "$lateLogs",
+                  as: "log",
+                  cond: {
+                    $and: [
+                      { $gte: ["$$log.date", startDate] },
+                      { $lte: ["$$log.date", now] }
+                    ]
+                  }
+                }
+              },
               as: "log",
-              cond: {
-                $and: [
-                  { $gte: ["$$log.date", startDate] },
-                  { $lte: ["$$log.date", now] }
-                ]
+              in: {
+                date: "$$log.date",
+                markedByName: "$$log.markedByName",
+                markedByEmail: "$$log.markedByEmail",
+                markedBy: "$$log.markedBy",
+                notes: "$$log.notes",
+                editedAt: "$$log.editedAt",
+                editedBy: "$$log.editedBy",
+                isEdited: "$$log.isEdited"
               }
             }
           }
@@ -632,8 +791,8 @@ router.get("/records/:period", async (req, res) => {
     
     const totalRecords = countResult.length > 0 ? countResult[0].total : 0;
     
-    // PERFORMANCE: Add cache headers (90 seconds for records)
-    res.set('Cache-Control', 'private, max-age=90');
+    // PERFORMANCE: Set no-cache for records (data changes frequently)
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     
     if (!shouldPaginate) {
       return res.json({
@@ -1415,45 +1574,72 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
         .lean();
 
       // PERFORMANCE OPTIMIZATION: Use aggregation pipeline for most improved
-      // This is much faster than loading all students and filtering in memory
+      // ALGORITHM: Compare recent attendance (past 7 days) vs overall pattern
+      // Students are "improved" if they have few recent late days but higher total late days
+      // This identifies students changing their behavior positively
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
       const mostImproved = await Student.aggregate([
         // Only students with lates
         { $match: { lateDays: { $gt: 0 } } },
-        // Unwind late logs to analyze them
-        { $unwind: { path: "$lateLogs", preserveNullAndEmptyArrays: true } },
-        // Group to count recent lates
+        // Add fields for recent and past month late counts
         {
-          $group: {
-            _id: "$_id",
-            rollNo: { $first: "$rollNo" },
-            name: { $first: "$name" },
-            year: { $first: "$year" },
-            branch: { $first: "$branch" },
-            lateDays: { $first: "$lateDays" },
+          $addFields: {
             recentLates: {
-              $sum: {
-                $cond: [
-                  { $gte: ["$lateLogs.date", sevenDaysAgo] },
-                  1,
-                  0
-                ]
+              $size: {
+                $filter: {
+                  input: "$lateLogs",
+                  as: "log",
+                  cond: { $gte: ["$$log.date", sevenDaysAgo] }
+                }
+              }
+            },
+            monthLates: {
+              $size: {
+                $filter: {
+                  input: "$lateLogs",
+                  as: "log",
+                  cond: { $gte: ["$$log.date", thirtyDaysAgo] }
+                }
               }
             }
           }
         },
-        // Only those with no recent lates
-        { $match: { recentLates: 0 } },
-        // Improvement score = total late days (since no recent)
-        { $addFields: { improvement: "$lateDays" } },
-        // Sort by improvement
-        { $sort: { improvement: -1 } },
+        // Calculate improvement rate: (lates_last_month - lates_last_week) / total_late_days
+        // Students showing improvement: had lates in past month but few/none in past week
+        {
+          $addFields: {
+            improvementScore: {
+              $cond: [
+                { $gt: ["$monthLates", 0] },
+                { $subtract: ["$monthLates", "$recentLates"] }, // Higher = more improved
+                0
+              ]
+            }
+          }
+        },
+        // Only show students who had lates in past month but few recent
+        { $match: { monthLates: { $gt: 1 }, improvementScore: { $gt: 0 } } },
+        // Sort by improvement score descending
+        { $sort: { improvementScore: -1, lateDays: -1 } },
         // Top 10
         { $limit: 10 },
-        // Project only needed fields
-        { $project: { rollNo: 1, name: 1, year: 1, branch: 1, lateDays: 1, improvement: 1 } }
+        // Project only needed fields - use improvementScore as "improvement" for frontend
+        { 
+          $project: { 
+            rollNo: 1, 
+            name: 1, 
+            year: 1, 
+            branch: 1, 
+            lateDays: 1, 
+            improvement: "$improvementScore",
+            recentLates: 1
+          } 
+        }
       ]);
 
       // Add cache headers

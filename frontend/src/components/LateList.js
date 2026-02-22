@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiList, FiClipboard, FiDownload, FiFileText, FiCalendar, FiXCircle, FiAlertCircle, FiCircle } from "react-icons/fi";
+import { FiList, FiClipboard, FiDownload, FiFileText, FiCalendar, FiXCircle, FiAlertCircle, FiCircle, FiUser, FiRotateCcw } from "react-icons/fi";
 import API from "../services/api";
 import { formatDate, isToday } from "../utils/dateUtils";
 import { downloadTextReport, formatStudentDataForExport, getTimestamp } from "../utils/exportUtils";
@@ -15,6 +15,60 @@ function LateList() {
  const [selectedYear, setSelectedYear] = useState("all");
  const [selectedBranch, setSelectedBranch] = useState("all");
  const [selectedSection, setSelectedSection] = useState("all");
+ const [undoingStudent, setUndoingStudent] = useState(null);
+ 
+ // Get today's late marking info for a student
+ const getTodayLateInfo = (lateLogs) => {
+   if (!lateLogs || lateLogs.length === 0) return null;
+   
+   const today = new Date();
+   today.setHours(0, 0, 0, 0);
+   const tomorrow = new Date(today);
+   tomorrow.setDate(tomorrow.getDate() + 1);
+   
+   const todayLog = lateLogs.find(log => {
+     const logDate = new Date(log.date);
+     return logDate >= today && logDate < tomorrow;
+   });
+   
+   if (!todayLog) return null;
+   
+   const minutesSinceMarking = (Date.now() - new Date(todayLog.date).getTime()) / 60000;
+   const canUndo = minutesSinceMarking < 10; // 10 minute window
+   
+   return {
+     ...todayLog,
+     minutesSinceMarking: Math.floor(minutesSinceMarking),
+     canUndo
+   };
+ };
+ 
+ // Handle undo late marking
+ const handleUndoLate = async (rollNo) => {
+   if (!window.confirm(`Are you sure you want to undo the late marking for ${rollNo}? This action will remove today's late entry.`)) {
+     return;
+   }
+   
+   setUndoingStudent(rollNo);
+   try {
+     const res = await API.delete(`/students/undo-late/${rollNo}`);
+     toast.success(res.data.message || 'Late marking undone successfully');
+     
+     // Refresh the list with cache-busting timestamp
+     const refreshRes = await API.get("/students/late-today", { 
+       timeout: 15000,
+       params: { _t: Date.now() }
+     });
+     const studentsData = refreshRes.data.students || refreshRes.data;
+     setStudents(studentsData);
+   } catch (err) {
+     console.error('Error undoing late marking:', err);
+     const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to undo late marking';
+     toast.error(errorMsg);
+   } finally {
+     setUndoingStudent(null);
+   }
+ };
 
  useEffect(() => {
  const fetchLateStudents = async () => {
@@ -693,6 +747,99 @@ function LateList() {
  borderTop: "2px solid rgba(102, 126, 234, 0.15)",
  animation: "fadeIn 0.4s ease-out"
  }}>
+ {/* Faculty Authorization Info */}
+ {(() => {
+   const todayInfo = getTodayLateInfo(s.lateLogs);
+   if (todayInfo) {
+     return (
+       <div style={{
+         marginBottom: "2rem",
+         padding: "1.25rem",
+         background: "linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%)",
+         borderRadius: "16px",
+         border: "2px solid #c7d2fe",
+         boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)"
+       }}>
+         <h4 style={{
+           margin: "0 0 1rem 0",
+           fontSize: "1rem",
+           color: "#4338ca",
+           fontWeight: "700",
+           display: "flex",
+           alignItems: "center",
+           gap: "0.5rem"
+         }}>
+           <FiUser />
+           Authorization Details
+         </h4>
+         <div style={{ fontSize: "0.9rem", color: "#4338ca", lineHeight: "1.8" }}>
+           <div><strong>Marked by:</strong> {todayInfo.markedByName || 'Unknown'}</div>
+           {todayInfo.markedByEmail && (
+             <div><strong>Email:</strong> {todayInfo.markedByEmail}</div>
+           )}
+           <div><strong>Marked at:</strong> {new Date(todayInfo.date).toLocaleString()}</div>
+           <div><strong>Time elapsed:</strong> {todayInfo.minutesSinceMarking} minutes ago</div>
+         </div>
+         
+         {todayInfo.canUndo && (
+           <button
+             onClick={() => handleUndoLate(s.rollNo)}
+             disabled={undoingStudent === s.rollNo}
+             style={{
+               marginTop: "1rem",
+               padding: "10px 20px",
+               background: undoingStudent === s.rollNo 
+                 ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
+                 : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+               color: "white",
+               border: "none",
+               borderRadius: "12px",
+               cursor: undoingStudent === s.rollNo ? "not-allowed" : "pointer",
+               fontSize: "0.9rem",
+               fontWeight: "600",
+               display: "flex",
+               alignItems: "center",
+               gap: "0.5rem",
+               boxShadow: "0 4px 12px rgba(245, 158, 11, 0.3)",
+               transition: "all 0.3s ease"
+             }}
+             onMouseOver={(e) => {
+               if (undoingStudent !== s.rollNo) {
+                 e.currentTarget.style.transform = "translateY(-2px)";
+                 e.currentTarget.style.boxShadow = "0 6px 16px rgba(245, 158, 11, 0.4)";
+               }
+             }}
+             onMouseOut={(e) => {
+               if (undoingStudent !== s.rollNo) {
+                 e.currentTarget.style.transform = "translateY(0)";
+                 e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 158, 11, 0.3)";
+               }
+             }}
+           >
+             <FiRotateCcw />
+             {undoingStudent === s.rollNo ? 'Undoing...' : `Undo Late Marking (${10 - todayInfo.minutesSinceMarking} min left)`}
+           </button>
+         )}
+         
+         {!todayInfo.canUndo && (
+           <div style={{
+             marginTop: "1rem",
+             padding: "0.75rem",
+             background: "#fee2e2",
+             borderRadius: "8px",
+             color: "#991b1b",
+             fontSize: "0.85rem",
+             fontWeight: "600"
+           }}>
+             ⏱ Edit window expired. Late marking cannot be undone after 10 minutes.
+           </div>
+         )}
+       </div>
+     );
+   }
+   return null;
+ })()}
+ 
  <h4 style={{
  margin: "0 0 1rem 0",
  fontSize: "1.1rem",
