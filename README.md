@@ -2,17 +2,17 @@
 
 > A comprehensive, production-ready full-stack web application for educational institutions to track student attendance, automate fine calculations, generate real-time analytics, and manage role-based access control with enterprise-grade security.
 
-Recent updates: dark mode support, active/inactive faculty status indicators, enhanced admin management, and improved UI/UX across all pages.
+Recent updates: server-side search implementation, graduation export system, student master data validation enhancements, and critical bug fixes.
 
-**Latest Version: v3.0.0** | [Release Notes](#-whats-new-in-v300) | [Changelog](#-changelog)
+**Latest Version: v3.1.0** | [Release Notes](#-whats-new-in-v310) | [Changelog](#-changelog)
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://studentlatetracker.vercel.app/)
-[![Backend API](https://img.shields.io/badge/API-live-blue?style=for-the-badge)](https://backend-3wax4q7pc-chelluri-sai-vishals-projects-3f9c693c.vercel.app)
-[![Version](https://img.shields.io/badge/version-3.0.0-orange?style=for-the-badge)](https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean/releases/tag/v3.0.0)
+[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://your-frontend-app.vercel.app/)
+[![Backend API](https://img.shields.io/badge/API-live-blue?style=for-the-badge)](https://your-backend-api.vercel.app)
+[![Version](https://img.shields.io/badge/version-3.1.0-orange?style=for-the-badge)](https://github.com/yourusername/StudentLateTrackingSystem/releases/tag/v3.1.0)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/cloud/atlas)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-**🔗 Live Application:** [Click here to view....!!](https://studentlatetracker.vercel.app/)
+**🔗 Live Application:** Deploy to your own Vercel account (see [Deployment](#deployment) section)
 
 ---
 
@@ -56,6 +56,108 @@ This system provides:
 - **Comprehensive audit logging** for accountability and compliance
 - **Bulk operations** for semester promotions and record management
 - **Professional UI** with responsive design and modern glassmorphism effects
+
+---
+
+## 🎉 What's New in v3.1.0
+
+**Released: February 22, 2026 - Bug Fixes & Search Optimization**
+
+### 🐛 Critical Bug Fixes
+
+- **Student Profile Search Fixed** 🔍
+  - Re-added `/students/search` endpoint (accidentally removed during cleanup)
+  - Search by roll number or name with limit of 20 results
+  - Excludes graduated students from search results
+  - StudentProfile component now functional again
+
+- **Graduation Export System Improved** 🎓
+  - Fixed data preservation: student data now fetched BEFORE status update
+  - Added comprehensive console logging (📊 Found, 💾 Saving, ✅ Success, 🗑️ Deleting)
+  - Export/deletion wrapped in try-catch with error handling
+  - Verification check: warns if deletedCount doesn't match expected count
+  - Creates `backend/exports/` directory if missing
+  - CSV format: 12 fields including late history, fines, graduation date
+  - Files saved as: `graduated_students_YYYY-MM-DDTHH-MM-SS.csv`
+
+- **New Student Registration Fixed** ✅
+  - Added `isLate: false` flag support to prevent marking new students late on entry
+  - Register-only mode when `isLate === false`
+  - Returns `registered: true` in response with success message
+  - Students can now be added to master data without late marking
+
+### ⚡ Search & Pagination Overhaul
+
+- **Server-Side Search Implementation** 🚀
+  - **Problem Fixed**: Search results appearing on wrong pages (empty pages 1-4, results on page 5)
+  - Moved from client-side filtering to server-side MongoDB queries
+  - Search parameter added to `/students/all` endpoint
+  - MongoDB `$or` query searches across 4 fields: rollNo, name, branch, section
+  - Case-insensitive regex matching for better UX
+  - Automatically resets to page 1 when search query changes
+  - Returns `searchQuery` in response for UI feedback
+
+- **Visual Search Enhancements** 🎨
+  - Search icon turns blue when actively searching
+  - Input border highlights (2px blue) during active search
+  - Shows "🔍 Searching for: 'query'" indicator below search box
+  - Clear button (X) properly resets pagination to page 1
+  - Pagination footer displays: `Showing X of Y students (search: "query")`
+  - Count display: "Found: X students" vs "Total: X students"
+
+### 📊 Student Master Data Enhancements
+
+- **Year-Semester Validation** ✓
+  - Prevents invalid semester-year combinations (e.g., Year 1 with Semester 8)
+  - Validation logic: `Year 1 → Sem 1-2`, `Year 2 → Sem 3-4`, `Year 3 → Sem 5-6`, `Year 4 → Sem 7-8`
+  - Error messages: "Invalid semester for Year X. Must be between Y and Z."
+  - Dynamic semester dropdown shows only valid semesters for selected year
+  - Helper text: "Year 1: Sem 1-2" for better UX
+
+- **Smart Semester Auto-Selection** 🧠
+  - Auto-adjusts semester when year changes
+  - `Year 1 → Semester 1`, `Year 2 → Semester 3`, `Year 3 → Semester 5`, `Year 4 → Semester 7`
+  - Prevents manual selection errors
+  - Smooth user experience with intelligent defaults
+
+- **Visual Edit Mode Indicators** 👁️
+  - Blue background and border when editing existing student
+  - Warning banner shows: "⚠️ Editing student: [ROLLNO]"
+  - Roll number change warning displayed prominently
+  - Clear distinction between "Add New" and "Edit" modes
+
+- **Section Input Improvement** 📝
+  - Changed from text input to dropdown (values: A-F)
+  - Prevents typos and invalid section entries
+  - Consistent data format in database
+
+### 🛠️ Technical Improvements
+
+- **Frontend Code Quality**
+  - Fixed `'sections' is not defined` ESLint warning
+  - Added `sections` constant: `["A", "B", "C", "D", "E", "F"]`
+  - Removed duplicate filtering logic (now handled server-side)
+  - Simplified `sortedStudents` memoization (only sorting, no filtering)
+  - Added `searchQuery` to `fetchAllStudents` dependencies
+
+- **Backend Enhancements**
+  - Search query sanitization (trim whitespace)
+  - Regex options set to case-insensitive (`options: 'i'`)
+  - Returns both `students` and `totalCount` for accurate pagination
+  - Maintains backward compatibility (search is optional parameter)
+
+### 📋 Files Modified (3 files)
+- `backend/routes/studentRoutes.js` - Search endpoint + graduation logic + mark-late flag
+- `frontend/src/components/StudentManagement.js` - Server-side search + validation + UI
+- `backend/utils/pdfGenerator.js` - CSV export function
+
+### 🎯 User-Requested Features Implemented
+- ✅ "When 4th years get promoted, export their data and remove from system" → Graduation CSV export
+- ✅ "Student profile search not returning data" → Re-added search endpoint
+- ✅ "Graduation logic didn't work" → Fixed with improved logging
+- ✅ "New students marked late during entry" → Added isLate flag
+- ✅ "Check Student Master Data logic" → Validation + smart defaults
+- ✅ "Search shows empty pages" → Server-side search implementation
 
 ---
 
@@ -620,7 +722,7 @@ graph TB
 
 #### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean.git
+git clone https://github.com/yourusername/StudentLateTrackingSystem.git
 cd StudentLateTrackingSystem-Clean
 ```
 
@@ -800,7 +902,7 @@ npm start
 ## 📡 API Documentation
 
 ### Base URL
-- **Production:** `https://backend-amber-three-76.vercel.app/api`
+- **Production:** `https://your-backend-api.vercel.app/api`
 - **Local Development:** `http://localhost:5000/api`
 
 ### Authentication Endpoints
@@ -1196,9 +1298,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 👨‍💻 Author
 
-**Chelluri Sai Vishal**
-- GitHub: [@SAIVISHAL007](https://github.com/SAIVISHAL007)
-- Email: chellurisaivishal@gmail.com
+**Your Name**
+- GitHub: [@yourusername](https://github.com/yourusername)
+- Email: your.email@example.com
 
 ---
 
@@ -1215,6 +1317,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **⭐ Star this repo if you find it useful! ⭐**
 
-Made with ❤️ by Chelluri Sai Vishal
+Made with ❤️ for Educational Institutions
 
 </div>

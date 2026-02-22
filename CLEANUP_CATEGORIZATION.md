@@ -147,10 +147,10 @@ Action: Keep for now, review monthly
 
 ### Decision 1: Delete Dangerous Endpoints? ⚠️
 **Delete these 4 endpoints from backend (NO UI):**
-- [ ] `/students/delete-all-students` 
-- [ ] `/students/reset-all-data`
-- [ ] `/students/search` (redundant)
-- [ ] Confirm: YES / NO
+- [x] `/students/delete-all-students` ✅ REMOVED (backend + frontend handler)
+- [x] `/students/reset-all-data` ✅ REMOVED (backend + frontend handler)
+- [x] `/students/search` ✅ REMOVED (redundant)
+- [x] Confirm: YES
 
 ### Decision 2: Implement New Admin Features? 📊
 **Add UI for these High-Priority endpoints:**

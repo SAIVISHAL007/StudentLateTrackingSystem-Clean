@@ -162,9 +162,9 @@
 ### For Each Online User
 
 ```
-┌─ Name: "Siva Jyothi"
+┌─ Name: "Name of the user"
 ├─ Role: "ADMIN"
-├─ Email: "sivajyothi.csm@anits.edu.in"
+├─ Email: "name.branch@anits.edu.in"
 ├─ Time Online: "2 minutes ago"
 ├─ Device: "📱 Mobile"
 └─ IP: "192.168.0.106"
@@ -174,8 +174,8 @@
 
 ```
 ┌─ Action: STUDENT_MARKED_LATE
-├─ Actor: "Siva Jyothi" (Admin)
-├─ Target: "CHELLURI. SAI VISHAL" (A23126552137)
+├─ Actor: "Admin User" (Admin)
+├─ Target: "STUDENT NAME" (21PA1A0501)
 ├─ Time: "5 minutes ago"
 ├─ Reason: "Class attendance marked"
 ├─ Device: "💻 Desktop"
@@ -190,9 +190,9 @@
 📊 Logins This Month: 1,247
 
 🏆 Top Faculty Today:
-  1. Dr. K Selvani Deepthi - 87 actions
-  2. Mrs B Siva Jyothi - 56 actions
-  3. Mr. P. Santosh Kumar - 42 actions
+  1. Faculty Member 1 - 87 actions
+  2. Faculty Member 2 - 56 actions
+  3. Faculty Member 3 - 42 actions
 ```
 
 ---

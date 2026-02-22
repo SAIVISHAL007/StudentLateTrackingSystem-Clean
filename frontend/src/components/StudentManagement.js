@@ -11,6 +11,9 @@ function StudentManagement() {
   // Check if user has admin access
   const hasAdminAccess = userRole === "admin" || userRole === "superadmin";
   
+  // Section options
+  const sections = ["A", "B", "C", "D", "E", "F"];
+  
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -43,13 +46,18 @@ function StudentManagement() {
   const fetchAllStudents = useCallback(async () => {
     setLoading(true);
     try {
-      // PERFORMANCE: Fetch with pagination
-      const res = await API.get("/students/all", {
-        params: {
-          page: currentPage,
-          limit: pageSize
-        }
-      });
+      // PERFORMANCE: Fetch with pagination and search
+      const params = {
+        page: currentPage,
+        limit: pageSize
+      };
+      
+      // Add search query if exists
+      if (searchQuery && searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+      
+      const res = await API.get("/students/all", { params });
       setStudents(res.data.students || []);
       setTotalCount(res.data.totalCount || 0);
       setHasMore(res.data.hasMore || false);
@@ -59,11 +67,11 @@ function StudentManagement() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, searchQuery]); // Add searchQuery dependency
 
   useEffect(() => {
     fetchAllStudents();
-  }, [currentPage, fetchAllStudents]); // Refetch when page changes
+  }, [fetchAllStudents]); // Refetch when fetchAllStudents changes (which includes searchQuery changes)
 
   useEffect(() => {
     return () => {
@@ -78,7 +86,19 @@ function StudentManagement() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // If year changes, auto-adjust semester to first semester of that year
+    if (name === "year") {
+      const year = parseInt(value);
+      const firstSemester = (year - 1) * 2 + 1;
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: value,
+        semester: firstSemester.toString() // Auto-set to first semester of selected year
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   // PERFORMANCE: Debounced search handler (500ms delay)
@@ -98,6 +118,7 @@ function StudentManagement() {
     searchDebounceRef.current = setTimeout(() => {
       searchRafRef.current = requestAnimationFrame(() => {
         setSearchQuery(value);
+        setCurrentPage(1); // Reset to page 1 when search query changes
       });
     }, 500);
   };
@@ -112,20 +133,8 @@ function StudentManagement() {
   };
 
   const sortedStudents = useMemo(() => {
-    let filtered = students;
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = students.filter(student =>
-        (student.rollNo || "").toLowerCase().includes(query) ||
-        (student.name || "").toLowerCase().includes(query) ||
-        (student.branch || "").toLowerCase().includes(query) ||
-        (student.section || "").toLowerCase().includes(query) ||
-        (student.year || "").toString().includes(query)
-      );
-    }
-
-    const sorted = [...filtered].sort((a, b) => {
+    // Client-side sorting only (filtering is now server-side)
+    const sorted = [...students].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
 
@@ -140,13 +149,26 @@ function StudentManagement() {
     });
 
     return sorted;
-  }, [students, searchQuery, sortField, sortDirection]);
+  }, [students, sortField, sortDirection]);
 
   const handleAddStudent = async (e) => {
     e.preventDefault();
     
     if (!formData.rollNo.trim() || !formData.name.trim()) {
       toast.error("Roll number and name are required");
+      return;
+    }
+    
+    // Validate year and semester relationship
+    const year = parseInt(formData.year);
+    const semester = parseInt(formData.semester);
+    
+    // Year 1 = Sem 1-2, Year 2 = Sem 3-4, Year 3 = Sem 5-6, Year 4 = Sem 7-8
+    const minSemester = (year - 1) * 2 + 1;
+    const maxSemester = year * 2;
+    
+    if (semester < minSemester || semester > maxSemester) {
+      toast.error(`Invalid semester for Year ${year}. Must be between ${minSemester} and ${maxSemester}.`);
       return;
     }
 
@@ -156,22 +178,22 @@ function StudentManagement() {
         await API.put(`/students/student/${editingStudent.rollNo}`, {
           rollNo: formData.rollNo.toUpperCase().trim(),
           name: formData.name.trim(),
-          year: parseInt(formData.year),
-          semester: parseInt(formData.semester),
+          year: year,
+          semester: semester,
           branch: formData.branch.toUpperCase(),
           section: formData.section.toUpperCase()
         });
         toast.success("Student updated successfully");
       } else {
+        // Add new student WITHOUT marking late
         await API.post("/students/mark-late", {
           rollNo: formData.rollNo.toUpperCase().trim(),
           name: formData.name.trim(),
-          year: parseInt(formData.year),
-          semester: parseInt(formData.semester),
+          year: year,
+          semester: semester,
           branch: formData.branch.toUpperCase(),
           section: formData.section.toUpperCase(),
-          date: new Date().toISOString().split("T")[0],
-          isLate: false
+          isLate: false  // Important: Only register, don't mark late
         });
         toast.success("Student added successfully");
       }
@@ -188,7 +210,8 @@ function StudentManagement() {
       });
       fetchAllStudents();
     } catch (err) {
-      toast.error(err.response?.data?.error || `Failed to ${editingStudent ? 'update' : 'add'} student`);
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || `Failed to ${editingStudent ? 'update' : 'add'} student`;
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -284,20 +307,22 @@ function StudentManagement() {
               left: "1rem", 
               top: "50%", 
               transform: "translateY(-50%)", 
-              color: "#6c757d",
+              color: searchQuery ? "#007bff" : "#6c757d",
               fontSize: "1.2rem"
             }} 
           />
           <input
             type="text"
-            placeholder="Search by roll number, name, branch, section, or year..."
+            placeholder="Search by roll number, name, branch, or section..."
             value={searchInput}
             onChange={handleSearchChange}
             className="pro-input"
             style={{
               paddingLeft: "3rem",
               fontSize: "1rem",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              borderColor: searchQuery ? "#007bff" : "#dee2e6",
+              borderWidth: searchQuery ? "2px" : "1px"
             }}
           />
           {searchInput && (
@@ -305,6 +330,7 @@ function StudentManagement() {
               onClick={() => {
                 setSearchInput("");
                 setSearchQuery("");
+                setCurrentPage(1); // Reset to page 1 when clearing search
               }}
               style={{
                 position: "absolute",
@@ -326,6 +352,16 @@ function StudentManagement() {
             </button>
           )}
         </div>
+        {searchQuery && (
+          <div style={{
+            marginTop: "0.5rem",
+            fontSize: "0.85rem",
+            color: "#007bff",
+            fontWeight: "500"
+          }}>
+            🔍 Searching for: "{searchQuery}"
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
@@ -356,9 +392,9 @@ function StudentManagement() {
         </button>
         <div style={{ marginLeft: "auto", fontSize: "1.1rem", fontWeight: "600", color: "#495057" }}>
           {searchQuery ? (
-            <>Showing: {sortedStudents.length} of {students.length} students</>
+            <>Found: {totalCount} student{totalCount !== 1 ? 's' : ''}</>
           ) : (
-            <>Total: {students.length} students</>
+            <>Total: {totalCount} student{totalCount !== 1 ? 's' : ''}</>
           )}
         </div>
       </div>
@@ -367,15 +403,36 @@ function StudentManagement() {
       {showAddForm && (
         <form onSubmit={handleAddStudent} className="pro-card" style={{
           padding: "2rem",
-          marginBottom: "2rem"
+          marginBottom: "2rem",
+          border: editingStudent ? "3px solid #007bff" : "1px solid #dee2e6",
+          background: editingStudent ? "#f0f8ff" : "white"
         }}>
-          <h3 style={{ marginTop: 0, color: "#495057", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <h3 style={{ 
+            marginTop: 0, 
+            color: editingStudent ? "#007bff" : "#495057", 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "0.5rem" 
+          }}>
             {editingStudent ? (
-              <><FiEdit2 size={20} /> Edit Student</>
+              <><FiEdit2 size={20} /> Edit Student: {editingStudent.rollNo}</>
             ) : (
               <><FiPlus size={20} /> Add New Student</>
             )}
           </h3>
+          {editingStudent && (
+            <div style={{
+              padding: "0.75rem 1rem",
+              background: "#cfe2ff",
+              border: "1px solid #9ec5fe",
+              borderRadius: "8px",
+              marginBottom: "1rem",
+              fontSize: "0.9rem",
+              color: "#084298"
+            }}>
+              <strong>Editing mode:</strong> You are modifying student record {editingStudent.rollNo}. Changes will update the existing record.
+            </div>
+          )}
           
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
             <div>
@@ -391,6 +448,11 @@ function StudentManagement() {
                 required
                 className="pro-input"
               />
+              {editingStudent && formData.rollNo !== editingStudent.rollNo && (
+                <small style={{ color: "#dc3545", fontSize: "0.8rem", display: "block", marginTop: "0.25rem" }}>
+                  ⚠️ Changing roll number - make sure this is correct!
+                </small>
+              )}
             </div>
 
             <div>
@@ -437,10 +499,22 @@ function StudentManagement() {
                 onChange={handleInputChange}
                 className="pro-select"
               >
-                {[1,2,3,4,5,6,7,8].map(s => (
-                  <option key={s} value={s}>Sem {s}</option>
-                ))}
+                {(() => {
+                  const year = parseInt(formData.year);
+                  const minSem = (year - 1) * 2 + 1;
+                  const maxSem = year * 2;
+                  const validSemesters = [];
+                  for (let s = minSem; s <= maxSem; s++) {
+                    validSemesters.push(s);
+                  }
+                  return validSemesters.map(s => (
+                    <option key={s} value={s}>Sem {s}</option>
+                  ));
+                })()}
               </select>
+              <small style={{ color: "#6c757d", fontSize: "0.8rem", display: "block", marginTop: "0.25rem" }}>
+                Year {formData.year}: Sem {(parseInt(formData.year) - 1) * 2 + 1}-{parseInt(formData.year) * 2}
+              </small>
             </div>
 
             <div>
@@ -469,15 +543,16 @@ function StudentManagement() {
               <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#495057" }}>
                 Section
               </label>
-              <input
-                type="text"
+              <select
                 name="section"
                 value={formData.section}
                 onChange={handleInputChange}
-                placeholder="A"
-                maxLength="2"
-                className="pro-input"
-              />
+                className="pro-select"
+              >
+                {sections.map(sec => (
+                  <option key={sec} value={sec}>{sec}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -611,8 +686,8 @@ function StudentManagement() {
               borderTop: "2px solid #dee2e6"
             }}>
               <div style={{ color: "#6c757d", fontSize: "0.95rem" }}>
-                Showing <strong>{students.length}</strong> of <strong>{totalCount}</strong> students
-                {searchQuery && <span> (filtered)</span>}
+                Showing <strong>{students.length}</strong> of <strong>{totalCount}</strong> student{totalCount !== 1 ? 's' : ''}
+                {searchQuery && <span> (search: "{searchQuery}")</span>}
               </div>
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
                 <button

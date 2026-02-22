@@ -250,4 +250,57 @@ export const generateAuditTrailPDF = (auditData = {}) => {
   });
 };
 
-export default { generateRemovalProof, generateAuditTrailPDF };
+/**
+ * Generate graduation export CSV for 4th year students
+ * @param {Array} students - Array of graduating student objects
+ * @returns {String} CSV formatted string
+ */
+export const generateGraduationCSV = (students = []) => {
+  const headers = [
+    'Roll No',
+    'Name',
+    'Year',
+    'Semester',
+    'Branch',
+    'Section',
+    'Status',
+    'Total Late Days',
+    'Excuse Days Used',
+    'Total Fines',
+    'Graduation Date',
+    'Late History Count'
+  ];
+
+  const rows = students.map(student => {
+    return [
+      student.rollNo || '',
+      student.name || '',
+      student.year || '',
+      student.semester || '',
+      student.branch || '',
+      student.section || '',
+      student.status || '',
+      student.lateDays || 0,
+      student.excuseDaysUsed || 0,
+      student.fines || 0,
+      new Date().toLocaleDateString(),
+      (student.lateLogs || []).length
+    ];
+  });
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => {
+      // Escape commas and quotes in CSV
+      const str = String(cell);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    }).join(','))
+  ].join('\n');
+
+  return csvContent;
+};
+
+export default { generateRemovalProof, generateAuditTrailPDF, generateGraduationCSV };

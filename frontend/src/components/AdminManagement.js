@@ -45,6 +45,16 @@ function AdminManagement() {
  // State for tab navigation
  const [activeTab, setActiveTab] = useState("management"); // "management", "audit", or "fines"
 
+ // State for semester demotion
+ const [showDemotionForm, setShowDemotionForm] = useState(false);
+ const [demotionForm, setDemotionForm] = useState({
+   currentYear: "",
+   currentSemester: "",
+   targetYear: "",
+   targetSemester: ""
+ });
+ const [demotionLoading, setDemotionLoading] = useState(false);
+
  const initializedRef = useRef(false);
 
  useEffect(()=>{
@@ -77,7 +87,7 @@ function AdminManagement() {
  ? specificBranch
  : 'ALL';
  
- if (!window.confirm(`SEMESTER PROMOTION\n\nTarget: ${filterText} students\n\nThis will:\n Move students to next semester\n Update year (if crossing year boundary)\n Mark Y4S8 students as graduated\n Reset all late records and fines\n Keep student information intact\n\nProceed with promotion?`)){
+ if (!window.confirm(`SEMESTER PROMOTION\n\nTarget: ${filterText} students\n\nThis will:\n✓ Move students to next semester\n✓ Update year (if crossing year boundary)\n✓ Graduate Y4S8 students (export to CSV + delete from DB)\n✓ Reset all late records and fines\n✓ Keep student information intact\n\n📁 Graduated students exported for physical records\n\nProceed with promotion?`)){
  return;
  }
 
@@ -95,6 +105,8 @@ function AdminManagement() {
  message, 
  studentsPromoted = 0, 
  studentsGraduated = 0,
+ studentsDeleted = 0,
+ exportedToFile = null,
  yearTransitions = 0,
  totalStudents = 0,
  details 
@@ -104,6 +116,13 @@ function AdminManagement() {
  resultMsg += `• Promoted: ${studentsPromoted} students\n`;
  if (studentsGraduated > 0) {
  resultMsg += `• Graduated: ${studentsGraduated} students \n`;
+ if (studentsDeleted > 0) {
+ resultMsg += `• Deleted from DB: ${studentsDeleted} students\n`;
+ }
+ if (exportedToFile) {
+ resultMsg += `• Exported to: ${exportedToFile}\n`;
+ resultMsg += ` Data saved for physical records\n`;
+ }
  }
  if (yearTransitions > 0) {
  resultMsg += `• Year transitions: ${yearTransitions} students\n`;
@@ -146,69 +165,55 @@ function AdminManagement() {
  }
  };
 
- const handleResetAllData=async()=>{
- if (!window.confirm(" DANGER: This will reset ALL late data for ALL students but keep student records. Are you sure?")) {
+ const handleSemesterDemotion = async (e) => {
+ e?.preventDefault?.();
+ 
+ const { currentYear, currentSemester, targetYear, targetSemester } = demotionForm;
+ 
+ if (!targetYear || !targetSemester) {
+ alert("Target year and semester are required");
  return;
  }
 
- setLoading(true);
- try {
- const res=await API.post("/students/reset-all-data", {}, {
- timeout:45000 //45 second timeout
- });
- 
- const message=res.data.message;
- const reset=res.data.studentsReset;
- const total=res.data.totalStudents;
+ let targetText = `Y${targetYear}S${targetSemester}`;
+ if (currentYear && currentSemester) {
+ targetText = `Y${currentYear}S${currentSemester} → ${targetText}`;
+ }
 
- alert(`${message}\nReset: ${reset}/${total} students`);
+ if (!window.confirm(`SEMESTER DEMOTION\n\nTarget: ${targetText}\n\nThis will move students back to a previous semester.\n\nProceed with demotion?`)) {
+ return;
+ }
+
+ setDemotionLoading(true);
+ try {
+ const payload = { targetYear: parseInt(targetYear), targetSemester: parseInt(targetSemester) };
+ if (currentYear) payload.currentYear = parseInt(currentYear);
+ if (currentSemester) payload.currentSemester = parseInt(currentSemester);
+
+ const res = await API.post("/students/demote-semester", payload, { timeout: 45000 });
+ 
+ alert(`${res.data.message}\n\nStudents demoted: ${res.data.studentsDemoted}/${res.data.totalAffected}`);
+ setShowDemotionForm(false);
+ setDemotionForm({ currentYear: "", currentSemester: "", targetYear: "", targetSemester: "" });
  fetchSystemStats();
- } catch (err){
- console.error('Data reset error:', err);
+ } catch (err) {
+ console.error("Semester demotion error:", err);
+ let errorMessage = "Failed to demote students";
  
- let errorMessage = "Failed to reset data";
- 
- if (err.code === 'ECONNABORTED') {
- errorMessage = " Operation timed out. Please check your connection and try again.";
- } else if (err.response?.status === 503) {
- errorMessage = `${err.response.data.error}\n ${err.response.data.details}`;
- } else if (err.response?.status === 404) {
- errorMessage = "No students found to reset. Add students first.";
+ if (err.response?.status === 404) {
+ errorMessage = "No students found matching the criteria to demote";
  } else if (err.response?.data?.error) {
  errorMessage = ` ${err.response.data.error}`;
- if (err.response.data.details) {
- errorMessage+=`\n ${err.response.data.details}`;
- }
- } else if (err.message) {
- errorMessage=` Network Error: ${err.message}`;
+ if (err.response.data.details) errorMessage += `\n ${err.response.data.details}`;
  }
  
  alert(errorMessage);
  } finally {
- setLoading(false);
+ setDemotionLoading(false);
  }
  };
 
- const handleDeleteAllStudents = async () => {
- const confirmText = "DELETE ALL STUDENTS";
- const userInput = window.prompt(` CRITICAL WARNING: This will permanently delete ALL students from the database!\n\nThis action CANNOT be undone!\n\nType "${confirmText}" to confirm:`);
- 
- if (userInput !== confirmText) {
- alert("Deletion cancelled.");
- return;
- }
 
- setLoading(true);
- try {
- const res = await API.delete("/students/delete-all-students");
- alert(`${res.data.message}`);
- fetchSystemStats();
- } catch (err) {
- alert(` Error: ${err.response?.data?.error || "Failed to delete all students"}`);
- } finally {
- setLoading(false);
- }
- };
 
  // Fetch late records based on selected period
  const fetchLateRecords = async () => {
@@ -860,7 +865,7 @@ function AdminManagement() {
  <br />• Y1S2→Y2S3 (1st→2nd year transition)
  <br />• Y2S4→Y3S5 (2nd→3rd year transition)
  <br />• Y3S6→Y4S7 (3rd→4th year transition)
- <br />• Y4S8 students marked as graduated 
+ <br />• Y4S8 graduates: Exported to CSV & deleted from DB 📁
  <br />• Resets all late data & fines
  <br />• Keeps student records intact
  </p>
@@ -994,40 +999,141 @@ function AdminManagement() {
  </details>
  </div>
 
- {/* Data Reset */}
+ {/* Semester Demotion */}
  <div style={{
  padding: "1.5rem",
  border: "2px solid #ffc107",
  borderRadius: "8px",
- backgroundColor: "#fffbf0"
+ backgroundColor: "#fffbf0",
+ gridColumn: "1 / -1"
  }}>
- <h4 style={{ color: "#e58e00", marginBottom: "1rem", fontSize: "1.1rem" }}>
- Reset Late Data
+ <h4 style={{ color: "#ff9800", marginBottom: "1rem", fontSize: "1.1rem" }}>
+ Semester Demotion
  </h4>
- <p style={{ fontSize: "0.9rem", color: "#6c757d", marginBottom: "1rem" }}>
- Reset all late-related data for testing:
- <br />• Clear all late days and fines
- <br />• Reset status to normal
- <br />• Remove all late history
- <br />• Keep student info and semester
+ <p style={{ fontSize: "0.85rem", color: "#6c757d", marginBottom: "1rem" }}>
+ Move students back to a previous semester (corrects accidental promotions)
  </p>
+
+ {!showDemotionForm ? (
  <button
- onClick={handleResetAllData}
- disabled={loading}
+ onClick={() => setShowDemotionForm(true)}
  style={{
  padding: "12px 20px",
  backgroundColor: "#ffc107",
  color: "#212529",
  border: "none",
  borderRadius: "6px",
- cursor: loading ? "not-allowed" : "pointer",
+ cursor: "pointer",
  fontSize: "1rem",
  fontWeight: "600"
  }}
  >
- Reset All Data
+ Open Demotion Tool
+ </button>
+ ) : (
+ <>
+ <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+ <div>
+ <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600", marginBottom: "0.3rem" }}>
+ Current Year (optional)
+ </label>
+ <input
+ type="number"
+ min="1"
+ max="4"
+ placeholder="e.g., 2"
+ value={demotionForm.currentYear}
+ onChange={(e) => setDemotionForm({ ...demotionForm, currentYear: e.target.value })}
+ style={{ width: "100%", padding: "8px", border: "2px solid #dee2e6", borderRadius: "6px", fontSize: "0.9rem" }}
+ />
+ </div>
+ <div>
+ <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600", marginBottom: "0.3rem" }}>
+ Current Semester (optional)
+ </label>
+ <input
+ type="number"
+ min="1"
+ max="8"
+ placeholder="e.g., 4"
+ value={demotionForm.currentSemester}
+ onChange={(e) => setDemotionForm({ ...demotionForm, currentSemester: e.target.value })}
+ style={{ width: "100%", padding: "8px", border: "2px solid #dee2e6", borderRadius: "6px", fontSize: "0.9rem" }}
+ />
+ </div>
+ <div>
+ <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600", marginBottom: "0.3rem", color: "#d32f2f" }}>
+ Target Year *
+ </label>
+ <input
+ type="number"
+ min="1"
+ max="4"
+ placeholder="e.g., 1"
+ required
+ value={demotionForm.targetYear}
+ onChange={(e) => setDemotionForm({ ...demotionForm, targetYear: e.target.value })}
+ style={{ width: "100%", padding: "8px", border: "2px solid #d32f2f", borderRadius: "6px", fontSize: "0.9rem" }}
+ />
+ </div>
+ <div>
+ <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600", marginBottom: "0.3rem", color: "#d32f2f" }}>
+ Target Semester *
+ </label>
+ <input
+ type="number"
+ min="1"
+ max="8"
+ placeholder="e.g., 3"
+ required
+ value={demotionForm.targetSemester}
+ onChange={(e) => setDemotionForm({ ...demotionForm, targetSemester: e.target.value })}
+ style={{ width: "100%", padding: "8px", border: "2px solid #d32f2f", borderRadius: "6px", fontSize: "0.9rem" }}
+ />
+ </div>
+ </div>
+
+ <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+ <button
+ onClick={handleSemesterDemotion}
+ disabled={demotionLoading}
+ style={{
+ padding: "12px 20px",
+ backgroundColor: "#ffc107",
+ color: "#212529",
+ border: "none",
+ borderRadius: "6px",
+ cursor: demotionLoading ? "not-allowed" : "pointer",
+ fontSize: "1rem",
+ fontWeight: "600"
+ }}
+ >
+ {demotionLoading ? "Processing..." : "Demote Students"}
+ </button>
+ <button
+ onClick={() => {
+ setShowDemotionForm(false);
+ setDemotionForm({ currentYear: "", currentSemester: "", targetYear: "", targetSemester: "" });
+ }}
+ style={{
+ padding: "12px 20px",
+ backgroundColor: "#6c757d",
+ color: "white",
+ border: "none",
+ borderRadius: "6px",
+ cursor: "pointer",
+ fontSize: "1rem",
+ fontWeight: "600"
+ }}
+ >
+ Cancel
  </button>
  </div>
+ </>
+ )}
+ </div>
+
+
 
  {/* Remove Late Records (Enhanced with filters, search, grouping) */}
  <div style={{
@@ -1554,38 +1660,7 @@ function AdminManagement() {
  </div>
 
  {/* Complete Reset */}
- <div style={{
- padding: "1.5rem",
- border: "2px solid #dc3545",
- borderRadius: "8px",
- backgroundColor: "#fff5f5"
- }}>
- <h4 style={{ color: "#dc3545", marginBottom: "1rem", fontSize: "1.1rem" }}>
- Complete Database Reset
- </h4>
- <p style={{ fontSize: "0.9rem", color: "#6c757d", marginBottom: "1rem" }}>
- <strong> DANGER ZONE:</strong>
- <br />Permanently delete ALL students from database.
- <br />This action cannot be undone!
- <br />Use only for prototype testing.
- </p>
- <button
- onClick={handleDeleteAllStudents}
- disabled={loading}
- style={{
- padding: "12px 20px",
- backgroundColor: "#dc3545",
- color: "white",
- border: "none",
- borderRadius: "6px",
- cursor: loading ? "not-allowed" : "pointer",
- fontSize: "1rem",
- fontWeight: "600"
- }}
- >
- DELETE ALL STUDENTS
- </button>
- </div>
+
  </div>
 
  {loading && (

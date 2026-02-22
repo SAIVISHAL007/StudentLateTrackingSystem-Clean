@@ -451,4 +451,4 @@ vercel projects
 
 **Deployment Status:** ✅ Ready for Production
 
-Made with ❤️ by Chelluri Sai Vishal
+A project by Chelluri Sai Vishal for educational institutions

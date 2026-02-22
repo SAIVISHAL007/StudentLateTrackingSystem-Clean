@@ -281,7 +281,7 @@ curl https://your-backend-url.vercel.app/api/health
 - Vercel Docs: https://vercel.com/docs
 - MongoDB Docs: https://docs.mongodb.com/
 - React Docs: https://react.dev/
-- Email: saivishal.chelluri@gmail.com
+- Support: chellurisaivishal@gmail.com
 
 ---
 

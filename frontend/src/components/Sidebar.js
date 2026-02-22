@@ -58,7 +58,7 @@ function Sidebar({ currentPage, onPageChange }) {
  id: "late-management",
  icon: <FiClock size={24} />,
  title: "Late Management",
- description: "Today's late students & records (tabbed view)"
+ description: "Today's late students & records management"
  },
  {
  id: "analytics",

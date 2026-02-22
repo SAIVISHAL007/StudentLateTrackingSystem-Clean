@@ -2,8 +2,14 @@ import express from "express";
 import mongoose from "mongoose";
 import Student from "../models/student.js";
 import AuditLog from "../models/auditLog.js";
-import { generateRemovalProof, generateAuditTrailPDF } from "../utils/pdfGenerator.js";
+import { generateRemovalProof, generateAuditTrailPDF, generateGraduationCSV } from "../utils/pdfGenerator.js";
 import { authMiddleware } from "./authRoutes.js";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -66,12 +72,15 @@ const checkDbConnection = (req, res, next) => {
 // Mark student late
 router.post("/mark-late", authMiddleware, checkDbConnection, validateMarkLateData, async (req, res) => {
   try {
-    const { rollNo, name, year, semester, branch, section } = req.body;
+    const { rollNo, name, year, semester, branch, section, isLate } = req.body;
     
     // Get faculty information from authenticated request
     const facultyName = req.faculty?.name || 'Unknown Faculty';
     const facultyEmail = req.faculty?.email || '';
     const facultyId = req.faculty?._id;
+    
+    // Check if this is a registration-only request (not marking late)
+    const registerOnly = isLate === false;
 
     // Check if student exists
     let student = await Student.findOne({ rollNo });
@@ -93,19 +102,52 @@ router.post("/mark-late", authMiddleware, checkDbConnection, validateMarkLateDat
         studentSemester = (year * 2) - 1;
       }
       
-      // Create new student
+      // Create new student (without marking late if registerOnly)
       student = new Student({ 
         rollNo, 
         name, 
         year,
         semester: studentSemester,
         branch: branch.toUpperCase(),
-        section: section.toUpperCase()
+        section: section.toUpperCase(),
+        status: registerOnly ? 'normal' : 'excused'
       });
+      
+      // If registerOnly, save and return immediately without marking late
+      if (registerOnly) {
+        await student.save({ 
+          timeout: 10000,
+          writeConcern: { w: 'majority', j: true }
+        });
+        
+        return res.json({
+          ...student._doc,
+          message: `Student registered successfully: ${student.name} (${student.rollNo})`,
+          alertType: "success",
+          fineAmount: 0,
+          totalFines: 0,
+          excuseDaysRemaining: 2,
+          registered: true
+        });
+      }
     } else {
       // For existing students without semester, calculate and set it
       if (!student.semester) {
         student.semester = (student.year * 2) - 1; // Default to first semester of their year
+      }
+      
+      // If this is a registerOnly request for an existing student, just return their info
+      if (registerOnly) {
+        return res.json({
+          ...student._doc,
+          message: `Student already registered: ${student.name} (${student.rollNo})`,
+          alertType: "info",
+          fineAmount: 0,
+          totalFines: student.fines || 0,
+          excuseDaysRemaining: Math.max(0, 2 - (student.excuseDaysUsed || 0)),
+          registered: true,
+          alreadyExists: true
+        });
       }
       
       // IMPROVED DUPLICATE CHECK: Check if already marked late today by any faculty
@@ -140,6 +182,7 @@ router.post("/mark-late", authMiddleware, checkDbConnection, validateMarkLateDat
       }
     }
 
+    // From this point, we're marking the student late (not just registering)
     // Increment lateDays and add log WITH FACULTY TRACKING
     student.lateDays += 1;
     student.lateLogs.push({ 
@@ -438,11 +481,22 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
 // Get all students (for admin management) - optimized with mandatory pagination
 router.get("/all", checkDbConnection, async (req, res) => {
   try {
-    const { year, page, limit } = req.query;
+    const { year, page, limit, search } = req.query;
     let query = {};
     
     if (year && year !== 'all') {
       query.year = parseInt(year);
+    }
+    
+    // Add search functionality
+    if (search && search.trim()) {
+      const searchQuery = search.trim();
+      query.$or = [
+        { rollNo: { $regex: searchQuery, $options: 'i' } },
+        { name: { $regex: searchQuery, $options: 'i' } },
+        { branch: { $regex: searchQuery, $options: 'i' } },
+        { section: { $regex: searchQuery, $options: 'i' } }
+      ];
     }
     
     // PERFORMANCE: Always use pagination with reasonable defaults
@@ -470,69 +524,13 @@ router.get("/all", checkDbConnection, async (req, res) => {
       page: pageNum,
       limit: limitNum,
       totalPages: Math.ceil(totalCount / limitNum),
-      hasMore: skip + students.length < totalCount
+      hasMore: skip + students.length < totalCount,
+      searchQuery: search || null
     });
   } catch (err) {
     console.error('❌ Get all students error:', err);
     res.status(500).json({ 
       error: "Failed to fetch students", 
-      details: err.message 
-    });
-  }
-});
-
-router.get("/search", checkDbConnection, async (req, res) => {
-  try {
-    const { q, year, page = 1, limit = 20 } = req.query;
-    
-    if (!q || q.trim().length < 2) {
-      return res.status(400).json({ 
-        error: "Search query must be at least 2 characters long" 
-      });
-    }
-    
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    let query = {};
-    
-    // Build search query
-    if (q) {
-      // Use text search if available, otherwise use regex
-      query.$or = [
-        { rollNo: { $regex: q.trim(), $options: 'i' } },
-        { name: { $regex: q.trim(), $options: 'i' } }
-      ];
-    }
-    
-    // Add year filter if specified
-    if (year && year !== 'all') {
-      query.year = parseInt(year);
-    }
-    
-    const students = await Student.find(query)
-      .select("rollNo name year branch section lateDays status fines limitExceeded excuseDaysUsed alertFaculty")
-      .sort({ lateDays: -1, rollNo: 1 })
-      .skip(skip)
-      .limit(parseInt(limit))
-      .lean();
-    
-    const totalCount = await Student.countDocuments(query);
-    
-    // PERFORMANCE: Add cache headers for search results (45 seconds)
-    res.set('Cache-Control', 'private, max-age=45');
-
-    res.json({
-      query: q,
-      year: year || 'all',
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalCount,
-      totalPages: Math.ceil(totalCount / parseInt(limit)),
-      students
-    });
-  } catch (err) {
-    console.error('❌ Search error:', err);
-    res.status(500).json({ 
-      error: "Search failed", 
       details: err.message 
     });
   }
@@ -876,9 +874,17 @@ router.post("/promote-semester", async (req, res) => {
       const yearChanged = newYear !== currentYear;
       if (yearChanged) yearChangedCount++;
 
-      // Check if student is graduating (Year 4, moving to Semester 9)
+      // Check if student is graduating (Year 4, Semester 8, about to move to "Semester 9")
       if (currentYear === 4 && currentSemester >= 8 && graduateYear4Sem8) {
-        // Mark as graduated (or you could delete, or move to alumni collection)
+        // Store student data BEFORE any updates (includes all late history)
+        const graduatingStudent = await Student.findOne({ rollNo: student.rollNo }).lean();
+        
+        if (!graduatingStudent) {
+          console.error(`⚠️ Graduation error: Student ${student.rollNo} not found`);
+          continue;
+        }
+        
+        // Update student to graduated status (but don't delete yet - will be deleted later in batch)
         await Student.updateOne(
           { rollNo: student.rollNo },
           {
@@ -886,23 +892,19 @@ router.post("/promote-semester", async (req, res) => {
               semester: 8, // Keep at 8 (max)
               year: 4, // Keep at 4 (max)
               status: 'graduated',
-              lateDays: 0,
-              excuseDaysUsed: 0,
-              consecutiveLateDays: 0,
-              fines: 0,
-              limitExceeded: false,
-              alertFaculty: false,
-              lateLogs: [],
-              fineHistory: []
+              graduationDate: new Date()
+              // Keep late data intact for now - will be exported before deletion
             }
           }
         );
+        
         graduatedCount++;
         promotionDetails.push({
           rollNo: student.rollNo,
           action: 'graduated',
           from: `Y${currentYear}S${currentSemester}`,
-          to: 'Graduated'
+          to: 'Graduated',
+          studentData: graduatingStudent // Store complete data for CSV export
         });
       } else {
         // Regular promotion
@@ -935,15 +937,80 @@ router.post("/promote-semester", async (req, res) => {
       }
     }
 
+    // Export graduated students data to CSV and delete them from database
+    let graduationExportPath = null;
+    let deletedCount = 0;
+    
+    if (graduatedCount > 0) {
+      try {
+        // Get all graduated students data (stored BEFORE clearing late logs)
+        const graduatedStudents = promotionDetails
+          .filter(detail => detail.action === 'graduated' && detail.studentData)
+          .map(detail => detail.studentData);
+        
+        console.log(`📊 Found ${graduatedStudents.length} students to export and delete`);
+        
+        if (graduatedStudents.length > 0) {
+          // Generate CSV
+          const csvData = generateGraduationCSV(graduatedStudents);
+          
+          // Create exports directory if it doesn't exist
+          const exportsDir = path.join(__dirname, '../../exports');
+          if (!fs.existsSync(exportsDir)) {
+            console.log(`📁 Creating exports directory: ${exportsDir}`);
+            fs.mkdirSync(exportsDir, { recursive: true });
+          }
+          
+          // Save CSV file with timestamp
+          const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+          const filename = `graduated_students_${timestamp}.csv`;
+          graduationExportPath = path.join(exportsDir, filename);
+          
+          console.log(`💾 Saving CSV to: ${graduationExportPath}`);
+          fs.writeFileSync(graduationExportPath, csvData, 'utf-8');
+          console.log(`✅ CSV export successful: ${filename}`);
+          
+          // Delete graduated students from database
+          const graduatedRollNumbers = graduatedStudents.map(s => s.rollNo);
+          console.log(`🗑️ Deleting ${graduatedRollNumbers.length} graduated students from database...`);
+          
+          const deleteResult = await Student.deleteMany({ 
+            rollNo: { $in: graduatedRollNumbers },
+            status: 'graduated'
+          });
+          deletedCount = deleteResult.deletedCount;
+          
+          console.log(`✅ Successfully deleted ${deletedCount} graduated students from database`);
+          
+          if (deletedCount !== graduatedStudents.length) {
+            console.warn(`⚠️ Warning: Expected to delete ${graduatedStudents.length} students but deleted ${deletedCount}`);
+          }
+        }
+      } catch (exportError) {
+        console.error('❌ Graduation export/deletion error:', exportError);
+        // Don't fail the entire promotion if export fails - just log it
+        // The students are marked as graduated, admin can manually export them
+      }
+    }
+
     res.json({
-      message: `Successfully promoted ${promotedCount} students${graduatedCount > 0 ? ` and graduated ${graduatedCount} students` : ''}!`,
+      message: `Successfully promoted ${promotedCount} students${graduatedCount > 0 ? `, graduated and exported ${graduatedCount} students` : ''}!`,
       studentsPromoted: promotedCount,
       studentsGraduated: graduatedCount,
+      studentsDeleted: deletedCount,
+      exportedToFile: graduationExportPath ? path.basename(graduationExportPath) : null,
       yearTransitions: yearChangedCount,
       totalStudents: studentCount,
-      details: promotionDetails.length <= 100 ? promotionDetails : { 
+      details: promotionDetails.length <= 100 ? promotionDetails.map(d => {
+        // Remove studentData from response (too large)
+        const { studentData, ...rest } = d;
+        return rest;
+      }) : { 
         note: 'Too many students to show details',
-        sample: promotionDetails.slice(0, 10)
+        sample: promotionDetails.slice(0, 10).map(d => {
+          const { studentData, ...rest } = d;
+          return rest;
+        })
       }
     });
   } catch (err) {
@@ -1051,60 +1118,6 @@ router.post("/demote-semester", async (req, res) => {
 });
 
 // Reset all student data (for prototype testing)
-router.post("/reset-all-data", async (req, res) => {
-  try {
-    // Check if there are students to reset
-    const studentCount = await Student.countDocuments();
-    
-    if (studentCount === 0) {
-      return res.status(404).json({ 
-        error: "No students found to reset",
-        studentsReset: 0 
-      });
-    }
-
-    const result = await Student.updateMany(
-      {},
-      {
-        $set: {
-          lateDays: 0,
-          excuseDaysUsed: 0,
-          consecutiveLateDays: 0,
-          fines: 0,
-          limitExceeded: false,
-          status: 'normal',
-          alertFaculty: false,
-          lateLogs: [],
-          fineHistory: []
-        }
-      },
-      { 
-        timeout: 30000, // 30 second timeout
-        writeConcern: { w: 'majority', j: true }
-      }
-    );
-
-    res.json({
-      message: `Successfully reset data for ${result.modifiedCount} students!`,
-      studentsReset: result.modifiedCount,
-      totalStudents: studentCount
-    });
-  } catch (err) {
-    console.error('❌ Data reset error:', err);
-    if (err.name === 'MongooseError' && err.message.includes('buffering timed out')) {
-      res.status(503).json({ 
-        error: "Database connection timeout. Please check your connection and try again.",
-        details: "The reset operation took too long to complete."
-      });
-    } else {
-      res.status(500).json({ 
-        error: "Failed to reset student data",
-        details: err.message 
-      });
-    }
-  }
-});
-
 // Delete a specific student
 router.delete("/student/:rollNo", async (req, res) => {
   try {
@@ -1125,6 +1138,49 @@ router.delete("/student/:rollNo", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Search students by name or roll number (for StudentProfile component)
+router.get("/search", checkDbConnection, async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({ 
+        error: "Search query must be at least 2 characters",
+        students: [] 
+      });
+    }
+    
+    const searchQuery = q.trim();
+    
+    // Search by roll number (exact or partial match) OR name (case-insensitive)
+    const students = await Student.find({
+      $or: [
+        { rollNo: { $regex: searchQuery, $options: 'i' } },
+        { name: { $regex: searchQuery, $options: 'i' } }
+      ],
+      status: { $ne: 'graduated' } // Exclude graduated students
+    })
+    .select('rollNo name year semester branch section lateDays fines status')
+    .sort({ rollNo: 1 })
+    .limit(20) // Limit results to prevent overload
+    .lean();
+    
+    res.json({
+      success: true,
+      count: students.length,
+      students,
+      query: searchQuery
+    });
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({ 
+      error: "Search failed",
+      details: err.message,
+      students: [] 
+    });
   }
 });
 
@@ -1163,19 +1219,6 @@ router.get("/student/:rollNo", checkDbConnection, async (req, res) => {
 });
 
 // Delete all students (complete reset for prototype)
-router.delete("/delete-all-students", async (req, res) => {
-  try {
-    const result = await Student.deleteMany({});
-
-    res.json({
-      message: `Successfully deleted ${result.deletedCount} students from database!`,
-      studentsDeleted: result.deletedCount
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // API Health check
 router.get("/health", checkDbConnection, async (req, res) => {
   try {
