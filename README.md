@@ -18,7 +18,7 @@ Recent updates: server-side search implementation, graduation export system, stu
 
 ##  Table of Contents
 - [Overview](#overview)
-- [What's New in v3.0.0](#-whats-new-in-v300)
+- [What's New in v3.1.0](#-whats-new-in-v310)
 - [Key Features by Role](#key-features-by-role)
 - [Role-Based Access Control](#role-based-access-control)
 - [Tech Stack](#tech-stack)
@@ -158,242 +158,6 @@ This system provides:
 - ✅ "New students marked late during entry" → Added isLate flag
 - ✅ "Check Student Master Data logic" → Validation + smart defaults
 - ✅ "Search shows empty pages" → Server-side search implementation
-
----
-
-## 🎉 What's New in v3.0.0
-
-**Released: February 12, 2026 - Trial Edition**
-
-### ✨ Major Features & Enhancements
-
-- **Dark Mode Support** 🌙
-  - Full dark mode theme across entire application
-  - Toggle button in navbar (sun/moon icon)
-  - User preference saved to localStorage
-  - Smooth transitions between light and dark themes
-  - Enhanced readability with optimized contrast ratios
-
-- **Faculty Directory Enhancements** 👥
-  - Active/Inactive status indicators with icons
-  - FiCheckCircle (green) for active faculty
-  - FiXCircle (red) for inactive faculty
-  - Quick visual identification of faculty status
-
-- **Admin Management UI Improvements** ⚙️
-  - Added FiSettings icon to admin management header
-  - Enhanced visual hierarchy and branding
-  - Improved component consistency
-
-- **Bug Fixes & Optimizations** 🐛
-  - Fixed Late Records page TypeError (Record.js)
-  - Fixed backend lean() query object spread issue
-  - Added optional chaining for safe property access
-  - Improved error handling and data validation
-
-- **Performance Enhancements** ⚡
-  - Optional pagination for /students/all endpoint
-  - Optional pagination for /students/records/:period endpoint
-  - Backwards compatible pagination (only activates if params provided)
-  - Faster data loading for large datasets
-
-**Trial Week Complete:** System ready for college-wide evaluation
-
----
-
-## 🎉 What's New in v2.3.0
-
-**Released: February 12, 2026 - Trial Edition**
-
-### ✨ Major Optimizations & Refinements
-- **Simplified Late Marking Process** 🚀
-  - Streamlined confirmation dialog for faster workflow
-  - Cleaner, more intuitive marking interface
-
-- **Mobile Experience Enhancement** 📱
-  - Optimized viewport scaling (initial-scale=0.8)
-  - Perfect display at 75-80% zoom level on mobile devices
-  - Improved touch targets and responsive layouts
-  - Better text sizing for mobile readability
-
-- **Professional UI Polish** ✨
-  - Removed all emoji characters (45,437 chars cleaned)
-  - Replaced with professional icons from react-icons
-  - Maintained color-coded status zones (green/yellow/red)
-  - Cleaner, more enterprise-appropriate interface
-
-- **Performance Improvements** ⚡
-  - Eliminated redundant API calls
-  - Embedded late counts in initial student fetch
-  - ~40-50% faster page load times
-  - Optimized code and removed unused dependencies
-
-- **Bug Fixes** 🐛
-  - Fixed semester field display in Student Profile Search
-  - Removed unused analytics endpoints
-  - Cleaned up console logs
-
-**Trial Week Ready:** System approved by HOD & Principal for one-week trial deployment
-
----
-
-## 🎉 What's New in v2.2.0
-
-**Released: February 6, 2026**
-
-### ✨ AI Analytics Dashboard 🤖
-- **Predictive Risk Scoring**
-  - ML-powered student risk assessment (0-100 scale)
-  - Identifies students approaching fine limits
-  - Pattern-based predictions on attendance behavior
-  - Real-time risk categorization
-
-- **Pattern Analysis**
-  - Detects problematic attendance patterns
-  - Identifies repeat offenders and chronic late-comers
-  - Behavioral analysis with actionable insights
-  - Department-level comparison metrics
-
-- **Early Warning System**
-  - Real-time alerts for at-risk students
-  - Threshold-based preventive warnings
-  - Recommended interventions for faculty
-  - Proactive notification system
-
-### ✨ Faculty Management Enhancements
-- **Complete Faculty Profile Deletion** 🗑️
-  - Secure DELETE endpoint with admin authorization
-  - Self-deletion prevention built-in
-  - Confirmation modal prevents accidental deletions
-  - Integrated with comprehensive audit logging
-
-### ✨ Advanced Student Data Management
-- **CSV Bulk Import Tool** 📥
-  - Import student records from CSV/XLSX files
-  - Flexible column name support (handles multiple formats)
-  - Dry-run mode for safe preview before importing
-  - Batch processing for large datasets (default 500 per batch)
-  - Comprehensive validation with detailed error reporting
-  - Successfully imported 565 student records (Year 2 & 3, all sections)
-  - npm script: `npm run import:students -- --file "path/to/csv" [--dry-run]`
-
-#### Students Master Data Improvements
-- **Advanced Search Feature** 🔍
-  - Real-time search across student names and roll numbers
-  - Instant filtering with clear button for quick reset
-  - Search results update as you type
-  - Case-insensitive search for better UX
-
-#### Enhanced Notifications
-- **Detailed Late Marking Notifications** 📢
-  - Notifications now include complete student information
-  - Display: Roll Number, Year, Branch, and Section
-  - Better tracking and verification of marked students
-  - Professional toast notification styling
-
-### ⚡ Performance Optimizations
-
-#### Device Refresh Rate Optimization
-- **RequestAnimationFrame (rAF) Throttling**
-  - Search input updates synchronized with device refresh rate (60Hz/120Hz)
-  - Smooth, lag-free typing experience
-  - Prevents unnecessary re-renders
-  - CPU usage reduced by ~30% during search operations
-
-#### Data Structure & Algorithm (DSA) Improvements
-- **Memoization with useMemo**
-  - Student sorting and filtering now cached
-  - Re-computation only when data changes
-  - Sorting performance improved by ~50%
-  - Handles 1000+ student records smoothly
-
-#### Mobile Performance
-- **CSS Optimizations**
-  - Removed heavy `backdrop-filter` effects on mobile
-  - Reduced shadow complexity for faster rendering
-  - Disabled hover animations on touch devices
-  - Improved scroll performance with `background-attachment: scroll`
-
-### 📱 Mobile Responsiveness
-
-#### Responsive Sidebar Navigation
-- **Hamburger Menu Implementation**
-  - Sidebar hidden by default on mobile devices (< 768px)
-  - Smooth slide-in animation with backdrop overlay
-  - Auto-close behavior after menu item selection
-  - Touch-optimized toggle button
-
-#### Touch-Friendly UI
-- **Accessibility Improvements**
-  - All interactive elements minimum 48px × 48px (WCAG 2.1 Level AAA)
-  - Larger tap targets for buttons and inputs
-  - Visual feedback on touch (highlight on press)
-  - Optimized sidebar width: 240px (phones), 260px (tablets)
-
-#### Layout Optimizations
-- **Spacing Improvements**
-  - Reduced padding on mobile: 1rem (phones), 1.5rem (tablets)
-  - Compact navbar and footer spacing
-  - Fixed excessive whitespace at bottom of pages
-  - Better content density on small screens
-
-#### Responsive Breakpoints
-- **Mobile-first Design**
-  - `@media (max-width: 768px)` - Tablets
-  - `@media (max-width: 480px)` - Phones
-  - `@media (hover: none)` - Touch devices
-  - `@media (prefers-reduced-motion)` - Accessibility
-
-### 🌐 Network & Testing
-
-#### Local Network Testing Support
-- **CORS Configuration for Local IPs**
-  - Support for `192.168.x.x` (Home networks)
-  - Support for `10.x.x.x` (Private networks)
-  - Support for `172.16-31.x.x` (Corporate networks)
-  - Auto-detection of backend host in development
-  - Seamless testing on mobile devices via local network
-
-#### Developer Experience
-- **Auto Host Detection**
-  - Frontend automatically detects host from `window.location.hostname`
-  - No hardcoded localhost references
-  - Works on any local IP address
-  - Production/development environment auto-switch
-
-### 🎨 UI/UX Improvements
-
-#### Visual Enhancements
-- Better navbar spacing and alignment on mobile
-- Improved hamburger menu icon (26px with touch feedback)
-- Optimized page container margins and padding
-- Responsive footer with adaptive spacing
-- Better visual hierarchy on small screens
-
-#### Interaction Improvements
-- Smooth sidebar transitions (0.3s cubic-bezier)
-- Backdrop fade-in animation
-- Touch ripple effects on buttons
-- Improved focus states for keyboard navigation
-
-### 🛠️ Technical Improvements
-
-#### Code Quality
-- Refactored sidebar state management (isCollapsed → isOpen)
-- Added window resize detection with React hooks
-- Implemented custom event system for sidebar toggle
-- Better separation of mobile/desktop behavior
-- Cleanup of duplicate CSS media queries
-
-#### Files Modified (8 files)
-- `frontend/src/components/StudentManagement.js` - Search + useMemo
-- `frontend/src/components/Sidebar.js` - Responsive behavior
-- `frontend/src/components/App.js` - Mobile backdrop
-- `frontend/src/components/Navbar.js` - Hamburger menu
-- `frontend/src/services/api.js` - Auto host detection
-- `frontend/src/index.css` - Mobile optimizations
-- `frontend/src/styles/professionalComponents.css` - Touch targets
-- `backend/server.js` - CORS for local networks
 
 ---
 
@@ -556,21 +320,149 @@ AuditLog Collection
 
 ##  Architecture
 
+### System Architecture Diagram
 ```mermaid
 graph TB
-    A[Client Browser]
-    A -->|HTTPS| B[Vercel CDN]
-    B -->|React Frontend| C[UI Components]
-    C -->|JWT in Headers| D[API Interceptor]
-    D -->|HTTPS REST| E[Vercel Serverless]
-    E -->|Mongoose ODM| F[MongoDB Atlas]
-    E -->|JWT Validation| G[Auth Middleware]
-    G -->|Role Check| H[Route Handler]
-    C -->|Service Worker| I[IndexedDB Cache]
+    subgraph Client["🖥️ Client Layer (React Frontend)"]
+        UI["UI Components"]
+        Auth["JWT Auth Manager"]
+        Cache["IndexedDB Cache"]
+        SW["Service Worker"]
+    end
     
-    style C fill:#61DAFB
-    style E fill:#68A063
-    style F fill:#4DB33D
+    subgraph API["🌐 API Gateway (Vercel Edge)"]
+        CORS["CORS Handler"]
+        RateLimit["Rate Limiter"]
+        JWT["JWT Validator"]
+    end
+    
+    subgraph Server["⚙️ Backend Server (Node.js/Express)"]
+        Route["Route Handlers"]
+        RBAC["Role-Based Auth"]
+        Validate["Input Validation"]
+        AI["AI Predictor"]
+    end
+    
+    subgraph Models["📊 Data Models"]
+        StudentModel["Student Schema"]
+        FacultyModel["Faculty Schema"]
+        AuditModel["Audit Log Schema"]
+    end
+    
+    subgraph Database["🗄️ MongoDB Atlas"]
+        Students["Students Collection"]
+        Faculty["Faculty Collection"]
+        Logs["Audit Logs Collection"]
+    end
+    
+    Client -->|HTTPS + JWT| API
+    API -->|Validates| JWT
+    API -->|Rate Limits| CORS
+    CORS -->|Forwards| Server
+    Server -->|Checks Role| RBAC
+    Server -->|Validates Data| Validate
+    Server -->|Risk Analysis| AI
+    Server -->|Maps Data| Models
+    Models -->|Query/Update| Database
+    Database -->|Replicates| Database
+    Client -->|Offline Sync| SW
+    SW -->|Caches| Cache
+    
+    style Client fill:#61DAFB,stroke:#0288D1,stroke-width:2px
+    style API fill:#F7B500,stroke:#FFA000,stroke-width:2px
+    style Server fill:#68A063,stroke:#2E7D32,stroke-width:2px
+    style Models fill:#AB47BC,stroke:#7B1FA2,stroke-width:2px
+    style Database fill:#4DB33D,stroke:#33691E,stroke-width:2px
+```
+
+### Data Flow Architecture
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser as React Browser
+    participant API as Vercel API
+    participant Backend as Node.js Server
+    participant DB as MongoDB Atlas
+    
+    User->>Browser: 1. Login with credentials
+    Browser->>API: 2. POST /auth/login (HTTPS)
+    API->>Backend: 3. Validate email/password
+    Backend->>DB: 4. Query faculty collection
+    DB-->>Backend: 5. Return faculty record
+    Backend->>Backend: 6. Hash password + JWT generation
+    Backend-->>API: 7. Return JWT token + user info
+    API-->>Browser: 8. Token stored in localStorage
+    
+    User->>Browser: 9. Navigate to Mark Late
+    Browser->>API: 10. GET /students/search?query (JWT header)
+    API->>Backend: 11. Validate JWT signature
+    Backend->>Backend: 12. Extract role from token
+    Backend->>DB: 13. MongoDB $or query on 4 fields
+    DB-->>Backend: 14. Return filtered students
+    Backend-->>API: 15. Send results + pagination
+    API-->>Browser: 16. Update UI with results
+    Browser->>Browser: 17. Render student cards
+    
+    User->>Browser: 18. Select student + mark late
+    Browser->>API: 19. POST /students/mark-late
+    API->>Backend: 20. Role + permission check
+    Backend->>Backend: 21. Calculate fine (date-based)
+    Backend->>DB: 22. Update student document
+    DB-->>Backend: 23. Return updated record
+    Backend->>DB: 24. Create audit log entry
+    Backend-->>API: 25. Success response
+    API-->>Browser: 26. Show toast notification
+```
+
+### Component Architecture
+```
+App.js (Main Router)
+├── Navbar (Header + User Menu)
+├── Sidebar (Navigation)
+└── Routes:
+    ├── Login.js
+    ├── Mark Student Late
+    │   └── StudentForm.js (Client-side)
+    │   └── PrefetchedStudentForm.js (Enhanced)
+    ├── Late Management
+    │   ├── LateList.js
+    │   └── Record.js
+    ├── Analytics
+    │   ├── Analytics.js (Dashboard)
+    │   └── AIInsights.js (ML Predictions)
+    ├── Student Profiles
+    │   ├── StudentProfile.js (Search)
+    │   └── StudentDashboard.js
+    ├── Admin Features
+    │   ├── StudentManagement.js (Master Data)
+    │   ├── FacultyDirectory.js
+    │   └── AdminManagement.js
+    └── Faculty Features
+        └── FacultyRegister.js
+```
+
+### Backend API Structure
+```
+backend/
+├── server.js (Express app + routes)
+├── routes/
+│   ├── authRoutes.js (Login, Faculty CRUD, Role Management)
+│   ├── studentRoutes.js (Mark late, Search, Records, Graduation Export)
+│   ├── aiRoutes.js (Risk predictions, Pattern analysis, Warnings)
+├── models/ (Mongoose schemas)
+│   ├── student.js (Roll No, Year, Semester, Late tracking)
+│   ├── faculty.js (Email, Role, Branch, Auth)
+│   └── auditLog.js (Action logging, Compliance)
+├── middleware/
+│   ├── errorHandler.js (Global error catch)
+│   ├── logger.js (Morgan HTTP logging)
+│   └── rateLimiter.js (Request throttling)
+├── services/
+│   └── aiPredictor.js (ML heuristics, Risk scoring)
+├── utils/
+│   └── pdfGenerator.js (CSV export, Graduation data)
+└── validators/
+    └── index.js (Input validation schemas)
 ```
 
 **Data Flow:**
@@ -582,128 +474,174 @@ graph TB
 6. Response returned with appropriate data based on permissions
 7. Frontend updates UI with toast notifications and state updates
 8. Service worker caches operations for offline support
+9. All actions logged to audit collection for compliance
 
 ---
 
 ## 📸 Screenshots
 
-### 🔐 Login Page
-<img src="./screenshots/login page.png" alt="Login Page" width="900"/>
+### � Mark Student Late (Faculty & Admin)
+<img src="./screenshots/mark_student_late.png" alt="Mark Student Late - Prefetched Form" width="900"/>
 
 **Features:**
-- Modern glassmorphism design with gradient background
-- Test credentials display for demo
-- Responsive layout (mobile, tablet, desktop)
-- Field validation with error messages
-- Password visibility toggle
-- Forgot Password link
-
----
-
-### 📝 Mark Student Late (Faculty & Admin)
-<img src="./screenshots/mark student late.png" alt="Mark Student Late" width="900"/>
-
-**Features:**
-- QR/Barcode scanner integration
-- Roll number search with auto-complete
-- Student details display (name, year, semester)
-- Automated fine calculation with breakdown
-- Confirmation dialog before submission
-- Toast notification on success
-- Offline queue support
+- Enhanced student selection with cascading filters (Year → Branch → Section)
+- Prefetched student form for rapid marking
+- Real-time filtering by academic year, branch, and section
+- Server-side search with pagination (limit: 20 results)
+- Auto-population of student details after selection
+- Automated fine calculation with rate breakdown
+- Confirmation dialog before marking
+- Toast notification with marking timestamp
+- Offline queue support for network interruptions
 
 ---
 
 ### 📋 Late Students Today (Faculty & Admin)
-<img src="./screenshots/late student today.png" alt="Late Students Today" width="900"/>
+<img src="./screenshots/late_today.png" alt="Late Students Today" width="900"/>
 
 **Features:**
-- Today's late students list with timestamps
-- Search by roll number or name
-- Filter by year, branch, semester
-- Column sorting (name, roll number, time)
-- Excel/TXT export options
-- Student detail view
-- Batch operations for admins
-
----
-
-### 📊 Late Records (Faculty & Admin)
-<img src="./screenshots/student late record.png" alt="Late Records" width="900"/>
-
-**Features:**
-- Weekly, monthly, and semester views
-- Search and filter capabilities
-- Detailed student late tracking
-- Fine history breakdown
-- Export to Excel/TXT
-- Department-wise statistics
-- Period selection dropdown
+- Real-time students marked late today view
+- Two tabs: "Late Students Today" and "Late Records"
+- Search by roll number or student name
+- Filter by academic year, branch, and section
+- Display: Roll No, Name, Year, Semester, Branch, Section, Late Days count
+- Column header sorting capabilities
+- Excel export button (green) and TXT table export (purple)
+- "View Details" button for individual student profiles
+- Professional card-based layout with status badges
 
 ---
 
 ### 📈 Live Analytics Dashboard (Faculty & Admin)
-<img src="./screenshots/live analytics.png" alt="Analytics Dashboard" width="900"/>
+<img src="./screenshots/analytics.png" alt="Live Analytics Dashboard" width="900"/>
 
 **Features:**
-- Real-time student late count metrics
-- Financial analytics (total fines, payment rates)
-- Student performance leaderboards
-- Most late, most improved, best-performing students
-- Interactive charts with trend indicators
-- Auto-refresh capability (5-second intervals)
-- Department breakdown statistics
-- Responsive grid layout
+- Real-time "Students Late Today" metric (large red card with big number)
+- Auto-refresh functionality (30-second intervals)
+- Financial Analytics section showing:
+  - Total fines collected (₹)
+  - Pending fines (₹)
+  - Projected revenue (₹)
+  - Payment rate (%)
+- Average fine per student calculation
+- Department Breakdown section:
+  - Late Students by Branch (bar chart)
+  - Fines Distribution by Branch (visual breakdown)
+- Responsive grid layout optimized for all screen sizes
+- Color-coded metrics for quick interpretation
+
+---
+
+### 👤 Student Profile Search (Faculty & Admin)
+<img src="./screenshots/student_profile.png" alt="Student Profile Search" width="900"/>
+
+**Features:**
+- Search students by roll number or name (e.g., A23120552001 or Adari Maheswari)
+- Professional profile card display with:
+  - Student name, year, semester, branch, section
+  - Faculty advisor information
+  - Visual status badges (color-coded)
+- Quick statistics cards:
+  - Total late days count
+  - Total fines incurred (₹)
+  - Excuse days used
+  - Current status (Excused/Active)
+- Late Attendance History with period filters:
+  - All time view, Today, This Week, This Month, Custom date range
+  - Historical instances with timestamps
+  - Chronological listing of late entries
+
+---
+
+### 🤖 AI Insights Dashboard (Faculty & Admin)
+<img src="./screenshots/ai_insights.png" alt="AI Insights - Predictive Analytics" width="900"/>
+
+**Features:**
+- Machine Learning powered student risk assessment
+- Three interactive analysis tabs:
+  1. **Risk Predictions**: Students categorized as High/Medium/Low risk
+     - Risk scoring on 0-100 scale
+     - Color-coded boxes (Red/Orange/Green)
+     - Top 20 high-risk students listed with scores
+  2. **Pattern Analysis**: Behavioral pattern detection
+     - Trend indicators and heuristic analysis
+  3. **Early Warnings**: Proactive alert system
+     - At-risk student identification
+     - Recommended interventions
+- Visual cards with ranking numbers
+- Department-wide comparative metrics
+- Refresh button for real-time updates
+
+---
+
+### 📊 Student Master Data Management (Admin Only)
+<img src="./screenshots/student_master.png" alt="Student Master Data Management" width="900"/>
+
+**Features:**
+- Complete student database with 571+ records visible
+- Search functionality across roll number, name, branch, and section
+- Bulk add new students button (green "Add Student" button)
+- Refresh data button (purple "Refresh" button)
+- Aggregated statistics: "Total: 571 students" displayed
+- Table columns (sortable):
+  - Roll No (ascending order ▲)
+  - Name
+  - Year (numeric)
+  - Semester (SEM)
+  - Branch (CSM - Computer Science & Engineering)
+  - Section (A-F, color-highlighted)
+  - Late Days count
+  - Fines (₹)
+  - Action buttons: Edit (pencil icon) and Delete (trash icon)
+- Year/semester/branch filtering dropdowns
+- Inline edit and delete operations
+- Student status management (Active/Inactive toggle)
+- Pagination support for large datasets
 
 ---
 
 ### 👥 Faculty Directory (Admin Only)
-<img src="./screenshots/faculty directory.png" alt="Faculty Directory" width="900"/>
+<img src="./screenshots/faculty_directory.png" alt="Faculty Directory Management" width="900"/>
 
 **Features:**
-- Complete faculty listing with pagination
-- Faculty role badges (Faculty, Admin, SuperAdmin)
-- Account status indicators
-- Email and branch information
-- Edit faculty details (name, email, role)
-- Create new faculty accounts
-- Reset password functionality (admin controlled)
-- Deactivate/reactivate faculty accounts
-- Audit trail integration
+- Complete faculty listing with 9+ faculty cards displayed
+- Faculty cards showing:
+  - Faculty name with professional typography
+  - Email address (clickable)
+  - Branch assignment (CSM)
+  - Role badge (Faculty, Admin, SuperAdmin)
+  - Active status indicator (green checkmark ✓)
+  - Password field masked (••••••)
+  - Last login timestamp
+- Search functionality by name or email
+- Role filter dropdown ("All Roles" default)
+- Refresh button for real-time updates
+- New Faculty button (purple) for account creation
+- Card-based responsive layout (3 columns on desktop)
+- Status indicators with color coding
 
 ---
 
-### ⚙️ Admin Management (Admin Only)
-<img src="./screenshots/admin management.png" alt="Admin Management" width="900"/>
+### ⚙️ Admin Management Dashboard (Admin Only)
+<img src="./screenshots/admin_management.png" alt="Admin Management - System statistics" width="900"/>
 
 **Features:**
-- System statistics dashboard
-- Real-time metrics (total students, faculty, fines)
-- Semester promotion with bulk filtering
-- Student Master Data management (add/edit/delete)
-- Bulk late record removal with proof export
-- Fine management and payment tracking
-- Year/Branch/Section filtering
-- Operation confirmation dialogs
-- Audit log viewing
-- PDF proof generation for record removals
-
----
-
-### 📊 Students Master Data (Admin Only)
-<img src="./screenshots/students master data.png" alt="Students Master Data" width="900"/>
-
-**Features:**
-- Complete student database view
-- Add new student records
-- Edit student information
-- Bulk import from CSV
-- Student status management
-- Year/Branch/Section organization
-- Search and filtering
-- Pagination for large datasets
-- Deactivate/reactivate students
-- Export student list
+- Three management tabs: Management (active), Audit Trail, Fine Management
+- **System Statistics Dashboard** showing:
+  - Total Students: 571
+  - Students with Late Records: 130
+  - Using Excuse Days: 124
+  - Being Fined: 6
+  - Alert Status: 0 (all clear)
+  - Total Fines: ₹30
+  - Year Distribution: Y1: 282, Y3: 278
+  - Branch Distribution: CSM: 565, CSE: 1, MECH: 1, CIVIL: 1, IT: 1, CSD: 1
+- Buttons for bulk operations:
+  - Refresh Stats (purple button)
+  - Download Database (green button)
+- Semester promotion form section
+- Fine management and bulk record removal capabilities
+- Comprehensive audit logging integration
 
 ---
 
@@ -1098,183 +1036,42 @@ Set environment variables:
 
 ## 📋 Changelog
 
-### Version 2.3.0 (February 12, 2026)
-**Trial Edition: Mobile Optimization, UI Polish & Performance**
+### Version 3.1.0 (February 22, 2026)
+**Production Release: Bug Fixes & Search Optimization**
 
-**Mobile Experience:**
-- ✅ Optimized viewport scaling (initial-scale=0.8)
-- ✅ Perfect display at 75-80% zoom level on mobile
-- ✅ Improved responsive layouts and touch targets
-- ✅ Enhanced text sizing for mobile readability
+**Critical Bug Fixes:**
+- ✅ Re-added `/students/search` endpoint (accidentally removed during cleanup)
+- ✅ Fixed graduation export system with improved data preservation and logging
+- ✅ Fixed new student registration with `isLate` flag support
 
-**UI/UX Improvements:**
-- ✅ Removed all emoji characters (45,437 characters cleaned)
-- ✅ Replaced with professional react-icons
-- ✅ Maintained color-coded status zones (green/yellow/red)
-- ✅ Enterprise-appropriate professional interface
+**Search & Pagination Overhaul:**
+- ✅ Moved from client-side to server-side search implementation
+- ✅ Fixed empty pages 1-4 issue in search results
+- ✅ MongoDB `$or` query searches across 4 fields: rollNo, name, branch, section
+- ✅ Auto-reset pagination to page 1 when search query changes
+- ✅ Search icon visual indicators (blue highlighting during active search)
 
-**Feature Simplification:**
-- ✅ Removed reason tracking from late marking (per faculty feedback)
-- ✅ Streamlined confirmation dialog
-- ✅ Cleaner marking workflow
-- ✅ Removed unused analytics endpoints
+**Student Master Data Enhancements:**
+- ✅ Year-Semester validation (prevents invalid combinations)
+- ✅ Smart semester auto-selection based on year
+- ✅ Visual edit mode indicators with warning banners
+- ✅ Section input changed from text to dropdown
 
-**Performance Optimizations:**
-- ✅ Eliminated redundant API calls
-- ✅ Embedded late counts in initial fetch
-- ✅ ~40-50% faster page load times
-- ✅ Cleaned unused code and dependencies
-
-**Bug Fixes:**
-- ✅ Fixed semester field display in Student Profile Search
-- ✅ Updated version display in sidebar
-- ✅ Cleaned console logs
-
-**Documentation:**
-- ✅ Created OPTIMIZATION_SUMMARY.md
-- ✅ Created PREVENT_DUPLICATE_MARKING.js implementation guide
-- ✅ Updated README to v2.3.0
-
-**Deployment Status:** ✅ Approved by HOD & Principal for one-week trial
-
----
-
-### Version 2.2.0 (February 6, 2026)
-**Major Release: AI Analytics Dashboard, Faculty Deletion & CSV Import**
-
-**AI Analytics Features:**
-- ✅ AI Insights Dashboard with 3 interactive tabs
-- ✅ Risk Predictions: ML-powered risk assessment (0-100 scale)
-- ✅ Pattern Analysis: Behavioral and attendance pattern detection
-- ✅ Early Warnings: Real-time alerts for at-risk students
-- ✅ Heuristic prediction algorithm (no external API calls)
-- ✅ Real-time risk categorization and recommendations
-
-**Faculty Management:**
-- ✅ Faculty profile deletion endpoint (DELETE /auth/faculty/:id)
-- ✅ Admin authorization with self-deletion prevention
-- ✅ Confirmation modal in frontend
-- ✅ Comprehensive audit logging for all deletions
-- ✅ FACULTY_DELETE audit action added
-
-**Student Data Management:**
-- ✅ CSV bulk import tool (importStudentsCsv.js)
-- ✅ Flexible column name support (multiple CSV formats)
-- ✅ Dry-run mode for safe preview (-–dry-run flag)
-- ✅ Batch processing (500 records per batch by default)
-- ✅ Comprehensive validation with detailed error messages
-- ✅ 565 students successfully imported
-  - Year 3: 275 students (CSM, sections A-D)
-  - Year 2: 290 students (CSM, sections A-D)
-- ✅ npm script: `npm run import:students`
-- ✅ MongoDB bulk upsert with $set and $setOnInsert
-
-**API Enhancements:**
-- ✅ AI routes: GET /api/ai/insights, GET /api/ai/health
-- ✅ Faculty routes: DELETE /auth/faculty/:id
-- ✅ Enhanced error handling and validation
-- ✅ Self-deletion prevention built-in
-
-**Frontend Components:**
-- ✅ AIInsights.js (470+ lines, fully responsive)
-- ✅ Three tabs: Risk Predictions, Pattern Analysis, Early Warnings
-- ✅ Color-coded risk scores and visual indicators
-- ✅ Pattern detection cards with detailed info
-- ✅ Early warning alerts with recommended actions
-- ✅ Integration with Sidebar and App navigation
-
-**Backend Services:**
-- ✅ aiPredictor.js: Heuristic risk scoring engine
-- ✅ aiRoutes.js: RESTful AI endpoints
-- ✅ importStudentsCsv.js: Safe bulk import tool
-- ✅ Updated server.js with AI route registration
-- ✅ Updated package.json with import script
-
-**Database:**
-- ✅ MongoDB Atlas populated with 565 student records
-- ✅ Ready for comprehensive AI analysis
-- ✅ All data validated and normalized
-- ✅ No data corruption during bulk import
-
-**Testing & Quality:**
-- ✅ Dry-run mode for safe testing
-- ✅ Validation before data writes
-- ✅ Two-batch import completed successfully
-- ✅ Error handling with descriptive messages
-- ✅ Graceful failure and rollback support
-
-**Files Added:**
-- `backend/routes/aiRoutes.js`
-- `backend/services/aiPredictor.js`
-- `backend/scripts/importStudentsCsv.js`
-- `frontend/src/components/AIInsights.js`
-- `ml-models/train_model.py` (optional)
-- `ml-models/predict.py` (optional)
-- `ml-models/requirements.txt` (optional)
-
-**Files Modified:**
-- `backend/models/auditLog.js` (+FACULTY_DELETE action)
-- `backend/routes/authRoutes.js` (+delete endpoint)
-- `backend/server.js` (+AI route registration)
-- `backend/package.json` (+import script)
-- `frontend/src/components/Sidebar.js` (+AI nav link)
-- `frontend/src/App.js` (+AI route)
-- `README.md` (v2.2.0 documentation)
-
-**Performance:**
-- ⚡ Heuristic algorithm runs in real-time (no ML compilation)
-- ⚡ Batch import with configurable batch size
-- ⚡ Efficient MongoDB bulk operations
-- ⚡ Client-side prediction caching
-
-**Security:**
-- 🔐 JWT authentication for AI endpoints
-- 🔐 Role-based authorization checks
-- 🔐 Input validation on all imports
-- 🔐 Audit logging for all sensitive operations
-- 🔐 Self-deletion prevention
-
----
-
-### Version 2.1.1 (February 6, 2026)
 **Features:**
-- ✅ Faculty Directory: Delete user functionality with confirmation modal
-- ✅ Students Master Data: Real-time search with instant filtering
-- ✅ Notifications: Enhanced format with complete student details
+- [x] Full student late tracking system
+- [x] Role-based access control (Faculty, Admin, SuperAdmin)
+- [x] Real-time analytics dashboard
+- [x] AI-powered risk predictions
+- [x] CSV bulk import tool
+- [x] Graduation export with auto-deletion
+- [x] Offline-first architecture with Service Worker
+- [x] Dark mode support
+- [x] Mobile responsiveness
+- [x] Comprehensive audit logging
+- [x] Academic year and semester management
+- [x] Fine calculation and management
 
-**Performance:**
-- ⚡ Device refresh rate optimization (requestAnimationFrame throttling)
-- ⚡ DSA sorting optimization (useMemo memoization for 50% faster sorting)
-- ⚡ Mobile CSS optimizations (removed heavy effects, improved rendering)
-
-**Mobile Responsiveness:**
-- 📱 Responsive sidebar with hamburger menu and overlay
-- 📱 Touch-friendly UI (48px minimum targets, WCAG 2.1 AAA compliant)
-- 📱 Optimized spacing and layout for mobile devices
-- 📱 Fixed whitespace issues and improved content density
-
-**Network & Testing:**
-- 🌐 CORS configuration for local network testing (192.168.x.x, 10.x.x.x, etc.)
-- 🌐 Auto-detection of backend host for seamless dev/prod switching
-
-**UI/UX:**
-- 🎨 Better navbar spacing and hamburger menu styling
-- 🎨 Visual feedback on touch interactions
-- 🎨 Improved responsive breakpoints and media queries
-
-### Version 2.1.0 (Previous Release)
-- Enhanced README with comprehensive documentation
-- Integrated professional favicon package
-- Updated role-based access control documentation
-- Improved UI design with glassmorphism effects
-- Production deployment optimizations
-
-### Version 2.0.0 (Initial Release)
-- Full-stack MERN application
-- JWT authentication and role-based access control
-- Real-time attendance tracking and fine calculation
-- MongoDB Atlas integration
-- Vercel deployment
+**Deployment Status:** ✅ Production-Ready (v3.1.0)
 
 ---
 
