@@ -481,7 +481,7 @@ backend/
 ## 📸 Screenshots
 
 ### 🔐 Login Page
-<img src="./screenshots/Screenshot 2026-02-25 134501.png" alt="Login Page" width="900"/>
+<img src="./screenshots/login page.png" alt="Login Page" width="900"/>
 
 **Features:**
 - Clean and professional login interface
@@ -498,7 +498,7 @@ backend/
 ---
 
 ### 📝 Mark Student Late (Faculty & Admin)
-<img src="./screenshots/mark student late(2).png" alt="Mark Student Late - Prefetched Form" width="900"/>
+<img src="./screenshots/mark student late (2).png" alt="Mark Student Late - Prefetched Form" width="900"/>
 
 **Features:**
 - Enhanced student selection with cascading filters (Year → Branch → Section)
