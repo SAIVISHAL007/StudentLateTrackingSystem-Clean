@@ -481,7 +481,7 @@ backend/
 ## 📸 Screenshots
 
 ### 🔐 Login Page
-<img src="./screenshots/login page.png" alt="Login Page" width="900"/>
+<img src="./screenshots/login_page.png" alt="Login Page" width="900"/>
 
 **Features:**
 - Clean and professional login interface
