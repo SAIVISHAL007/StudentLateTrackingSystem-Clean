@@ -480,8 +480,25 @@ backend/
 
 ## 📸 Screenshots
 
-### � Mark Student Late (Faculty & Admin)
-<img src="./screenshots/mark_student_late.png" alt="Mark Student Late - Prefetched Form" width="900"/>
+### 🔐 Login Page
+<img src="./screenshots/Screenshot 2026-02-25 134501.png" alt="Login Page" width="900"/>
+
+**Features:**
+- Clean and professional login interface
+- Faculty authentication with email and password
+- Role-based access control (Admin, Faculty, Student)
+- Secure JWT token-based authentication
+- Password validation and error handling
+- "Remember Me" functionality
+- Responsive design for mobile and desktop
+- Dark mode support
+- Session management with 7-day token expiry
+- Forgot password option (if implemented)
+
+---
+
+### 📝 Mark Student Late (Faculty & Admin)
+<img src="./screenshots/mark student late(2).png" alt="Mark Student Late - Prefetched Form" width="900"/>
 
 **Features:**
 - Enhanced student selection with cascading filters (Year → Branch → Section)
@@ -496,8 +513,8 @@ backend/
 
 ---
 
-### 📋 Late Students Today (Faculty & Admin)
-<img src="./screenshots/late_today.png" alt="Late Students Today" width="900"/>
+### 📋 Late Students Today and records management (Faculty & Admin)
+<img src="./screenshots/late management.png" alt="Late Students Records" width="900"/>
 
 **Features:**
 - Real-time students marked late today view
@@ -513,7 +530,7 @@ backend/
 ---
 
 ### 📈 Live Analytics Dashboard (Faculty & Admin)
-<img src="./screenshots/analytics.png" alt="Live Analytics Dashboard" width="900"/>
+<img src="./screenshots/live analytics.png" alt="Live Analytics Dashboard" width="900"/>
 
 **Features:**
 - Real-time "Students Late Today" metric (large red card with big number)
@@ -533,7 +550,7 @@ backend/
 ---
 
 ### 👤 Student Profile Search (Faculty & Admin)
-<img src="./screenshots/student_profile.png" alt="Student Profile Search" width="900"/>
+<img src="./screenshots/student profile search.png" alt="Student Profile Search" width="900"/>
 
 **Features:**
 - Search students by roll number or name (e.g., A23120552001 or Adari Maheswari)
@@ -554,7 +571,7 @@ backend/
 ---
 
 ### 🤖 AI Insights Dashboard (Faculty & Admin)
-<img src="./screenshots/ai_insights.png" alt="AI Insights - Predictive Analytics" width="900"/>
+<img src="./screenshots/AI insights.png" alt="AI Insights - Predictive Analytics" width="900"/>
 
 **Features:**
 - Machine Learning powered student risk assessment
@@ -575,7 +592,7 @@ backend/
 ---
 
 ### 📊 Student Master Data Management (Admin Only)
-<img src="./screenshots/student_master.png" alt="Student Master Data Management" width="900"/>
+<img src="./screenshots/students master data.png" alt="Student Master Data Management" width="900"/>
 
 **Features:**
 - Complete student database with 571+ records visible
@@ -601,7 +618,7 @@ backend/
 ---
 
 ### 👥 Faculty Directory (Admin Only)
-<img src="./screenshots/faculty_directory.png" alt="Faculty Directory Management" width="900"/>
+<img src="./screenshots/faculty directory.png" alt="Faculty Directory Management" width="900"/>
 
 **Features:**
 - Complete faculty listing with 9+ faculty cards displayed
@@ -623,7 +640,7 @@ backend/
 ---
 
 ### ⚙️ Admin Management Dashboard (Admin Only)
-<img src="./screenshots/admin_management.png" alt="Admin Management - System statistics" width="900"/>
+<img src="./screenshots/admin management.png" alt="Admin Management - System statistics" width="900"/>
 
 **Features:**
 - Three management tabs: Management (active), Audit Trail, Fine Management
