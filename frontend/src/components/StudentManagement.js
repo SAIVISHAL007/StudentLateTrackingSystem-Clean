@@ -101,7 +101,7 @@ function StudentManagement() {
     }
   };
 
-  // PERFORMANCE: Debounced search handler (500ms delay)
+  // PERFORMANCE: Debounced search handler (250ms delay - faster mobile response)
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
@@ -114,13 +114,13 @@ function StudentManagement() {
       cancelAnimationFrame(searchRafRef.current);
     }
 
-    // Debounce search query update by 500ms
+    // Debounce search query update by 250ms (reduced from 500ms for faster UX)
     searchDebounceRef.current = setTimeout(() => {
       searchRafRef.current = requestAnimationFrame(() => {
         setSearchQuery(value);
         setCurrentPage(1); // Reset to page 1 when search query changes
       });
-    }, 500);
+    }, 250);
   };
 
   const handleSort = (field) => {
@@ -607,29 +607,29 @@ function StudentManagement() {
           </p>
         </div>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table className="pro-table">
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <table className="pro-table" style={{ minWidth: "100%", width: "max-content" }}>
             <thead>
               <tr style={{ background: "#f8f9fa" }}>
-                <th style={{ padding: "1rem", textAlign: "left", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("rollNo")}>
+                <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: "700", color: "#495057", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => handleSort("rollNo")}>
                   Roll No {sortField === "rollNo" && (sortDirection === "asc" ? "▲" : "▼")}
                 </th>
-                <th style={{ padding: "1rem", textAlign: "left", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("name")}>
+                <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: "700", color: "#495057", cursor: "pointer", whiteSpace: "nowrap", minWidth: "150px" }} onClick={() => handleSort("name")}>
                   Name {sortField === "name" && (sortDirection === "asc" ? "▲" : "▼")}
                 </th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("year")}>
+                <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => handleSort("year")}>
                   Year {sortField === "year" && (sortDirection === "asc" ? "▲" : "▼")}
                 </th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Sem</th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("branch")}>
+                <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: "700", color: "#495057", whiteSpace: "nowrap" }}>Sem</th>
+                <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => handleSort("branch")}>
                   Branch {sortField === "branch" && (sortDirection === "asc" ? "▲" : "▼")}
                 </th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer" }} onClick={() => handleSort("section")}>
+                <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: "700", color: "#495057", cursor: "pointer", whiteSpace: "nowrap" }} onClick={() => handleSort("section")}>
                   Section {sortField === "section" && (sortDirection === "asc" ? "▲" : "▼")}
                 </th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Late Days</th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Fines</th>
-                <th style={{ padding: "1rem", textAlign: "center", fontWeight: "700", color: "#495057" }}>Actions</th>
+                <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: "700", color: "#495057", whiteSpace: "nowrap" }}>Late Days</th>
+                <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: "700", color: "#495057", whiteSpace: "nowrap" }}>Fines</th>
+                <th style={{ padding: "0.75rem", textAlign: "center", fontWeight: "700", color: "#495057", whiteSpace: "nowrap", position: "sticky", right: 0, background: "#f8f9fa", boxShadow: "-2px 0 4px rgba(0,0,0,0.05)" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -638,31 +638,31 @@ function StudentManagement() {
                   borderTop: "1px solid #dee2e6",
                   background: index % 2 === 0 ? "white" : "#f8f9fa"
                 }}>
-                  <td style={{ padding: "1rem", fontWeight: "600", color: "#495057" }}>{student.rollNo}</td>
-                  <td style={{ padding: "1rem", color: "#495057" }}>{student.name}</td>
-                  <td style={{ padding: "1rem", textAlign: "center", color: "#495057" }}>{student.year}</td>
-                  <td style={{ padding: "1rem", textAlign: "center", color: "#495057" }}>{student.semester}</td>
-                  <td style={{ padding: "1rem", textAlign: "center", fontWeight: "600", color: "#007bff" }}>{student.branch}</td>
-                  <td style={{ padding: "1rem", textAlign: "center", color: "#495057" }}>{student.section}</td>
-                  <td style={{ padding: "1rem", textAlign: "center", color: student.lateDays > 0 ? "#dc3545" : "#28a745" }}>
+                  <td style={{ padding: "0.75rem", fontWeight: "600", color: "#495057", whiteSpace: "nowrap" }}>{student.rollNo}</td>
+                  <td style={{ padding: "0.75rem", color: "#495057", minWidth: "150px" }}>{student.name}</td>
+                  <td style={{ padding: "0.75rem", textAlign: "center", color: "#495057" }}>{student.year}</td>
+                  <td style={{ padding: "0.75rem", textAlign: "center", color: "#495057" }}>{student.semester}</td>
+                  <td style={{ padding: "0.75rem", textAlign: "center", fontWeight: "600", color: "#007bff" }}>{student.branch}</td>
+                  <td style={{ padding: "0.75rem", textAlign: "center", color: "#495057" }}>{student.section}</td>
+                  <td style={{ padding: "0.75rem", textAlign: "center", color: student.lateDays > 0 ? "#dc3545" : "#28a745" }}>
                     {student.lateDays}
                   </td>
-                  <td style={{ padding: "1rem", textAlign: "center", fontWeight: "600", color: student.fines > 0 ? "#dc3545" : "#28a745" }}>
+                  <td style={{ padding: "0.75rem", textAlign: "center", fontWeight: "600", color: student.fines > 0 ? "#dc3545" : "#28a745" }}>
                     ₹{student.fines}
                   </td>
-                  <td style={{ padding: "1rem", textAlign: "center" }}>
-                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+                  <td style={{ padding: "0.75rem", textAlign: "center", whiteSpace: "nowrap", position: "sticky", right: 0, background: index % 2 === 0 ? "white" : "#f8f9fa", boxShadow: "-2px 0 4px rgba(0,0,0,0.05)" }}>
+                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "nowrap" }}>
                       <button
                         onClick={() => handleEditStudent(student)}
                         className="pro-btn pro-btn-primary"
-                        style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                        style={{ padding: "6px 12px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
                       >
                         <FiEdit2 size={14} style={{ marginRight: "6px" }} /> Edit
                       </button>
                       <button
                         onClick={() => handleDeleteStudent(student.rollNo)}
                         className="pro-btn pro-btn-danger"
-                        style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+                        style={{ padding: "6px 12px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
                       >
                         <FiTrash2 size={14} style={{ marginRight: "6px" }} /> Delete
                       </button>

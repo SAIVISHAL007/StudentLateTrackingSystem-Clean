@@ -75,13 +75,37 @@ function Analytics() {
   useEffect(() => {
     fetchAnalytics(false);
     
-    // Auto-refresh every 30 seconds
+    // PERFORMANCE: Page Visibility API - Stop polling when tab is hidden
     let interval;
-    if (autoRefresh) {
+    
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab is hidden - stop polling
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+        }
+      } else {
+        // Tab is visible - resume polling if enabled
+        if (autoRefresh && !interval) {
+          // Fetch once when tab becomes visible
+          fetchAnalytics(false);
+          // Resume polling
+          interval = setInterval(() => fetchAnalytics(false), 30000);
+        }
+      }
+    };
+    
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Start polling if autoRefresh is enabled and tab is visible
+    if (autoRefresh && !document.hidden) {
       interval = setInterval(() => fetchAnalytics(false), 30000);
     }
     
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (interval) clearInterval(interval);
     };
   }, [autoRefresh, fetchAnalytics]);

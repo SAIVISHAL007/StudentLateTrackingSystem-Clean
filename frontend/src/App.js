@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FiSettings } from "react-icons/fi";
 import PrefetchedStudentForm from "./components/PrefetchedStudentForm";
 import CombinedLateView from "./components/CombinedLateView";
@@ -14,6 +14,7 @@ import FacultyDirectory from "./components/FacultyDirectory";
 import StudentPortal from "./components/StudentPortal";
 import { isAuthenticated } from "./utils/auth";
 import { useDarkMode } from "./context/DarkModeContext";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 
 function App() {
   // Get last page from localStorage, default to "mark-late"
@@ -22,32 +23,27 @@ function App() {
   });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // PERFORMANCE: Use custom useMediaQuery hook instead of resize listener
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const { isDarkMode } = useDarkMode();
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handlePageChange = (pageId) => {
+  // PERFORMANCE: useCallback for stable function reference
+  const handlePageChange = useCallback((pageId) => {
     setCurrentPage(pageId);
     // Save current page to localStorage
     localStorage.setItem('lastPage', pageId);
-  };
+  }, []);
 
-  const handleLogin = (username) => {
+  const handleLogin = useCallback((username) => {
     setAuthenticated(true);
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setAuthenticated(false);
     localStorage.setItem('lastPage', "mark-late"); // Reset to default page on logout
     setCurrentPage("mark-late");
-  };
+  }, []);
 
   // Check authentication status on app load
   useEffect(() => {
@@ -177,22 +173,28 @@ function App() {
       )}
 
       {/* Sidebar */}
-      <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
+      <Sidebar currentPage={currentPage} onPageChange={handlePageChange} isMobile={isMobile} />
       
       {/* Main Content */}
       <div style={{
-        marginLeft: isMobile ? 0 : (sidebarCollapsed ? "70px" : "280px"),
+        marginLeft: isMobile ? 0 : (sidebarCollapsed ? "80px" : "300px"),
         flex: 1,
         transition: "margin-left 0.3s ease",
-        width: "100%"
+        width: isMobile ? "100%" : "calc(100% - " + (sidebarCollapsed ? "80px" : "300px") + ")",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column"
       }}>
         <Navbar onLogout={handleLogout} />
         
         <div style={{
           padding: isMobile ? "1rem" : "2rem",
-          maxWidth: "1200px",
+          maxWidth: "100%",
           margin: "0 auto",
-          width: "100%"
+          width: "100%",
+          boxSizing: "border-box",
+          flex: 1,
+          overflow: "auto"
         }}>
           {renderCurrentPage()}
 

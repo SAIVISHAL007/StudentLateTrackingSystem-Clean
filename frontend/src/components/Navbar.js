@@ -1,31 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback } from "react";
 import { FiUser, FiClock, FiLogOut, FiMenu, FiMoon, FiSun } from 'react-icons/fi';
 import { getCurrentUser, logout, getUserDisplayName, getLoginDuration } from "../utils/auth";
 import { useDarkMode } from '../context/DarkModeContext';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
-function Navbar({ onLogout }) {
+// PERFORMANCE: Use memo to prevent unnecessary re-renders from parent
+const NavbarComponent = ({ onLogout }) => {
   const user = getCurrentUser();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // PERFORMANCE: Use custom hook instead of resize listener
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handleLogout = () => {
+  // PERFORMANCE: useCallback for stable function references
+  const handleLogout = useCallback(() => {
     if (window.confirm("Are you sure you want to logout?")) {
       logout();
       if (onLogout) onLogout();
     }
-  };
+  }, [onLogout]);
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { shouldOpen: true } }));
-  };
+  }, []);
+
+  const handleDarkMode = useCallback(() => {
+    toggleDarkMode();
+  }, [toggleDarkMode]);
 
   return (
     <nav className="professional-navbar">
@@ -58,6 +59,7 @@ function Navbar({ onLogout }) {
               onMouseUp={(e) => e.currentTarget.style.background = "none"}
               onTouchStart={(e) => e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)"}
               onTouchEnd={(e) => e.currentTarget.style.background = "none"}
+              title="Toggle sidebar"
             >
               <FiMenu size={26} />
             </button>
@@ -81,6 +83,8 @@ function Navbar({ onLogout }) {
             <img
               src="/brandingHeader.png"
               alt="ANITS Header"
+              loading="lazy"
+              decoding="async"
               style={{
                 height: "100%",
                 width: "auto",
@@ -93,7 +97,7 @@ function Navbar({ onLogout }) {
         </div>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", justifyContent: "flex-end" }}>
           <button
-            onClick={toggleDarkMode}
+            onClick={handleDarkMode}
             className="dark-mode-toggle"
             title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
@@ -142,6 +146,7 @@ function Navbar({ onLogout }) {
                   padding: isMobile ? "8px 12px" : "0.625rem 1.25rem",
                   fontSize: isMobile ? "inherit" : "0.875rem"
                 }}
+                title="Logout"
               >
                 {isMobile ? <FiLogOut size={20} /> : (
                   <>
@@ -156,6 +161,7 @@ function Navbar({ onLogout }) {
       </div>
     </nav>
   );
-}
+};
 
-export default Navbar;
+// PERFORMANCE: Wrap with React.memo
+export default React.memo(NavbarComponent);

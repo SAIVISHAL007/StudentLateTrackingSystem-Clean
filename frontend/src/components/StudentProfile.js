@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FiSearch, FiX, FiCalendar, FiDollarSign, FiUser, FiClock, FiCheckCircle, FiAlertCircle, FiXCircle, FiFileText, FiCheck } from 'react-icons/fi';
 import API from '../services/api';
 import { toast } from './Toast';
 
-function StudentProfile() {
+// PERFORMANCE: Memoize component to prevent unnecessary re-renders
+const StudentProfileComponent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -599,6 +600,7 @@ function StudentProfile() {
       )}
     </div>
   );
-}
+};
 
-export default StudentProfile;
+// PERFORMANCE: Wrap with React.memo
+export default React.memo(StudentProfileComponent);
