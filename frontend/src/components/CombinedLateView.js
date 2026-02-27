@@ -16,6 +16,8 @@ import {
   FiCheck,
   FiSearch,
   FiDollarSign,
+  FiEdit2,
+  FiX,
 } from "react-icons/fi";
 import API from "../services/api";
 import { formatDate, isToday } from "../utils/dateUtils";
@@ -51,6 +53,15 @@ function CombinedLateView() {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordError, setRecordError] = useState(null);
   const ITEMS_PER_PAGE = 30;
+  
+  // ============ DATE RANGE PICKER STATE ============
+  const [useCustomDateRange, setUseCustomDateRange] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  
+  // ============ RECORD EDITING STATE ============
+  const [editingRecordId, setEditingRecordId] = useState(null);
+  const [editingData, setEditingData] = useState({});
 
   // ============ FETCH - TODAY'S LATE STUDENTS ============
   useEffect(() => {
@@ -304,6 +315,116 @@ function CombinedLateView() {
     } else {
       toast.error("Export failed. Please try again.");
     }
+  };
+
+  // ============ DATE RANGE HANDLERS ============
+  const handleApplyDateRange = () => {
+    if (!startDate || !endDate) {
+      toast.error("Please select both start and end dates");
+      return;
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      toast.error("Start date must be before end date");
+      return;
+    }
+    // Fetch records with custom date range
+    fetchRecordsWithDateRange(startDate, endDate);
+  };
+
+  const fetchRecordsWithDateRange = async (start, end) => {
+    setLoading(true);
+    setRecordError(null);
+    try {
+      // First, fetch all records for the current period
+      const res = await API.get(`/students/records/${selectedPeriod}`);
+      const allData = res.data;
+
+      // Filter by date range client-side
+      const startDateTime = new Date(start).getTime();
+      const endDateTime = new Date(end).getTime() + 86400000; // Add 1 day to include end date
+
+      const filteredStudents = allData.students?.filter(student => {
+        if (!student.lateLogs || student.lateLogs.length === 0) return false;
+        
+        // Check if any late log falls within the date range
+        return student.lateLogs.some(log => {
+          const logTime = new Date(log.date).getTime();
+          return logTime >= startDateTime && logTime <= endDateTime;
+        });
+      }) || [];
+
+      setRecordData({
+        ...allData,
+        students: filteredStudents
+      });
+      setCurrentPage(1);
+      toast.success(`Found ${filteredStudents.length} records in date range`);
+    } catch (err) {
+      console.error("Error fetching date range records:", err);
+      const errorMessage = err.response?.data?.error || "Failed to fetch records for date range";
+      setRecordError(errorMessage);
+      setRecordData(null);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearDateRange = () => {
+    setStartDate("");
+    setEndDate("");
+    setUseCustomDateRange(false);
+    fetchRecords(selectedPeriod);
+    toast.success("Date range cleared");
+  };
+
+  // ============ RECORD UPDATE HANDLERS ============
+  const handleEditRecord = (student) => {
+    setEditingRecordId(student._id);
+    setEditingData({
+      lateDays: student.lateDays || 0,
+      fines: student.fines || 0,
+      gracePeriodUsed: student.gracePeriodUsed || 0,
+    });
+  };
+
+  const handleSaveRecord = async (student) => {
+    try {
+      const updatePayload = {
+        lateDays: parseInt(editingData.lateDays) || 0,
+        fines: parseInt(editingData.fines) || 0,
+        gracePeriodUsed: parseInt(editingData.gracePeriodUsed) || 0,
+      };
+
+      await API.put(`/students/records/${student._id}`, updatePayload);
+      
+      // Update local state
+      setRecordData(prev => ({
+        ...prev,
+        students: prev.students.map(s => 
+          s._id === student._id ? { ...s, ...updatePayload } : s
+        )
+      }));
+
+      setEditingRecordId(null);
+      setEditingData({});
+      toast.success("Record updated successfully");
+    } catch (err) {
+      console.error("Error updating record:", err);
+      toast.error(err.response?.data?.error || "Failed to update record");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRecordId(null);
+    setEditingData({});
+  };
+
+  const handleEditFieldChange = (field, value) => {
+    setEditingData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // ============ FILTER LOGIC - TODAY ============
@@ -1441,6 +1562,109 @@ function CombinedLateView() {
             )}
           </div>
 
+          {/* Date Range Picker */}
+          <div
+            style={{
+              background: "linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)",
+              padding: "1.5rem",
+              borderRadius: "16px",
+              border: "1px solid rgba(102, 126, 234, 0.2)",
+              marginBottom: "2rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                marginBottom: "1rem",
+                flexWrap: "wrap",
+              }}
+            >
+              <FiCalendar size={20} style={{ color: "#667eea" }} />
+              <label style={{ fontWeight: "600", color: "#495057" }}>
+                Filter by Custom Date Range
+              </label>
+              <input
+                type="checkbox"
+                checked={useCustomDateRange}
+                onChange={(e) => setUseCustomDateRange(e.target.checked)}
+                style={{ cursor: "pointer", transform: "scale(1.2)", marginLeft: "auto" }}
+              />
+            </div>
+
+            {useCustomDateRange && (
+              <div style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: "600", color: "#495057" }}>
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    style={{
+                      padding: "10px",
+                      border: "1px solid #dee2e6",
+                      borderRadius: "8px",
+                      fontSize: "0.95rem",
+                      fontWeight: "500",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: "600", color: "#495057" }}>
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    style={{
+                      padding: "10px",
+                      border: "1px solid #dee2e6",
+                      borderRadius: "8px",
+                      fontSize: "0.95rem",
+                      fontWeight: "500",
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={handleApplyDateRange}
+                  disabled={loading}
+                  style={{
+                    padding: "10px 20px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    fontWeight: "600",
+                    fontSize: "0.9rem",
+                    opacity: loading ? 0.6 : 1,
+                  }}
+                >
+                  {loading ? "Loading..." : "Apply"}
+                </button>
+                <button
+                  onClick={handleClearDateRange}
+                  style={{
+                    padding: "10px 20px",
+                    background: "#e2e8f0",
+                    color: "#495057",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Period Selection Buttons */}
           <div
             style={{
@@ -1786,141 +2010,276 @@ function CombinedLateView() {
                     key={student._id}
                     style={{
                       padding: "1rem",
-                      backgroundColor: "#f8f9fa",
+                      backgroundColor: editingRecordId === student._id ? "#e3f2fd" : "#f8f9fa",
                       borderRadius: "8px",
-                      border: "1px solid #dee2e6",
+                      border: editingRecordId === student._id ? "2px solid #667eea" : "1px solid #dee2e6",
                       display: "flex",
+                      flexDirection: editingRecordId === student._id ? "column" : "row",
                       justifyContent: "space-between",
-                      alignItems: "center",
+                      alignItems: editingRecordId === student._id ? "stretch" : "center",
                       marginBottom: "1rem",
+                      transition: "all 0.3s ease",
                     }}
                   >
-                    <div>
-                      <div
-                        style={{
-                          fontSize: "1rem",
-                          fontWeight: "600",
-                          color: "#343a40",
-                          marginBottom: "0.5rem",
-                        }}
-                      >
-                        {student.rollNo} - {student.name}
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "1rem",
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "12px",
-                            fontSize: "0.75rem",
-                            fontWeight: "500",
-                            backgroundColor:
-                              student.lateDays > 10
-                                ? "#dc3545"
-                                : student.lateDays > 7
-                                  ? "#fd7e14"
-                                  : "#28a745",
-                            color: "white",
-                          }}
-                        >
-                          {student.lateDays}/10 late days
-                        </span>
-
-                        {student.status === "approaching_limit" && (
-                          <span
+                    {/* View Mode */}
+                    {editingRecordId !== student._id && (
+                      <>
+                        <div>
+                          <div
                             style={{
-                              padding: "3px 8px",
-                              borderRadius: "12px",
-                              fontSize: "0.75rem",
-                              fontWeight: "500",
-                              backgroundColor: "#ffc107",
-                              color: "#212529",
+                              fontSize: "1rem",
+                              fontWeight: "600",
+                              color: "#343a40",
+                              marginBottom: "0.5rem",
                             }}
                           >
-                            Approaching
-                          </span>
-                        )}
-
-                        {student.status === "grace_period" && (
-                          <span
+                            {student.rollNo} - {student.name}
+                          </div>
+                          <div
                             style={{
-                              padding: "3px 8px",
-                              borderRadius: "12px",
-                              fontSize: "0.75rem",
-                              fontWeight: "500",
-                              backgroundColor: "#fd7e14",
-                              color: "white",
+                              display: "flex",
+                              gap: "1rem",
+                              alignItems: "center",
+                              flexWrap: "wrap",
                             }}
                           >
-                            Grace ({student.gracePeriodUsed}/4)
-                          </span>
-                        )}
+                            <span
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "12px",
+                                fontSize: "0.75rem",
+                                fontWeight: "500",
+                                backgroundColor:
+                                  student.lateDays > 10
+                                    ? "#dc3545"
+                                    : student.lateDays > 7
+                                      ? "#fd7e14"
+                                      : "#28a745",
+                                color: "white",
+                              }}
+                            >
+                              {student.lateDays}/10 late days
+                            </span>
 
-                        {student.status === "fined" && (
-                          <span
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: "12px",
-                              fontSize: "0.75rem",
-                              fontWeight: "500",
-                              backgroundColor: "#dc3545",
-                              color: "white",
-                            }}
-                          >
-                            Fined
-                          </span>
-                        )}
-
-                        {student.fines > 0 && (
-                          <span
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: "12px",
-                              fontSize: "0.75rem",
-                              fontWeight: "500",
-                              backgroundColor: "#e74c3c",
-                              color: "white",
-                            }}
-                          >
-                            ₹{student.fines}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.8rem",
-                        color: "#6c757d",
-                        textAlign: "right",
-                      }}
-                    >
-                      <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-                        Latest Info:
-                      </div>
-                      {student.lateLogs &&
-                        student.lateLogs.slice(-2).map((log, index) => (
-                          <div key={index} style={{ fontSize: "0.75rem", lineHeight: "1.4" }}>
-                            <div>{formatDate(log.date)}</div>
-                            {log.markedByName && (
-                              <div
+                            {student.status === "approaching_limit" && (
+                              <span
                                 style={{
-                                  color: "#495057",
-                                  fontSize: "0.7rem",
-                                  fontStyle: "italic",
+                                  padding: "3px 8px",
+                                  borderRadius: "12px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: "500",
+                                  backgroundColor: "#ffc107",
+                                  color: "#212529",
                                 }}
                               >
-                                By: {log.markedByName}
-                              </div>
+                                Approaching
+                              </span>
+                            )}
+
+                            {student.status === "grace_period" && (
+                              <span
+                                style={{
+                                  padding: "3px 8px",
+                                  borderRadius: "12px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: "500",
+                                  backgroundColor: "#fd7e14",
+                                  color: "white",
+                                }}
+                              >
+                                Grace ({student.gracePeriodUsed}/4)
+                              </span>
+                            )}
+
+                            {student.status === "fined" && (
+                              <span
+                                style={{
+                                  padding: "3px 8px",
+                                  borderRadius: "12px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: "500",
+                                  backgroundColor: "#dc3545",
+                                  color: "white",
+                                }}
+                              >
+                                Fined
+                              </span>
+                            )}
+
+                            {student.fines > 0 && (
+                              <span
+                                style={{
+                                  padding: "3px 8px",
+                                  borderRadius: "12px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: "500",
+                                  backgroundColor: "#e74c3c",
+                                  color: "white",
+                                }}
+                              >
+                                ₹{student.fines}
+                              </span>
                             )}
                           </div>
-                        ))}
-                    </div>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "0.5rem",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "#6c757d",
+                              textAlign: "right",
+                            }}
+                          >
+                            <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
+                              Latest Info:
+                            </div>
+                            {student.lateLogs &&
+                              student.lateLogs.slice(-2).map((log, index) => (
+                                <div key={index} style={{ fontSize: "0.75rem", lineHeight: "1.4" }}>
+                                  <div>{formatDate(log.date)}</div>
+                                  {log.markedByName && (
+                                    <div
+                                      style={{
+                                        color: "#495057",
+                                        fontSize: "0.7rem",
+                                        fontStyle: "italic",
+                                      }}
+                                    >
+                                      By: {log.markedByName}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                          <button
+                            onClick={() => handleEditRecord(student)}
+                            style={{
+                              padding: "6px 12px",
+                              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontWeight: "600",
+                              fontSize: "0.85rem",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <FiEdit2 size={14} style={{ marginRight: "4px", display: "inline" }} /> Edit
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Edit Mode */}
+                    {editingRecordId === student._id && (
+                      <>
+                        <div style={{ marginBottom: "1rem" }}>
+                          <h4 style={{ margin: "0 0 1rem 0", color: "#343a40" }}>
+                            Editing: {student.rollNo} - {student.name}
+                          </h4>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                            <div>
+                              <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+                                Late Days (0-10)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="10"
+                                value={editingData.lateDays}
+                                onChange={(e) => handleEditFieldChange("lateDays", e.target.value)}
+                                style={{
+                                  width: "100%",
+                                  padding: "8px",
+                                  border: "1px solid #dee2e6",
+                                  borderRadius: "6px",
+                                  fontSize: "0.95rem",
+                                  boxSizing: "border-box",
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+                                Fines (₹)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={editingData.fines}
+                                onChange={(e) => handleEditFieldChange("fines", e.target.value)}
+                                style={{
+                                  width: "100%",
+                                  padding: "8px",
+                                  border: "1px solid #dee2e6",
+                                  borderRadius: "6px",
+                                  fontSize: "0.95rem",
+                                  boxSizing: "border-box",
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+                                Grace Period Used (0-4)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="4"
+                                value={editingData.gracePeriodUsed}
+                                onChange={(e) => handleEditFieldChange("gracePeriodUsed", e.target.value)}
+                                style={{
+                                  width: "100%",
+                                  padding: "8px",
+                                  border: "1px solid #dee2e6",
+                                  borderRadius: "6px",
+                                  fontSize: "0.95rem",
+                                  boxSizing: "border-box",
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => handleSaveRecord(student)}
+                            style={{
+                              padding: "8px 16px",
+                              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontWeight: "600",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            <FiCheck size={14} style={{ marginRight: "4px", display: "inline" }} /> Save
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#e2e8f0",
+                              color: "#495057",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontWeight: "600",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            <FiX size={14} style={{ marginRight: "4px", display: "inline" }} /> Cancel
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
