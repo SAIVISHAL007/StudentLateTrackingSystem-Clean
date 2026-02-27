@@ -52,6 +52,7 @@ function CombinedLateView() {
   const [recordData, setRecordData] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordError, setRecordError] = useState(null);
+  const [dateRangeInfo, setDateRangeInfo] = useState(null);
   const ITEMS_PER_PAGE = 30;
   
   // ============ DATE RANGE PICKER STATE ============
@@ -288,7 +289,7 @@ function CombinedLateView() {
       section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections",
     };
 
-    const success = exportLateRecordsToExcel(filteredStudents, filters);
+    const success = exportLateRecordsToExcel(filteredStudents, 'late_records', filters, dateRangeInfo);
 
     if (success) {
       toast.success(
@@ -339,19 +340,39 @@ function CombinedLateView() {
       const res = await API.get(`/students/records/${selectedPeriod}`);
       const allData = res.data;
 
-      // Filter by date range client-side
-      const startDateTime = new Date(start).getTime();
-      const endDateTime = new Date(end).getTime() + 86400000; // Add 1 day to include end date
+      // Fix timezone issue - parse dates locally without timezone conversion
+      const startParts = start.split('-');
+      const endParts = end.split('-');
+      const startDate = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
+      const endDate = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]));
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
 
       const filteredStudents = allData.students?.filter(student => {
         if (!student.lateLogs || student.lateLogs.length === 0) return false;
         
         // Check if any late log falls within the date range
-        return student.lateLogs.some(log => {
-          const logTime = new Date(log.date).getTime();
-          return logTime >= startDateTime && logTime <= endDateTime;
+        const logsInRange = student.lateLogs.filter(log => {
+          const logParts = log.date.split('T')[0].split('-');
+          const logDate = new Date(parseInt(logParts[0]), parseInt(logParts[1]) - 1, parseInt(logParts[2]));
+          logDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+          return logDate >= startDate && logDate <= endDate;
         });
+        
+        if (logsInRange.length > 0) {
+          student.logsInRange = logsInRange;
+          return true;
+        }
+        return false;
       }) || [];
+
+      // Store date range info for exports
+      const dateRangeInfo = {
+        startDate: start,
+        endDate: end,
+        totalRecordsInRange: filteredStudents.reduce((sum, s) => sum + (s.logsInRange?.length || 0), 0)
+      };
+      setDateRangeInfo(dateRangeInfo);
 
       setRecordData({
         ...allData,

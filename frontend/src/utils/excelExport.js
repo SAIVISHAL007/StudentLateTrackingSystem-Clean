@@ -129,9 +129,9 @@ export const exportToExcel = (students, filename, filters = {}) => {
  * @param {Array} students - Array of student objects with late logs
  * @param {string} filename - Base filename
  * @param {Object} filters - Applied filters
- * @param {Object} periodInfo - Period information (startDate, endDate, period name)
+ * @param {Object} dateRangeInfo - Date range information (startDate, endDate, totalRecordsInRange)
  */
-export const exportLateRecordsToExcel = (students, filename, filters = {}, periodInfo = {}) => {
+export const exportLateRecordsToExcel = (students, filename, filters = {}, dateRangeInfo = null) => {
   try {
     // Main student data
     const studentsData = students.map((student, index) => ({
@@ -198,9 +198,9 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
       { Field: 'Report Title', Value: 'Student Late Tracking - Attendance Records' },
       { Field: 'Generated On', Value: new Date().toLocaleString() },
       { Field: '', Value: '' },
-      { Field: 'Period', Value: periodInfo.period || 'N/A' },
-      { Field: 'Start Date', Value: periodInfo.startDate ? new Date(periodInfo.startDate).toLocaleDateString() : 'N/A' },
-      { Field: 'End Date', Value: periodInfo.endDate ? new Date(periodInfo.endDate).toLocaleDateString() : 'N/A' },
+      { Field: 'Period', Value: filters.period || 'N/A' },
+      { Field: 'Start Date', Value: dateRangeInfo?.startDate || 'N/A' },
+      { Field: 'End Date', Value: dateRangeInfo?.endDate || 'N/A' },
       { Field: '', Value: '' },
       { Field: 'Filters Applied', Value: '' },
       { Field: '  Year', Value: filters.year || 'All Years' },
@@ -209,7 +209,7 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
       { Field: '', Value: '' },
       { Field: 'Statistics', Value: '' },
       { Field: '  Total Students', Value: students.length },
-      { Field: '  Total Late Instances', Value: students.reduce((sum, s) => sum + (s.lateCountInPeriod || 0), 0) },
+      { Field: '  Total Late Instances', Value: dateRangeInfo?.totalRecordsInRange || students.reduce((sum, s) => sum + (s.lateCountInPeriod || 0), 0) },
       { Field: '  Total Fines', Value: `₹${students.reduce((sum, s) => sum + (s.fines || 0), 0)}` },
       { Field: '  Students Being Fined', Value: students.filter(s => s.status === 'fined').length },
       { Field: '  Students with Alerts', Value: students.filter(s => s.alertFaculty).length },
@@ -230,6 +230,61 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, perio
     const summarySheet = XLSX.utils.json_to_sheet(summaryData);
     summarySheet['!cols'] = [{ wch: 25 }, { wch: 35 }];
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+
+    // Add 4th sheet - Detailed Records with requested columns
+    const detailedRecordsData = [];
+    let serialNo = 1;
+    
+    students.forEach(student => {
+      const logsToProcess = (dateRangeInfo && student.logsInRange) ? student.logsInRange : (student.lateLogs || []);
+      
+      if (logsToProcess.length > 0) {
+        logsToProcess.forEach(log => {
+          detailedRecordsData.push({
+            'S.No': serialNo++,
+            'Roll Number': student.rollNo || 'N/A',
+            'Name': student.name || 'N/A',
+            'Year': student.year || 'N/A',
+            'Semester': student.semester || 'N/A',
+            'Branch': student.branch || 'N/A',
+            'Section': student.section || 'N/A',
+            'Late Days (Total)': student.lateDays || 0,
+            'Late Days (Period)': logsToProcess.length,
+            'Excuse Days Used': student.excuseDaysUsed || 0,
+            'Status': student.status || 'Active',
+            'Total Fines (₹)': student.fines || student.totalFines || 0,
+            'Date': new Date(log.date).toLocaleDateString('en-IN'),
+            'Time': new Date(log.date).toLocaleTimeString('en-IN'),
+            'Marked By': log.markedByName || log.markedBy || 'N/A'
+          });
+        });
+      }
+    });
+    
+    if (detailedRecordsData.length > 0) {
+      const detailedSheet = XLSX.utils.json_to_sheet(detailedRecordsData);
+      
+      // Set column widths for better readability
+      detailedSheet['!cols'] = [
+        { wch: 8 },   // S.No
+        { wch: 15 },  // Roll Number
+        { wch: 25 },  // Name
+        { wch: 8 },   // Year
+        { wch: 10 },  // Semester
+        { wch: 15 },  // Branch
+        { wch: 10 },  // Section
+        { wch: 16 },  // Late Days Total
+        { wch: 16 },  // Late Days Period
+        { wch: 16 },  // Excuse Days
+        { wch: 12 },  // Status
+        { wch: 16 },  // Total Fines
+        { wch: 12 },  // Date
+        { wch: 12 },  // Time
+        { wch: 20 }   // Marked By
+      ];
+      
+      XLSX.utils.book_append_sheet(workbook, detailedSheet, 'Detailed Records');
+    }
 
     // Generate filename
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
