@@ -1530,18 +1530,13 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
         }
       }
 
-      // Recalculate fines using existing logic (replicating fine calculation pattern)
+      // Recalculate fines using UNIFIED logic: ₹5 per day after excuse period  
       let newFines = 0;
       const dayCount = student.lateDays;
-      for (let day = 1; day <= dayCount; day++) {
-        if (day <= 2) continue; // excuse days
-        if (day <= 5) newFines += 3; // days 3-5
-        else {
-          // Cycle increments every 3 days after day 5, pattern of +5 every 3 days
-          const extraGroupIndex = Math.floor((day - 6) / 3); // 0-based
-          // Each full group adds 5
-          newFines += 5 * (extraGroupIndex + 1);
-        }
+      
+      if (dayCount > 2) { // After 2 excuse days
+        // Simple uniform calculation: ₹5 × number of days after excuse period
+        newFines = (dayCount - 2) * 5;
       }
       summary.fineReductionTotal += Math.max(0, originalFines - newFines);
       student.fines = newFines;
