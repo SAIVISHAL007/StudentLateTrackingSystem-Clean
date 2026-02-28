@@ -286,7 +286,7 @@ app.get("/", async (req, res) => {
         <li><strong>GET</strong> /api/students/records/:period - Get attendance records</li>
         <li><strong>GET</strong> /api/students/system-stats - Get system statistics</li>
         <li><strong>POST</strong> /api/students/promote-semester - Promote all students</li>
-        <li><strong>DELETE</strong> /api/students/remove-late-record - Remove specific late record</li>
+        <li><strong>POST</strong> /api/students/bulk-remove-late-records - Bulk remove late records</li>
         <li><strong>DELETE</strong> /api/students/student/:rollNo - Delete specific student</li>
         <li><strong>GET</strong> /health - Health check</li>
       </ul>

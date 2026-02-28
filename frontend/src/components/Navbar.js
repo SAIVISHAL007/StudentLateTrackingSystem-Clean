@@ -1,5 +1,5 @@
-import React, { useCallback } from "react";
-import { FiUser, FiClock, FiLogOut, FiMenu, FiMoon, FiSun } from 'react-icons/fi';
+import React, { useCallback, useState, useEffect } from "react";
+import { FiUser, FiClock, FiLogOut, FiMenu, FiMoon, FiSun, FiWifiOff } from 'react-icons/fi';
 import { getCurrentUser, logout, getUserDisplayName, getLoginDuration } from "../utils/auth";
 import { useDarkMode } from '../context/DarkModeContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -8,9 +8,23 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 const NavbarComponent = ({ onLogout }) => {
   const user = getCurrentUser();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // PERFORMANCE: Use custom hook instead of resize listener
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // OFFLINE INDICATOR: Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // PERFORMANCE: useCallback for stable function references
   const handleLogout = useCallback(() => {
@@ -32,9 +46,9 @@ const NavbarComponent = ({ onLogout }) => {
     <nav className="professional-navbar">
       <div style={{
         display: "grid",
-        gridTemplateColumns: "auto 1fr auto",
+        gridTemplateColumns: isMobile ? "auto minmax(0, 1fr) auto" : "auto 1fr auto",
         alignItems: "center",
-        gap: "1rem"
+        gap: isMobile ? "0.5rem" : "1rem"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           {isMobile && (
@@ -68,7 +82,9 @@ const NavbarComponent = ({ onLogout }) => {
         <div style={{
           display: "flex",
           justifyContent: "center",
-          alignItems: "center"
+          alignItems: "center",
+          minWidth: 0,
+          overflow: "hidden"
         }}>
           <div style={{
             display: "flex",
@@ -95,7 +111,24 @@ const NavbarComponent = ({ onLogout }) => {
             />
           </div>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", gap: isMobile ? "0.5rem" : "1rem", alignItems: "center", justifyContent: "flex-end" }}>
+          {!isOnline && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: isMobile ? "0" : "0.5rem",
+              padding: isMobile ? "0.45rem" : "0.5rem 0.75rem",
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              color: "#ef4444",
+              fontSize: "0.875rem",
+              fontWeight: "500"
+            }} title="No internet connection - offline mode enabled">
+              <FiWifiOff size={16} />
+              {!isMobile && <span>Offline</span>}
+            </div>
+          )}
           <button
             onClick={handleDarkMode}
             className="dark-mode-toggle"

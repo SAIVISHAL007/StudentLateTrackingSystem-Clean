@@ -666,6 +666,141 @@ router.post("/pay-fine", checkDbConnection, async (req, res) => {
   }
 });
 
+// Get records by custom date ranges (calendar mode optimization)
+router.post("/records/custom-range", async (req, res) => {
+  try {
+    const { ranges } = req.body || {};
+
+    if (!Array.isArray(ranges) || ranges.length === 0) {
+      return res.status(400).json({ error: "ranges array is required" });
+    }
+
+    const parsedRanges = ranges.map((range, index) => {
+      if (!range?.start || !range?.end) {
+        throw new Error(`Range ${index + 1}: start and end are required`);
+      }
+
+      const startDate = new Date(range.start);
+      const endDate = new Date(range.end);
+
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        throw new Error(`Range ${index + 1}: invalid date format`);
+      }
+
+      if (startDate > endDate) {
+        throw new Error(`Range ${index + 1}: start date cannot be after end date`);
+      }
+
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+
+      return { startDate, endDate };
+    });
+
+    const anyRangeMatch = parsedRanges.map((range) => ({
+      "lateLogs.date": {
+        $gte: range.startDate,
+        $lte: range.endDate
+      }
+    }));
+
+    const lateLogOrConditions = parsedRanges.map((range) => ({
+      $and: [
+        { $gte: ["$$log.date", range.startDate] },
+        { $lte: ["$$log.date", range.endDate] }
+      ]
+    }));
+
+    const basePipeline = [
+      {
+        $match: {
+          $or: anyRangeMatch
+        }
+      },
+      {
+        $project: {
+          rollNo: 1,
+          name: 1,
+          year: 1,
+          semester: 1,
+          branch: 1,
+          section: 1,
+          lateDays: 1,
+          fines: 1,
+          status: 1,
+          excuseDaysUsed: 1,
+          limitExceeded: 1,
+          alertFaculty: 1,
+          consecutiveLateDays: 1,
+          lateLogs: {
+            $map: {
+              input: {
+                $filter: {
+                  input: "$lateLogs",
+                  as: "log",
+                  cond: { $or: lateLogOrConditions }
+                }
+              },
+              as: "log",
+              in: {
+                date: "$$log.date",
+                markedByName: "$$log.markedByName",
+                markedByEmail: "$$log.markedByEmail",
+                markedBy: "$$log.markedBy",
+                notes: "$$log.notes",
+                editedAt: "$$log.editedAt",
+                editedBy: "$$log.editedBy",
+                isEdited: "$$log.isEdited"
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          lateCountInPeriod: { $size: "$lateLogs" }
+        }
+      },
+      {
+        $match: {
+          lateCountInPeriod: { $gt: 0 }
+        }
+      },
+      {
+        $sort: { lateCountInPeriod: -1, rollNo: 1 }
+      }
+    ];
+
+    const [result] = await Student.aggregate([
+      ...basePipeline,
+      {
+        $facet: {
+          students: [],
+          meta: [{ $count: "total" }]
+        }
+      }
+    ]);
+
+    const students = result?.students || [];
+    const totalRecords = result?.meta?.[0]?.total || 0;
+
+    const startDate = new Date(Math.min(...parsedRanges.map((r) => r.startDate.getTime())));
+    const endDate = new Date(Math.max(...parsedRanges.map((r) => r.endDate.getTime())));
+
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return res.json({
+      period: "custom-range",
+      startDate,
+      endDate,
+      students,
+      totalRecords
+    });
+  } catch (err) {
+    console.error('❌ Error fetching custom-range records:', err);
+    return res.status(400).json({ error: err.message || 'Failed to fetch custom-range records' });
+  }
+});
+
 // Get records by time period (weekly, monthly, semester)
 router.get("/records/:period", async (req, res) => {
   try {
@@ -699,7 +834,7 @@ router.get("/records/:period", async (req, res) => {
     const limitNum = Math.min(Math.max(parseInt(limit || "50", 10), 1), 200);
     const shouldPaginate = page !== undefined || limit !== undefined;
     
-    const pipeline = [
+    const basePipeline = [
       // Match students with lateLogs in the period
       {
         $match: {
@@ -771,23 +906,23 @@ router.get("/records/:period", async (req, res) => {
         $sort: { lateCountInPeriod: -1, rollNo: 1 }
       }
     ];
-    
-    // Add pagination stages if requested
-    if (shouldPaginate) {
-      pipeline.push({ $skip: (pageNum - 1) * limitNum });
-      pipeline.push({ $limit: limitNum });
-    }
-    
-    // Execute aggregation and get total count in parallel
-    const [students, countResult] = await Promise.all([
-      Student.aggregate(pipeline),
-      Student.aggregate([
-        ...pipeline.slice(0, -2), // Remove skip and limit for count
-        { $count: "total" }
-      ])
+
+    const studentsPipeline = shouldPaginate
+      ? [{ $skip: (pageNum - 1) * limitNum }, { $limit: limitNum }]
+      : [];
+
+    const [result] = await Student.aggregate([
+      ...basePipeline,
+      {
+        $facet: {
+          students: studentsPipeline,
+          meta: [{ $count: "total" }]
+        }
+      }
     ]);
-    
-    const totalRecords = countResult.length > 0 ? countResult[0].total : 0;
+
+    const students = result?.students || [];
+    const totalRecords = result?.meta?.[0]?.total || 0;
     
     // PERFORMANCE: Set no-cache for records (data changes frequently)
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -1277,175 +1412,6 @@ router.get("/system-stats", checkDbConnection, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-});
-
-// Delete specific late record for a student on a particular date
-router.delete("/remove-late-record", checkDbConnection, async (req, res) => {
-  try {
-    const { rollNo, date, reason, authorizedBy } = req.body;
-
-    // Validation
-    if (!rollNo || !date || !reason || !authorizedBy) {
-      return res.status(400).json({ 
-        error: "Missing required fields",
-        required: ["rollNo", "date", "reason", "authorizedBy"]
-      });
-    }
-
-    // Find the student
-    const student = await Student.findOne({ rollNo });
-    if (!student) {
-      return res.status(404).json({ 
-        error: "Student not found",
-        rollNo: rollNo 
-      });
-    }
-
-    // Parse the date to match (start and end of day)
-    const targetDate = new Date(date);
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // Find late logs for that specific date
-    const matchingLogs = student.lateLogs.filter(log => {
-      const logDate = new Date(log.date);
-      return logDate >= startOfDay && logDate <= endOfDay;
-    });
-
-    if (matchingLogs.length === 0) {
-      return res.status(404).json({ 
-        error: "No late record found for the specified date",
-        rollNo: rollNo,
-        date: targetDate.toDateString()
-      });
-    }
-
-    // Store original values for rollback calculation
-    const originalLateDays = student.lateDays;
-    const originalFines = student.fines;
-    const originalStatus = student.status;
-
-    // Remove the late logs for that date
-    student.lateLogs = student.lateLogs.filter(log => {
-      const logDate = new Date(log.date);
-      return !(logDate >= startOfDay && logDate <= endOfDay);
-    });
-
-    // Recalculate student stats based on remaining logs
-    const newLateDays = student.lateLogs.length;
-    student.lateDays = newLateDays;
-
-    // Recalculate status and fines based on UNIFIED fine structure
-    // Days 1-2: Excuse days (₹0), Days 3+: ₹5 per day
-    const EXCUSE_DAYS = 2;
-    const FINE_PER_DAY = 5;
-
-    // Reset all calculated fields
-    student.fines = 0;
-    student.excuseDaysUsed = 0;
-    student.consecutiveLateDays = 0;
-    student.limitExceeded = false;
-    student.alertFaculty = false;
-    student.fineHistory = [];
-
-    if (newLateDays <= EXCUSE_DAYS) {
-      // Still in excuse period
-      student.excuseDaysUsed = newLateDays;
-      student.status = 'excused';
-    } else {
-      // Calculate fines based on unified structure: ₹5 per day after excuse period
-      student.excuseDaysUsed = EXCUSE_DAYS;
-      student.status = 'fined';
-      student.consecutiveLateDays = newLateDays - EXCUSE_DAYS;
-      
-      // Recalculate total fines: ₹5 per day after excuse period
-      const daysAfterExcuse = newLateDays - EXCUSE_DAYS;
-      student.fines = daysAfterExcuse * FINE_PER_DAY; // Simple: ₹5 × number of days after excuse
-      
-      // Also populate fineHistory for transparency
-      for (let day = 3; day <= newLateDays; day++) {
-        student.fineHistory.push({
-          amount: FINE_PER_DAY,
-          date: new Date(),
-          reason: `Late day #${day} - Day ${day - EXCUSE_DAYS} after excuse period (₹${FINE_PER_DAY}/day)`
-        });
-      }
-      
-      if (newLateDays >= 5) {
-        student.alertFaculty = true;
-      }
-    }
-
-    // Save the updated student record
-    await student.save({
-      timeout: 10000,
-      writeConcern: { w: 'majority', j: true }
-    });
-
-    // Create audit log entry
-    const auditInfo = {
-      action: 'LATE_RECORD_REMOVED',
-      rollNo: rollNo,
-      studentName: student.name,
-      date: targetDate.toDateString(),
-      reason: reason,
-      authorizedBy: authorizedBy,
-      timestamp: new Date(),
-      recordsRemoved: matchingLogs.length,
-      changes: {
-        lateDays: { from: originalLateDays, to: newLateDays },
-        fines: { from: originalFines, to: student.fines },
-        status: { from: originalStatus, to: student.status }
-      }
-    };
-
-    res.json({
-      message: `Successfully removed ${matchingLogs.length} late record(s) for ${student.name} on ${targetDate.toDateString()}`,
-      student: {
-        rollNo: student.rollNo,
-        name: student.name,
-        lateDays: student.lateDays,
-        status: student.status,
-        fines: student.fines
-      },
-      removedRecords: {
-        count: matchingLogs.length,
-        date: targetDate.toDateString()
-      },
-      changes: {
-        lateDaysChange: originalLateDays - newLateDays,
-        finesChange: originalFines - student.fines,
-        statusChange: originalStatus !== student.status
-      },
-      auditInfo: {
-        reason: reason,
-        authorizedBy: authorizedBy,
-        timestamp: new Date().toISOString()
-      }
-    });
-
-  } catch (err) {
-    console.error('❌ Error removing late record:', err);
-    
-    if (err.name === 'ValidationError') {
-      res.status(400).json({ 
-        error: "Invalid data provided",
-        details: Object.values(err.errors).map(e => e.message)
-      });
-    } else if (err.name === 'MongooseError' && err.message.includes('timed out')) {
-      res.status(503).json({ 
-        error: "Database timeout. Please try again.",
-        details: "The operation took too long to complete"
-      });
-    } else {
-      res.status(500).json({ 
-        error: "Failed to remove late record",
-        details: err.message 
-      });
-    }
   }
 });
 

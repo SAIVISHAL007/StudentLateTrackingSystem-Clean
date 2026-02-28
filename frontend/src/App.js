@@ -15,6 +15,9 @@ import StudentPortal from "./components/StudentPortal";
 import { isAuthenticated } from "./utils/auth";
 import { useDarkMode } from "./context/DarkModeContext";
 import { useMediaQuery } from "./hooks/useMediaQuery";
+import { flushQueue, getQueue } from "./utils/offlineQueue";
+import API from "./services/api";
+import { toast } from "./components/Toast";
 
 function App() {
   // Get last page from localStorage, default to "mark-late"
@@ -58,6 +61,48 @@ function App() {
     } else {
       setAuthenticated(isAuthenticated());
     }
+  }, []);
+
+  // OFFLINE QUEUE: Sync queued late marks when connection is restored
+  useEffect(() => {
+    // Try to flush queue on app load if device is online
+    const syncQueueOnStartup = async () => {
+      if (navigator.onLine && getQueue().length > 0) {
+        try {
+          const result = await flushQueue(API);
+          if (result.flushed > 0) {
+            toast.success(`Synced ${result.flushed} queued late mark(s)`);
+          }
+          if (result.failures.length > 0) {
+            toast.error(`Failed to sync ${result.failures.length} record(s)`);
+          }
+        } catch (err) {
+          console.error('Error flushing queue on startup:', err);
+        }
+      }
+    };
+
+    syncQueueOnStartup();
+
+    // Listen for when device comes back online
+    const handleOnline = async () => {
+      console.log('🌐 Connection restored - syncing offline queue...');
+      try {
+        const result = await flushQueue(API);
+        if (result.flushed > 0) {
+          toast.success(`✅ Synced ${result.flushed} queued late mark(s)`);
+        }
+        if (result.failures.length > 0) {
+          toast.warning(`⚠️ Failed to sync ${result.failures.length} record(s)`);
+        }
+      } catch (err) {
+        console.error('Error syncing queue:', err);
+        toast.error('Failed to sync offline queue');
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
 
   // Listen for sidebar toggle events

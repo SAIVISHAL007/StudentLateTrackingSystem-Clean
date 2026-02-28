@@ -16,8 +16,6 @@ import {
   FiCheck,
   FiSearch,
   FiDollarSign,
-  FiEdit2,
-  FiX,
 } from "react-icons/fi";
 import API from "../services/api";
 import { formatDate, isToday } from "../utils/dateUtils";
@@ -57,13 +55,8 @@ function CombinedLateView() {
   
   // ============ DATE RANGE PICKER STATE ============
   const [useCustomDateRange, setUseCustomDateRange] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [dateRanges, setDateRanges] = useState([]); // Array of {start, end}
   
-  // ============ RECORD EDITING STATE ============
-  const [editingRecordId, setEditingRecordId] = useState(null);
-  const [editingData, setEditingData] = useState({});
-
   // ============ FETCH - TODAY'S LATE STUDENTS ============
   useEffect(() => {
     if (activeTab === "today") {
@@ -282,14 +275,18 @@ function CombinedLateView() {
       return;
     }
 
+    const isCalendarMode = !!(dateRangeInfo && dateRangeInfo.ranges && dateRangeInfo.ranges.length > 0);
     const filters = {
-      period: getPeriodTitle(selectedPeriod),
+      period: isCalendarMode ? "Custom Date Range" : getPeriodTitle(selectedPeriod),
       year: selectedYear !== "all" ? `Year ${selectedYear}` : "All Years",
       branch: selectedBranch !== "all" ? selectedBranch : "All Branches",
       section: selectedSection !== "all" ? `Section ${selectedSection}` : "All Sections",
     };
 
-    const success = exportLateRecordsToExcel(filteredStudents, 'late_records', filters, dateRangeInfo);
+    // Prefer actual date range data over checkbox state to avoid mode mismatch
+    const rangeInfo = isCalendarMode ? dateRangeInfo : null;
+
+    const success = exportLateRecordsToExcel(filteredStudents, 'late_records', filters, rangeInfo);
 
     if (success) {
       toast.success(
@@ -319,57 +316,62 @@ function CombinedLateView() {
   };
 
   // ============ DATE RANGE HANDLERS ============
-  const handleApplyDateRange = () => {
-    if (!startDate || !endDate) {
-      toast.error("Please select both start and end dates");
-      return;
-    }
-    if (new Date(startDate) > new Date(endDate)) {
-      toast.error("Start date must be before end date");
-      return;
-    }
-    // Fetch records with custom date range
-    fetchRecordsWithDateRange(startDate, endDate);
+  const handleAddDateRange = () => {
+    setDateRanges([...dateRanges, { start: "", end: "" }]);
   };
 
-  const fetchRecordsWithDateRange = async (start, end) => {
+  const handleRemoveDateRange = (index) => {
+    const newRanges = dateRanges.filter((_, i) => i !== index);
+    setDateRanges(newRanges);
+    if (newRanges.length === 0) {
+      handleClearDateRange();
+    }
+  };
+
+  const handleUpdateDateRange = (index, field, value) => {
+    const newRanges = [...dateRanges];
+    newRanges[index][field] = value;
+    setDateRanges(newRanges);
+  };
+
+  const handleApplyDateRange = () => {
+    // Validate all ranges
+    for (let range of dateRanges) {
+      if (!range.start || !range.end) {
+        toast.error("Please fill in all date fields");
+        return;
+      }
+      if (new Date(range.start) > new Date(range.end)) {
+        toast.error("Start date must be before end date for all ranges");
+        return;
+      }
+    }
+    if (dateRanges.length === 0) {
+      toast.error("Please add at least one date range");
+      return;
+    }
+    // Ensure calendar mode is active when applying ranges
+    setUseCustomDateRange(true);
+    // Fetch records with multiple date ranges
+    fetchRecordsWithDateRanges(dateRanges);
+  };
+
+  const fetchRecordsWithDateRanges = async (ranges) => {
     setLoading(true);
     setRecordError(null);
     try {
-      // First, fetch all records for the current period
-      const res = await API.get(`/students/records/${selectedPeriod}`);
+      // Optimized path: let backend filter date ranges in DB itself
+      const res = await API.post(`/students/records/custom-range`, { ranges });
       const allData = res.data;
 
-      // Fix timezone issue - parse dates locally without timezone conversion
-      const startParts = start.split('-');
-      const endParts = end.split('-');
-      const startDate = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
-      const endDate = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]));
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
-
-      const filteredStudents = allData.students?.filter(student => {
-        if (!student.lateLogs || student.lateLogs.length === 0) return false;
-        
-        // Check if any late log falls within the date range
-        const logsInRange = student.lateLogs.filter(log => {
-          const logParts = log.date.split('T')[0].split('-');
-          const logDate = new Date(parseInt(logParts[0]), parseInt(logParts[1]) - 1, parseInt(logParts[2]));
-          logDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-          return logDate >= startDate && logDate <= endDate;
-        });
-        
-        if (logsInRange.length > 0) {
-          student.logsInRange = logsInRange;
-          return true;
-        }
-        return false;
-      }) || [];
+      const filteredStudents = (allData.students || []).map((student) => ({
+        ...student,
+        logsInRange: student.lateLogs || []
+      }));
 
       // Store date range info for exports
       const dateRangeInfo = {
-        startDate: start,
-        endDate: end,
+        ranges: ranges,
         totalRecordsInRange: filteredStudents.reduce((sum, s) => sum + (s.logsInRange?.length || 0), 0)
       };
       setDateRangeInfo(dateRangeInfo);
@@ -379,10 +381,11 @@ function CombinedLateView() {
         students: filteredStudents
       });
       setCurrentPage(1);
-      toast.success(`Found ${filteredStudents.length} records in date range`);
+      const rangesStr = ranges.map(r => `${r.start} to ${r.end}`).join(", ");
+      toast.success(`Found ${filteredStudents.length} students in ranges: ${rangesStr}`);
     } catch (err) {
       console.error("Error fetching date range records:", err);
-      const errorMessage = err.response?.data?.error || "Failed to fetch records for date range";
+      const errorMessage = err.response?.data?.error || "Failed to fetch records for date ranges";
       setRecordError(errorMessage);
       setRecordData(null);
       toast.error(errorMessage);
@@ -392,60 +395,11 @@ function CombinedLateView() {
   };
 
   const handleClearDateRange = () => {
-    setStartDate("");
-    setEndDate("");
+    setDateRanges([]);
+    setDateRangeInfo(null);
     setUseCustomDateRange(false);
     fetchRecords(selectedPeriod);
     toast.success("Date range cleared");
-  };
-
-  // ============ RECORD UPDATE HANDLERS ============
-  const handleEditRecord = (student) => {
-    setEditingRecordId(student._id);
-    setEditingData({
-      lateDays: student.lateDays || 0,
-      fines: student.fines || 0,
-      gracePeriodUsed: student.gracePeriodUsed || 0,
-    });
-  };
-
-  const handleSaveRecord = async (student) => {
-    try {
-      const updatePayload = {
-        lateDays: parseInt(editingData.lateDays) || 0,
-        fines: parseInt(editingData.fines) || 0,
-        gracePeriodUsed: parseInt(editingData.gracePeriodUsed) || 0,
-      };
-
-      await API.put(`/students/records/${student._id}`, updatePayload);
-      
-      // Update local state
-      setRecordData(prev => ({
-        ...prev,
-        students: prev.students.map(s => 
-          s._id === student._id ? { ...s, ...updatePayload } : s
-        )
-      }));
-
-      setEditingRecordId(null);
-      setEditingData({});
-      toast.success("Record updated successfully");
-    } catch (err) {
-      console.error("Error updating record:", err);
-      toast.error(err.response?.data?.error || "Failed to update record");
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingRecordId(null);
-    setEditingData({});
-  };
-
-  const handleEditFieldChange = (field, value) => {
-    setEditingData(prev => ({
-      ...prev,
-      [field]: value
-    }));
   };
 
   // ============ FILTER LOGIC - TODAY ============
@@ -1583,7 +1537,7 @@ function CombinedLateView() {
             )}
           </div>
 
-          {/* Date Range Picker */}
+          {/* Date Range Picker - Multiple Ranges */}
           <div
             style={{
               background: "linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)",
@@ -1598,161 +1552,249 @@ function CombinedLateView() {
                 display: "flex",
                 alignItems: "center",
                 gap: "1rem",
-                marginBottom: "1rem",
+                marginBottom: "1.5rem",
                 flexWrap: "wrap",
               }}
             >
               <FiCalendar size={20} style={{ color: "#667eea" }} />
               <label style={{ fontWeight: "600", color: "#495057" }}>
-                Filter by Custom Date Range
+                Filter by Custom Date Range(s) - <span style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: "400" }}>Alternative to Period buttons</span>
               </label>
               <input
                 type="checkbox"
                 checked={useCustomDateRange}
-                onChange={(e) => setUseCustomDateRange(e.target.checked)}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  setUseCustomDateRange(enabled);
+                  if (!enabled) {
+                    setDateRangeInfo(null);
+                    fetchRecords(selectedPeriod);
+                  }
+                }}
                 style={{ cursor: "pointer", transform: "scale(1.2)", marginLeft: "auto" }}
               />
             </div>
 
             {useCustomDateRange && (
-              <div style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label style={{ fontSize: "0.9rem", fontWeight: "600", color: "#495057" }}>
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    style={{
-                      padding: "10px",
-                      border: "1px solid #dee2e6",
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {/* Multiple Date Ranges */}
+                {dateRanges.map((range, index) => (
+                  <div 
+                    key={index}
+                    style={{ 
+                      display: "flex", 
+                      gap: "1rem", 
+                      alignItems: "flex-end", 
+                      flexWrap: "wrap",
+                      padding: "1rem",
+                      background: "#f8f9fa",
                       borderRadius: "8px",
-                      fontSize: "0.95rem",
-                      fontWeight: "500",
+                      border: "1px solid #dee2e6"
                     }}
-                  />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label style={{ fontSize: "0.9rem", fontWeight: "600", color: "#495057" }}>
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <label style={{ fontSize: "0.9rem", fontWeight: "600", color: "#495057" }}>
+                        Range {index + 1} - Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={range.start}
+                        onChange={(e) => handleUpdateDateRange(index, "start", e.target.value)}
+                        style={{
+                          padding: "10px",
+                          border: "1px solid #dee2e6",
+                          borderRadius: "8px",
+                          fontSize: "0.95rem",
+                          fontWeight: "500",
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <label style={{ fontSize: "0.9rem", fontWeight: "600", color: "#495057" }}>
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={range.end}
+                        onChange={(e) => handleUpdateDateRange(index, "end", e.target.value)}
+                        style={{
+                          padding: "10px",
+                          border: "1px solid #dee2e6",
+                          borderRadius: "8px",
+                          fontSize: "0.95rem",
+                          fontWeight: "500",
+                        }}
+                      />
+                    </div>
+                    {dateRanges.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveDateRange(index)}
+                        style={{
+                          padding: "10px 15px",
+                          background: "#dc3545",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add Range & Apply Buttons */}
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                  <button
+                    onClick={handleAddDateRange}
                     style={{
-                      padding: "10px",
-                      border: "1px solid #dee2e6",
+                      padding: "10px 20px",
+                      background: "#28a745",
+                      color: "white",
+                      border: "none",
                       borderRadius: "8px",
-                      fontSize: "0.95rem",
-                      fontWeight: "500",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      fontSize: "0.9rem",
                     }}
-                  />
+                  >
+                    + Add Date Range
+                  </button>
+                  <button
+                    onClick={handleApplyDateRange}
+                    disabled={loading}
+                    style={{
+                      padding: "10px 20px",
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: loading ? "not-allowed" : "pointer",
+                      fontWeight: "600",
+                      fontSize: "0.9rem",
+                      opacity: loading ? 0.6 : 1,
+                    }}
+                  >
+                    {loading ? "Loading..." : "Apply Ranges"}
+                  </button>
+                  <button
+                    onClick={handleClearDateRange}
+                    style={{
+                      padding: "10px 20px",
+                      background: "#e2e8f0",
+                      color: "#495057",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    Clear All
+                  </button>
                 </div>
-                <button
-                  onClick={handleApplyDateRange}
-                  disabled={loading}
-                  style={{
-                    padding: "10px 20px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: loading ? "not-allowed" : "pointer",
-                    fontWeight: "600",
-                    fontSize: "0.9rem",
-                    opacity: loading ? 0.6 : 1,
-                  }}
-                >
-                  {loading ? "Loading..." : "Apply"}
-                </button>
-                <button
-                  onClick={handleClearDateRange}
-                  style={{
-                    padding: "10px 20px",
-                    background: "#e2e8f0",
-                    color: "#495057",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  Clear
-                </button>
               </div>
             )}
           </div>
 
-          {/* Period Selection Buttons */}
+          {/* Period Selection Buttons - Disabled when using custom date range */}
           <div
             style={{
               display: "flex",
-              justifyContent: "center",
-              gap: "1.25rem",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1rem",
               marginBottom: "2rem",
-              flexWrap: "wrap",
             }}
           >
-            {[
-              { key: "weekly", label: <>Weekly</>, desc: "Last 7 days" },
-              { key: "monthly", label: <>Monthly</>, desc: "Current month" },
-              { key: "semester", label: <>Semester</>, desc: "Current semester" },
-            ].map((period) => (
-              <button
-                key={period.key}
-                onClick={() => setSelectedPeriod(period.key)}
+            {useCustomDateRange && (
+              <div
                 style={{
-                  padding: "16px 28px",
-                  border: "2px solid transparent",
-                  borderRadius: "16px",
-                  background:
-                    selectedPeriod === period.key
-                      ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                      : "rgba(102, 126, 234, 0.08)",
-                  color: selectedPeriod === period.key ? "white" : "#667eea",
-                  cursor: "pointer",
-                  fontSize: "0.95rem",
-                  fontWeight: "600",
-                  transition: "all 0.3s ease",
+                  padding: "10px 20px",
+                  background: "rgba(102, 126, 234, 0.1)",
+                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  borderRadius: "8px",
+                  color: "#667eea",
+                  fontSize: "0.85rem",
+                  fontWeight: "500",
                   textAlign: "center",
-                  minWidth: "150px",
-                  boxShadow:
-                    selectedPeriod === period.key
-                      ? "0 8px 20px rgba(102, 126, 234, 0.35)"
-                      : "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-                onMouseOver={(e) => {
-                  if (selectedPeriod !== period.key) {
-                    e.target.style.background = "rgba(102, 126, 234, 0.15)";
-                    e.target.style.transform = "translateY(-2px)";
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (selectedPeriod !== period.key) {
-                    e.target.style.background = "rgba(102, 126, 234, 0.08)";
-                    e.target.style.transform = "translateY(0)";
-                  }
                 }}
               >
-                <div style={{ fontSize: "1.1rem" }}>{period.label}</div>
-                <div
+                ℹ️ Custom date range is active. Period buttons are disabled.
+              </div>
+            )}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "1.25rem",
+                flexWrap: "wrap",
+                opacity: useCustomDateRange ? 0.5 : 1,
+                pointerEvents: useCustomDateRange ? "none" : "auto",
+                transition: "opacity 0.3s ease",
+              }}
+            >
+              {[
+                { key: "weekly", label: <>Weekly</>, desc: "Last 7 days" },
+                { key: "monthly", label: <>Monthly</>, desc: "Current month" },
+                { key: "semester", label: <>Semester</>, desc: "Current semester" },
+              ].map((period) => (
+                <button
+                  key={period.key}
+                  onClick={() => setSelectedPeriod(period.key)}
                   style={{
-                    fontSize: "0.75rem",
-                    opacity: selectedPeriod === period.key ? "0.9" : "0.7",
-                    fontWeight: "500",
+                    padding: "16px 28px",
+                    border: "2px solid transparent",
+                    borderRadius: "16px",
+                    background:
+                      selectedPeriod === period.key
+                        ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                        : "rgba(102, 126, 234, 0.08)",
+                    color: selectedPeriod === period.key ? "white" : "#667eea",
+                    cursor: useCustomDateRange ? "not-allowed" : "pointer",
+                    fontSize: "0.95rem",
+                    fontWeight: "600",
+                    transition: "all 0.3s ease",
+                    textAlign: "center",
+                    minWidth: "150px",
+                    boxShadow:
+                      selectedPeriod === period.key
+                        ? "0 8px 20px rgba(102, 126, 234, 0.35)"
+                        : "none",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                  onMouseOver={(e) => {
+                    if (selectedPeriod !== period.key && !useCustomDateRange) {
+                      e.target.style.background = "rgba(102, 126, 234, 0.15)";
+                      e.target.style.transform = "translateY(-2px)";
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (selectedPeriod !== period.key && !useCustomDateRange) {
+                      e.target.style.background = "rgba(102, 126, 234, 0.08)";
+                      e.target.style.transform = "translateY(0)";
+                    }
                   }}
                 >
-                  {period.desc}
-                </div>
-              </button>
-            ))}
+                  <div style={{ fontSize: "1.1rem" }}>{period.label}</div>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      opacity: selectedPeriod === period.key ? "0.9" : "0.7",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {period.desc}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Year Filter Selection */}
@@ -2031,40 +2073,37 @@ function CombinedLateView() {
                     key={student._id}
                     style={{
                       padding: "1rem",
-                      backgroundColor: editingRecordId === student._id ? "#e3f2fd" : "#f8f9fa",
+                      backgroundColor: "#f8f9fa",
                       borderRadius: "8px",
-                      border: editingRecordId === student._id ? "2px solid #667eea" : "1px solid #dee2e6",
+                      border: "1px solid #dee2e6",
                       display: "flex",
-                      flexDirection: editingRecordId === student._id ? "column" : "row",
+                      flexDirection: "row",
                       justifyContent: "space-between",
-                      alignItems: editingRecordId === student._id ? "stretch" : "center",
+                      alignItems: "center",
                       marginBottom: "1rem",
                       transition: "all 0.3s ease",
                     }}
                   >
-                    {/* View Mode */}
-                    {editingRecordId !== student._id && (
-                      <>
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "1rem",
-                              fontWeight: "600",
-                              color: "#343a40",
-                              marginBottom: "0.5rem",
-                            }}
-                          >
-                            {student.rollNo} - {student.name}
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "1rem",
-                              alignItems: "center",
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <span
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "1rem",
+                          fontWeight: "600",
+                          color: "#343a40",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        {student.rollNo} - {student.name}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "1rem",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
                               style={{
                                 padding: "3px 8px",
                                 borderRadius: "12px",
@@ -2078,9 +2117,9 @@ function CombinedLateView() {
                                       : "#28a745",
                                 color: "white",
                               }}
-                            >
-                              {student.lateDays}/10 late days
-                            </span>
+                        >
+                          {student.lateDays}/10 late days
+                        </span>
 
                             {student.status === "approaching_limit" && (
                               <span
@@ -2141,38 +2180,36 @@ function CombinedLateView() {
                                 ₹{student.fines}
                               </span>
                             )}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "#6c757d",
+                        textAlign: "right",
+                      }}
+                    >
+                      <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
+                        Latest Info:
+                      </div>
+                      {student.lateLogs &&
+                        student.lateLogs.slice(-2).map((log, index) => (
+                          <div key={index} style={{ fontSize: "0.75rem", lineHeight: "1.4" }}>
+                            <div>{formatDate(log.date)}</div>
+                            {log.markedByName && (
+                              <div
+                                style={{
+                                  color: "#495057",
+                                  fontSize: "0.7rem",
+                                  fontStyle: "italic",
+                                }}
+                              >
+                                By: {log.markedByName}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <div
-                          style={{
-                              fontSize: "0.8rem",
-                              color: "#6c757d",
-                              textAlign: "right",
-                            }}
-                          >
-                            <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-                              Latest Info:
-                            </div>
-                            {student.lateLogs &&
-                              student.lateLogs.slice(-2).map((log, index) => (
-                                <div key={index} style={{ fontSize: "0.75rem", lineHeight: "1.4" }}>
-                                  <div>{formatDate(log.date)}</div>
-                                  {log.markedByName && (
-                                    <div
-                                      style={{
-                                        color: "#495057",
-                                        fontSize: "0.7rem",
-                                        fontStyle: "italic",
-                                      }}
-                                    >
-                                      By: {log.markedByName}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                          </div>
-                      </>
-                    )}
+                        ))}
+                    </div>
                   </div>
                 ))}
               </div>

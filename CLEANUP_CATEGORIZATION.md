@@ -50,7 +50,6 @@ Useful functionality hidden from users. These should get frontend UI.
 | `/students/system-stats` | GET | Systems statistics dashboard | Admin panel | **HIGH** |
 | `/students/promote-semester` | POST | Bulk promote students to next semester | Admin/Academic office | **HIGH** |
 | `/students/demote-semester` | POST | Correct accidental promotions | Admin/Academic office | **MEDIUM** |
-| `/students/remove-late-record` | DELETE | Remove specific late record (audit) | Admin/Faculty | **MEDIUM** |
 | `/students/bulk-remove-late-records` | POST | Bulk remove late records | Admin | **LOW** |
 | `/students/export-backup` | GET | Full database backup | Admin/Backup | **LOW** |
 | `/export-removal-proof` | GET | PDF proof of record removal | Admin/Audit | **LOW** |
@@ -100,7 +99,7 @@ Action: Remove from backend immediately
 CREATE new Admin Management sections:
 - System Statistics Dashboard (/students/system-stats)
 - Semester Management (promote/demote) 
-- Record Removal Audit (/students/remove-late-record)
+
 - Database Backup Export (/students/export-backup)
 
 Action: Add UI to AdminManagement.js

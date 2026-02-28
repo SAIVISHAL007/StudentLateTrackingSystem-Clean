@@ -1,6 +1,69 @@
 import * as XLSX from 'xlsx';
 
 /**
+ * Format date safely from various formats
+ * @param {string|Date} dateInput - Date in ISO format or Date object
+ * @returns {string} - Formatted date as DD/MM/YYYY
+ */
+const formatDateSafely = (dateInput) => {
+  try {
+    if (!dateInput) return 'N/A';
+    
+    let date;
+    if (typeof dateInput === 'string') {
+      // Handle ISO format (2026-02-23T10:30:00Z)
+      // Or simple format like 2026-02-23
+      date = new Date(dateInput);
+    } else if (dateInput instanceof Date) {
+      date = dateInput;
+    } else {
+      return 'N/A';
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) return 'N/A';
+    
+    // Format as DD/MM/YYYY
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (err) {
+    console.error('Date formatting error:', err);
+    return 'N/A';
+  }
+};
+
+/**
+ * Auto-fit column widths based on content
+ * @param {Array} data - Array of row objects
+ * @param {Object} sheet - XLSX worksheet object
+ */
+const autoFitColumns = (data, sheet) => {
+  const columnWidths = [];
+  
+  // Get all column headers
+  const headers = Object.keys(data[0] || {});
+  
+  headers.forEach((header, colIndex) => {
+    // Start with header length
+    let maxWidth = header.length;
+    
+    // Check all rows for maximum content width
+    data.forEach(row => {
+      const cellValue = String(row[header] || '');
+      maxWidth = Math.max(maxWidth, cellValue.length);
+    });
+    
+    // Add some padding and set limits (min 10, max 60)
+    columnWidths.push({ wch: Math.min(Math.max(maxWidth + 2, 10), 60) });
+  });
+  
+  sheet['!cols'] = columnWidths;
+};
+
+
+/**
  * Export students data to Excel with filtering support
  * @param {Array} students - Array of student objects
  * @param {string} filename - Base filename for the export
@@ -66,25 +129,8 @@ export const exportToExcel = (students, filename, filters = {}) => {
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(excelData);
 
-    // Set column widths
-    const colWidths = [
-      { wch: 6 },  // S.No
-      { wch: 15 }, // Roll Number
-      { wch: 25 }, // Name
-      { wch: 6 },  // Year
-      { wch: 10 }, // Semester
-      { wch: 10 }, // Branch
-      { wch: 10 }, // Section
-      { wch: 14 }, // Total Late Days
-      { wch: 16 }, // Excuse Days Used
-      { wch: 12 }, // Status
-      { wch: 14 }, // Total Fines
-      { wch: 12 }, // Alert Faculty
-      { wch: 15 }, // Last Late Date
-      { wch: 25 }, // Marked By (Today)
-      { wch: 18 }  // Marked Time (Today)
-    ];
-    worksheet['!cols'] = colWidths;
+    // Auto-fit column widths
+    autoFitColumns(excelData, worksheet);
 
     // Add worksheet to workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Late Students');
@@ -106,7 +152,7 @@ export const exportToExcel = (students, filename, filters = {}) => {
       ];
 
       const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-      summarySheet['!cols'] = [{ wch: 25 }, { wch: 30 }];
+      autoFitColumns(summaryData, summarySheet);
       XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
     }
 
@@ -125,7 +171,7 @@ export const exportToExcel = (students, filename, filters = {}) => {
 };
 
 /**
- * Export late records with detailed information
+ * Export late records with detailed information - RESTRUCTURED TO 2 SHEETS
  * @param {Array} students - Array of student objects with late logs
  * @param {string} filename - Base filename
  * @param {Object} filters - Applied filters
@@ -133,114 +179,100 @@ export const exportToExcel = (students, filename, filters = {}) => {
  */
 export const exportLateRecordsToExcel = (students, filename, filters = {}, dateRangeInfo = null) => {
   try {
-    // Main student data
-    const studentsData = students.map((student, index) => ({
-      'S.No': index + 1,
-      'Roll Number': student.rollNo || 'N/A',
-      'Name': student.name || 'N/A',
-      'Year': student.year || 'N/A',
-      'Semester': student.semester || 'N/A',
-      'Branch': student.branch || 'N/A',
-      'Section': student.section || 'N/A',
-      'Late Days (Total)': student.lateDays || 0,
-      'Late Days (Period)': student.lateCountInPeriod || 0,
-      'Excuse Days Used': student.excuseDaysUsed || 0,
-      'Status': student.status || 'normal',
-      'Total Fines (₹)': student.fines || 0,
-      'Alert': student.alertFaculty ? 'Yes' : 'No'
-    }));
-
     const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(studentsData);
-
-    // Set column widths
-    worksheet['!cols'] = [
-      { wch: 6 }, { wch: 15 }, { wch: 25 }, { wch: 6 }, { wch: 10 }, 
-      { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, 
-      { wch: 12 }, { wch: 14 }, { wch: 8 }
-    ];
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
-
-    // Create detailed late logs sheet with FACULTY information
-    const lateLogsData = [];
-    students.forEach(student => {
-      if (student.lateLogs && student.lateLogs.length > 0) {
-        student.lateLogs.forEach(log => {
-          lateLogsData.push({
-            'Roll Number': student.rollNo,
-            'Name': student.name,
-            'Year': student.year || 'N/A',
-            'Semester': student.semester || 'N/A',
-            'Branch': student.branch || 'N/A',
-            'Section': student.section || 'N/A',
-            'Date': new Date(log.date).toLocaleDateString(),
-            'Time': new Date(log.date).toLocaleTimeString(),
-            'Marked By': log.markedByName || 'Unknown Faculty',
-            'Faculty Email': log.markedByEmail || 'N/A',
-            'Notes': log.notes || ''
-          });
-        });
-      }
-    });
-
-    if (lateLogsData.length > 0) {
-      const logsSheet = XLSX.utils.json_to_sheet(lateLogsData);
-      logsSheet['!cols'] = [
-        { wch: 15 }, { wch: 25 }, { wch: 6 }, { wch: 10 }, 
-        { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 25 }, { wch: 30 }
-      ];
-      XLSX.utils.book_append_sheet(workbook, logsSheet, 'Late Logs');
-    }
-
-    // Summary sheet
-    const summaryData = [
-      { Field: 'Report Title', Value: 'Student Late Tracking - Attendance Records' },
-      { Field: 'Generated On', Value: new Date().toLocaleString() },
-      { Field: '', Value: '' },
-      { Field: 'Period', Value: filters.period || 'N/A' },
-      { Field: 'Start Date', Value: dateRangeInfo?.startDate || 'N/A' },
-      { Field: 'End Date', Value: dateRangeInfo?.endDate || 'N/A' },
-      { Field: '', Value: '' },
-      { Field: 'Filters Applied', Value: '' },
-      { Field: '  Year', Value: filters.year || 'All Years' },
-      { Field: '  Branch', Value: filters.branch || 'All Branches' },
-      { Field: '  Section', Value: filters.section || 'All Sections' },
-      { Field: '', Value: '' },
-      { Field: 'Statistics', Value: '' },
-      { Field: '  Total Students', Value: students.length },
-      { Field: '  Total Late Instances', Value: dateRangeInfo?.totalRecordsInRange || students.reduce((sum, s) => sum + (s.lateCountInPeriod || 0), 0) },
-      { Field: '  Total Fines', Value: `₹${students.reduce((sum, s) => sum + (s.fines || 0), 0)}` },
-      { Field: '  Students Being Fined', Value: students.filter(s => s.status === 'fined').length },
-      { Field: '  Students with Alerts', Value: students.filter(s => s.alertFaculty).length },
-      { Field: '', Value: '' },
-      { Field: 'Branch Distribution', Value: '' }
-    ];
-
-    // Add branch distribution
-    const branchCounts = {};
-    students.forEach(s => {
-      const branch = s.branch || 'Unknown';
-      branchCounts[branch] = (branchCounts[branch] || 0) + 1;
-    });
-    Object.entries(branchCounts).forEach(([branch, count]) => {
-      summaryData.push({ Field: `  ${branch}`, Value: count });
-    });
-
-    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-    summarySheet['!cols'] = [{ wch: 25 }, { wch: 35 }];
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
-
-    // Add 4th sheet - Detailed Records with requested columns
-    const detailedRecordsData = [];
-    let serialNo = 1;
     
-    students.forEach(student => {
-      const logsToProcess = (dateRangeInfo && student.logsInRange) ? student.logsInRange : (student.lateLogs || []);
+    // ===== CALENDAR DATE RANGE EXPORT (2 sheets with hybrid format) =====
+    if (dateRangeInfo) {
+      // ============================================
+      // SHEET 1: Calendar-Based Date Range Selection Data with Separate Columns per Range
+      // ============================================
+      const calendarBasedData = students.map((student, index) => {
+        const row = {
+          'S.No': index + 1,
+          'Name': student.name || 'N/A',
+          'Roll Number': student.rollNo || 'N/A',
+          'Branch': student.branch || 'N/A',
+          'Year': student.year || 'N/A',
+          'Section': student.section || 'N/A'
+        };
+        
+        // Add columns for each date range in correct order (Period, Count, Period, Count...)
+        if (dateRangeInfo && dateRangeInfo.ranges && dateRangeInfo.ranges.length > 0) {
+          // Build an array of all date range data first
+          const rangeData = dateRangeInfo.ranges.map((range, idx) => {
+            const rangeNum = idx + 1;
+            const dateRangeStr = `${range.start} to ${range.end}`;
+            
+            // Calculate late count for this specific range - use original lateLogs to get accurate count per range
+            const logsInThisRange = (student.lateLogs || []).filter(log => {
+              // Parse log date properly - convert ISO date string to Date object for accurate comparison
+              const logParts = log.date.split('T')[0].split('-');
+              const logDate = new Date(parseInt(logParts[0]), parseInt(logParts[1]) - 1, parseInt(logParts[2]));
+              logDate.setHours(12, 0, 0, 0);
+              
+              // Parse range dates
+              const rangeParts = range.start.split('-');
+              const rangeStart = new Date(parseInt(rangeParts[0]), parseInt(rangeParts[1]) - 1, parseInt(rangeParts[2]));
+              rangeStart.setHours(0, 0, 0, 0);
+              
+              const rangeEndParts = range.end.split('-');
+              const rangeEnd = new Date(parseInt(rangeEndParts[0]), parseInt(rangeEndParts[1]) - 1, parseInt(rangeEndParts[2]));
+              rangeEnd.setHours(23, 59, 59, 999);
+              
+              // Compare as Date objects
+              return logDate >= rangeStart && logDate <= rangeEnd;
+            });
+            
+            return {
+              periodKey: `Selection Date Period ${rangeNum}`,
+              periodValue: dateRangeStr,
+              countKey: `Late Count Period ${rangeNum}`,
+              countValue: logsInThisRange.length
+            };
+          });
+          
+          // Add them in the correct order (Period 1, Count 1, Period 2, Count 2, ...)
+          rangeData.forEach(data => {
+            row[data.periodKey] = data.periodValue;
+            row[data.countKey] = data.countValue;
+          });
+        }
+        
+        // Add total late count
+        row['Overall Late Count'] = student.lateDays || 0;
+        
+        return row;
+      });
       
-      if (logsToProcess.length > 0) {
-        logsToProcess.forEach(log => {
-          detailedRecordsData.push({
+      const calendarSheet = XLSX.utils.json_to_sheet(calendarBasedData);
+      autoFitColumns(calendarBasedData, calendarSheet);
+      XLSX.utils.book_append_sheet(workbook, calendarSheet, 'Calendar Based Data');
+      
+      // ============================================
+      // SHEET 2: Overall Data - Hybrid Format for Calendar Export
+      // ============================================
+      const comprehensiveData = [];
+      let serialNo = 1;
+      
+      students.forEach(student => {
+        const logs = (dateRangeInfo && student.logsInRange) ? student.logsInRange : [];
+        
+        if (logs.length > 0) {
+          const lateDatesInPeriod = logs
+            .map(log => formatDateSafely(log.date))
+            .filter(date => date !== 'N/A')
+            .join(', ');
+          
+          const facultyWithDateTime = logs
+            .map(log => {
+              const facultyName = log.markedByName || 'Unknown';
+              const date = formatDateSafely(log.date);
+              const time = log.date ? new Date(log.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A';
+              return `${facultyName}(${date}, ${time})`;
+            })
+            .join(', ');
+          
+          comprehensiveData.push({
             'S.No': serialNo++,
             'Roll Number': student.rollNo || 'N/A',
             'Name': student.name || 'N/A',
@@ -249,41 +281,54 @@ export const exportLateRecordsToExcel = (students, filename, filters = {}, dateR
             'Branch': student.branch || 'N/A',
             'Section': student.section || 'N/A',
             'Late Days (Total)': student.lateDays || 0,
-            'Late Days (Period)': logsToProcess.length,
             'Excuse Days Used': student.excuseDaysUsed || 0,
-            'Status': student.status || 'Active',
-            'Total Fines (₹)': student.fines || student.totalFines || 0,
-            'Date': new Date(log.date).toLocaleDateString('en-IN'),
-            'Time': new Date(log.date).toLocaleTimeString('en-IN'),
-            'Marked By': log.markedByName || log.markedBy || 'N/A'
+            'Status': student.status || 'normal',
+            'Total Fines (₹)': student.fines || 0,
+            'Alert Faculty': student.alertFaculty ? 'Yes' : 'No',
+            'Late Count in Period': logs.length,
+            'Late Dates in Period': lateDatesInPeriod,
+            'Faculty Marked By': facultyWithDateTime
+          });
+        }
+      });
+      
+      const comprehensiveSheet = XLSX.utils.json_to_sheet(comprehensiveData);
+      autoFitColumns(comprehensiveData, comprehensiveSheet);
+      XLSX.utils.book_append_sheet(workbook, comprehensiveSheet, 'Overall Data');
+      
+    } else {
+      // ===== WEEKLY/MONTHLY/SEMESTER EXPORT (Simple format - one row per log entry) =====
+      const detailedData = [];
+      let serialNo = 1;
+      
+      students.forEach(student => {
+        const logs = student.lateLogs || [];
+        logs.forEach(log => {
+          detailedData.push({
+            'S.No': serialNo++,
+            'Roll Number': student.rollNo || 'N/A',
+            'Name': student.name || 'N/A',
+            'Year': student.year || 'N/A',
+            'Semester': student.semester || 'N/A',
+            'Branch': student.branch || 'N/A',
+            'Section': student.section || 'N/A',
+            'Date': formatDateSafely(log.date),
+            'Time': log.date ? new Date(log.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A',
+            'Late Days (Total)': student.lateDays || 0,
+            'Excuse Days Used': student.excuseDaysUsed || 0,
+            'Status': student.status || 'normal',
+            'Total Fines (₹)': student.fines || 0,
+            'Alert Faculty': student.alertFaculty ? 'Yes' : 'No',
+            'Marked By': log.markedByName || 'N/A',
+            'Faculty Email': log.markedByEmail || 'N/A',
+            'Notes': log.notes || ''
           });
         });
-      }
-    });
-    
-    if (detailedRecordsData.length > 0) {
-      const detailedSheet = XLSX.utils.json_to_sheet(detailedRecordsData);
+      });
       
-      // Set column widths for better readability
-      detailedSheet['!cols'] = [
-        { wch: 8 },   // S.No
-        { wch: 15 },  // Roll Number
-        { wch: 25 },  // Name
-        { wch: 8 },   // Year
-        { wch: 10 },  // Semester
-        { wch: 15 },  // Branch
-        { wch: 10 },  // Section
-        { wch: 16 },  // Late Days Total
-        { wch: 16 },  // Late Days Period
-        { wch: 16 },  // Excuse Days
-        { wch: 12 },  // Status
-        { wch: 16 },  // Total Fines
-        { wch: 12 },  // Date
-        { wch: 12 },  // Time
-        { wch: 20 }   // Marked By
-      ];
-      
-      XLSX.utils.book_append_sheet(workbook, detailedSheet, 'Detailed Records');
+      const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
+      autoFitColumns(detailedData, detailedSheet);
+      XLSX.utils.book_append_sheet(workbook, detailedSheet, 'Late Records');
     }
 
     // Generate filename

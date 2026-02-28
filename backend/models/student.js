@@ -73,6 +73,17 @@ studentSchema.index({ branch: 1, lateDays: -1 }); // Branch leaderboard
 studentSchema.index({ status: 1, lateDays: -1 }); // Status-based sorting
 studentSchema.index({ 'lateLogs.date': -1, rollNo: 1 }); // Date range queries with sorting
 studentSchema.index({ fines: 1, status: 1 }); // Fine management
+studentSchema.index({ 'lateLogs.date': -1, year: 1, branch: 1, section: 1 }); // Date-range + class filters
+
+// Partial indexes for frequent selective queries
+studentSchema.index(
+  { fines: -1, rollNo: 1 },
+  { partialFilterExpression: { fines: { $gt: 0 } } }
+); // Fast pending-fines listing
+studentSchema.index(
+  { alertFaculty: 1, lateDays: -1 },
+  { partialFilterExpression: { alertFaculty: true } }
+); // Fast alert dashboards
 
 // Text search index for name and roll number
 studentSchema.index({ 
