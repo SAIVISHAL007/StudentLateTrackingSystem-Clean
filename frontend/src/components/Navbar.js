@@ -1,23 +1,19 @@
 import React, { useCallback, useState, useEffect } from "react";
-import { FiUser, FiClock, FiLogOut, FiMenu, FiMoon, FiSun, FiWifiOff } from 'react-icons/fi';
+import { FiUser, FiClock, FiLogOut, FiMenu, FiShield, FiWifiOff } from 'react-icons/fi';
 import { getCurrentUser, logout, getUserDisplayName, getLoginDuration } from "../utils/auth";
-import { useDarkMode } from '../context/DarkModeContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
-// PERFORMANCE: Use memo to prevent unnecessary re-renders from parent
+// eslint-disable-next-line no-unused-vars
+import { useDarkMode } from '../context/DarkModeContext';
+
 const NavbarComponent = ({ onLogout }) => {
   const user = getCurrentUser();
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
-  // PERFORMANCE: Use custom hook instead of resize listener
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // OFFLINE INDICATOR: Track online/offline status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     return () => {
@@ -26,7 +22,6 @@ const NavbarComponent = ({ onLogout }) => {
     };
   }, []);
 
-  // PERFORMANCE: useCallback for stable function references
   const handleLogout = useCallback(() => {
     if (window.confirm("Are you sure you want to logout?")) {
       logout();
@@ -38,47 +33,63 @@ const NavbarComponent = ({ onLogout }) => {
     window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { shouldOpen: true } }));
   }, []);
 
-  const handleDarkMode = useCallback(() => {
-    toggleDarkMode();
-  }, [toggleDarkMode]);
+  const roleBadge = user?.role ? {
+    superadmin: { label: "Super Admin", color: "#f97316", bg: "#fff7ed", border: "#fed7aa" },
+    admin:      { label: "Admin",       color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
+    faculty:    { label: "Faculty",     color: "#0d9488", bg: "#f0fdfa", border: "#99f6e4" }
+  }[user.role] || { label: user.role, color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" } : null;
 
   return (
-    <nav className="professional-navbar">
+    <nav className="professional-navbar" style={{
+      background: "rgba(255, 255, 255, 0.98)",
+      backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      border: "1px solid #e8e5df",
+      borderRadius: isMobile ? "14px" : "16px",
+      padding: isMobile ? "0.375rem 0.75rem" : "0.5rem 1.25rem",
+      minHeight: isMobile ? "68px" : "88px",
+      marginBottom: isMobile ? "0.875rem" : "1.25rem",
+      boxShadow: "0 2px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)"
+    }}>
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "auto minmax(0, 1fr) auto" : "auto 1fr auto",
         alignItems: "center",
-        gap: isMobile ? "0.5rem" : "1rem"
+        gap: isMobile ? "0.5rem" : "1rem",
+        width: "100%"
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+
+        {/* Left: Mobile hamburger */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {isMobile && (
             <button
               onClick={toggleSidebar}
               style={{
-                background: "none",
-                border: "none",
-                color: "#667eea",
+                background: "#fff7ed",
+                border: "1px solid #fed7aa",
+                color: "#f97316",
                 cursor: "pointer",
-                fontSize: "1.5rem",
                 padding: "0.5rem",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                minWidth: "48px",
-                minHeight: "48px",
+                minWidth: "42px",
+                minHeight: "42px",
                 borderRadius: "10px",
                 transition: "all 0.2s ease"
               }}
-              onMouseDown={(e) => e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)"}
-              onMouseUp={(e) => e.currentTarget.style.background = "none"}
-              onTouchStart={(e) => e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)"}
-              onTouchEnd={(e) => e.currentTarget.style.background = "none"}
+              onMouseDown={(e) => { e.currentTarget.style.background = "#ffedd5"; }}
+              onMouseUp={(e) => { e.currentTarget.style.background = "#fff7ed"; }}
+              onTouchStart={(e) => { e.currentTarget.style.background = "#ffedd5"; }}
+              onTouchEnd={(e) => { e.currentTarget.style.background = "#fff7ed"; }}
               title="Toggle sidebar"
             >
-              <FiMenu size={26} />
+              <FiMenu size={21} />
             </button>
           )}
         </div>
+
+        {/* Center: COLLEGE BRANDING HEADER — prominently sized */}
         <div style={{
           display: "flex",
           justifyContent: "center",
@@ -89,112 +100,171 @@ const NavbarComponent = ({ onLogout }) => {
           <div style={{
             display: "flex",
             alignItems: "center",
-            height: isMobile ? "64px" : "96px",
-            padding: isMobile ? "0.25rem 0.5rem" : "0.35rem 0.85rem",
-            borderRadius: "14px",
-            background: "rgba(102, 126, 234, 0.06)",
-            boxShadow: "0 0 24px rgba(102, 126, 234, 0.2)",
+            justifyContent: "center",
+            height: isMobile ? "58px" : "80px",
+            padding: "0.2rem 0.5rem",
             maxWidth: "100%"
           }}>
             <img
               src="/brandingHeader.png"
-              alt="ANITS Header"
+              alt="ANITS College Header"
               loading="lazy"
               decoding="async"
               style={{
                 height: "100%",
                 width: "auto",
                 objectFit: "contain",
-                maxWidth: "100%",
-                filter: "drop-shadow(0 3px 10px rgba(102, 126, 234, 0.2))"
+                maxWidth: "100%"
+                /* Original logo colors — no filter */
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                const span = document.createElement('span');
+                span.textContent = 'ANITS Late Tracker';
+                span.style.cssText = `color:#f97316;font-weight:800;font-family:'Space Grotesk',sans-serif;font-size:${isMobile ? '0.95rem' : '1.2rem'};letter-spacing:-0.3px;`;
+                e.target.parentNode.appendChild(span);
               }}
             />
           </div>
         </div>
-        <div style={{ display: "flex", gap: isMobile ? "0.5rem" : "1rem", alignItems: "center", justifyContent: "flex-end" }}>
+
+        {/* Right: User controls */}
+        <div style={{
+          display: "flex",
+          gap: isMobile ? "0.35rem" : "0.625rem",
+          alignItems: "center",
+          justifyContent: "flex-end"
+        }}>
+
+          {/* Offline badge */}
           {!isOnline && (
             <div style={{
               display: "flex",
               alignItems: "center",
-              gap: isMobile ? "0" : "0.5rem",
-              padding: isMobile ? "0.45rem" : "0.5rem 0.75rem",
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
+              gap: isMobile ? "0" : "0.35rem",
+              padding: isMobile ? "0.35rem" : "0.35rem 0.7rem",
+              background: "#fef2f2",
+              border: "1px solid #fca5a5",
               borderRadius: "8px",
-              color: "#ef4444",
-              fontSize: "0.875rem",
-              fontWeight: "500"
-            }} title="No internet connection - offline mode enabled">
-              <FiWifiOff size={16} />
+              color: "#dc2626",
+              fontSize: "0.78rem",
+              fontWeight: "600"
+            }} title="No internet — offline mode">
+              <FiWifiOff size={14} />
               {!isMobile && <span>Offline</span>}
             </div>
           )}
-          <button
-            onClick={handleDarkMode}
-            className="dark-mode-toggle"
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            {isDarkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
-          </button>
-          {user ? (
+
+          {user && (
             <>
-              <div className="user-info-badge" style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.25rem",
-                padding: isMobile ? "0.5rem 0.75rem" : "0.625rem 1rem",
-                background: "rgba(102, 126, 234, 0.08)",
-                borderRadius: "8px",
-                border: "1px solid rgba(102, 126, 234, 0.15)"
-              }}>
-                <span style={{
-                  color: "#1e40af",
-                  fontSize: isMobile ? "0.7rem" : "0.875rem",
-                  fontWeight: "700",
+              {/* Desktop: full user badge */}
+              {!isMobile && (
+                <div style={{
                   display: "flex",
-                  alignItems: "center",
-                  gap: "0.4rem"
+                  flexDirection: "column",
+                  gap: "0.15rem",
+                  padding: "0.5rem 0.9rem",
+                  background: "linear-gradient(145deg, #fafaf8, #fff7ed)",
+                  borderRadius: "11px",
+                  border: "1px solid #ebe9e4",
+                  minWidth: 0,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)"
                 }}>
-                  <FiUser size={isMobile ? 14 : 16} />
-                  {isMobile ? getUserDisplayName().split(' ')[0] : getUserDisplayName()}
-                </span>
-                {!isMobile && (
                   <span style={{
-                    color: "#3b82f6",
-                    fontSize: "0.75rem",
-                    fontWeight: "600",
+                    color: "#111827",
+                    fontSize: "0.825rem",
+                    fontWeight: "700",
                     display: "flex",
                     alignItems: "center",
-                    gap: "0.4rem"
+                    gap: "0.35rem",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    whiteSpace: "nowrap"
                   }}>
-                    <FiClock size={12} />
-                    {getLoginDuration()}
+                    <FiUser size={13} color="#f97316" />
+                    {getUserDisplayName()}
                   </span>
-                )}
-              </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span style={{
+                      color: "#6b7280",
+                      fontSize: "0.7rem",
+                      fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.25rem"
+                    }}>
+                      <FiClock size={10} />
+                      {getLoginDuration()}
+                    </span>
+                    {roleBadge && (
+                      <span style={{
+                        fontSize: "0.62rem",
+                        fontWeight: "700",
+                        color: roleBadge.color,
+                        background: roleBadge.bg,
+                        border: `1px solid ${roleBadge.border}`,
+                        padding: "2px 7px",
+                        borderRadius: "99px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        letterSpacing: "0.4px",
+                        textTransform: "uppercase",
+                        whiteSpace: "nowrap"
+                      }}>
+                        <FiShield size={8} />
+                        {roleBadge.label}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Mobile: compact user badge */}
+              {isMobile && (
+                <div style={{
+                  padding: "0.4rem 0.55rem",
+                  background: "#fff7ed",
+                  borderRadius: "9px",
+                  border: "1px solid #fed7aa",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem"
+                }}>
+                  <FiUser size={14} color="#f97316" />
+                  <span style={{
+                    color: "#111827",
+                    fontSize: "0.72rem",
+                    fontWeight: "700",
+                    maxWidth: "65px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}>
+                    {getUserDisplayName().split(' ')[0]}
+                  </span>
+                </div>
+              )}
+
+              {/* Logout button */}
               <button
                 onClick={handleLogout}
                 className="logout-button"
                 style={{
-                  padding: isMobile ? "8px 12px" : "0.625rem 1.25rem",
-                  fontSize: isMobile ? "inherit" : "0.875rem"
+                  padding: isMobile ? "0.5rem 0.6rem" : "0.5rem 1rem",
+                  fontSize: isMobile ? "0.82rem" : "0.82rem",
+                  minHeight: "40px"
                 }}
                 title="Logout"
               >
-                {isMobile ? <FiLogOut size={20} /> : (
-                  <>
-                    <FiLogOut size={16} />
-                    Logout
-                  </>
-                )}
+                <FiLogOut size={isMobile ? 17 : 14} />
+                {!isMobile && <span>Logout</span>}
               </button>
             </>
-          ) : null}
+          )}
         </div>
       </div>
     </nav>
   );
 };
 
-// PERFORMANCE: Wrap with React.memo
 export default React.memo(NavbarComponent);

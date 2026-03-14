@@ -5,11 +5,13 @@ import {
 } from 'react-icons/fi';
 import api from '../services/api';
 import { toast } from './Toast';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 const AIInsights = () => {
  const [loading, setLoading] = useState(true);
  const [insights, setInsights] = useState(null);
  const [activeTab, setActiveTab] = useState('predictions');
+ const isMobile = useMediaQuery('(max-width: 768px)');
 
  const fetchInsights = async () => {
  try {
@@ -37,7 +39,7 @@ const AIInsights = () => {
  width: '50px',
  height: '50px',
  border: '4px solid #e2e8f0',
- borderRightColor: '#667eea',
+ borderRightColor: '#f97316',
  borderRadius: '50%',
  animation: 'spin 1s linear infinite',
  margin: '0 auto'
@@ -76,13 +78,14 @@ const AIInsights = () => {
  };
 
  const getRiskBadgeStyle = (category) => ({
- padding: '0.5rem 1rem',
+ padding: isMobile ? '0.4rem 0.7rem' : '0.5rem 1rem',
  borderRadius: '8px',
- fontSize: '0.875rem',
+ fontSize: isMobile ? '0.78rem' : '0.875rem',
  fontWeight: '700',
  color: 'white',
  backgroundColor: getRiskColor(category),
- display: 'inline-block'
+ display: 'inline-block',
+ whiteSpace: 'nowrap'
  });
 
  return (
@@ -154,7 +157,7 @@ const AIInsights = () => {
  </div>
 
  <div style={{
- background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+ background: 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
  padding: '1.5rem',
  borderRadius: '16px',
  color: 'white'
@@ -170,7 +173,8 @@ const AIInsights = () => {
  {/* Tabs */}
  <div style={{
  display: 'flex',
- gap: '1rem',
+ gap: isMobile ? '0.25rem' : '1rem',
+ flexWrap: isMobile ? 'wrap' : 'nowrap',
  borderBottom: '2px solid #e2e8f0',
  marginBottom: '2rem'
  }}>
@@ -183,16 +187,17 @@ const AIInsights = () => {
  key={tab.id}
  onClick={() => setActiveTab(tab.id)}
  style={{
- padding: '1rem 1.5rem',
+ padding: isMobile ? '0.75rem 0.6rem' : '1rem 1.5rem',
  background: 'none',
  border: 'none',
- borderBottom: activeTab === tab.id ? '3px solid #667eea' : '3px solid transparent',
- color: activeTab === tab.id ? '#667eea' : '#64748b',
+ borderBottom: activeTab === tab.id ? '3px solid #f97316' : '3px solid transparent',
+ color: activeTab === tab.id ? '#f97316' : '#64748b',
  fontWeight: '700',
+ fontSize: isMobile ? '0.8rem' : '1rem',
  cursor: 'pointer',
  display: 'flex',
  alignItems: 'center',
- gap: '0.5rem',
+ gap: isMobile ? '0.3rem' : '0.5rem',
  transition: 'all 0.3s ease'
  }}
  >
@@ -218,12 +223,13 @@ const AIInsights = () => {
  key={pred.student_id}
  style={{
  background: 'white',
- padding: '1.5rem',
+ padding: isMobile ? '1rem' : '1.5rem',
  borderRadius: '12px',
  border: '2px solid #e2e8f0',
  display: 'flex',
- alignItems: 'center',
- gap: '1.5rem',
+ alignItems: isMobile ? 'flex-start' : 'center',
+ gap: isMobile ? '0.8rem' : '1.5rem',
+ flexWrap: isMobile ? 'wrap' : 'nowrap',
  transition: 'all 0.3s ease',
  cursor: 'pointer'
  }}
@@ -238,53 +244,55 @@ const AIInsights = () => {
  >
  {/* Rank */}
  <div style={{
- width: '48px',
- height: '48px',
+ width: isMobile ? '40px' : '48px',
+ height: isMobile ? '40px' : '48px',
  borderRadius: '50%',
- background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+ background: 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
  color: 'white',
  display: 'flex',
  alignItems: 'center',
  justifyContent: 'center',
- fontSize: '1.25rem',
+ fontSize: isMobile ? '1rem' : '1.25rem',
  fontWeight: '900'
  }}>
  {index + 1}
  </div>
 
  {/* Student Info */}
- <div style={{ flex: 1 }}>
- <h3 style={{ margin: 0, fontSize: '1.125rem' }}>{pred.name}</h3>
- <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.875rem' }}>
+ <div style={{ flex: 1, minWidth: isMobile ? 'calc(100% - 52px)' : 0 }}>
+ <h3 style={{ margin: 0, fontSize: isMobile ? '1rem' : '1.125rem', lineHeight: 1.25 }}>
+ {pred.name}
+ </h3>
+ <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: isMobile ? '0.82rem' : '0.875rem' }}>
  {pred.roll_no} • {pred.branch} Year {pred.year} • {pred.late_days} late days
  </p>
  </div>
 
  {/* Risk Score */}
- <div style={{ textAlign: 'center' }}>
+ <div style={{ textAlign: 'center', marginLeft: 0 }}>
  <div style={{
- width: '80px',
- height: '80px',
+ width: isMobile ? '68px' : '80px',
+ height: isMobile ? '68px' : '80px',
  borderRadius: '50%',
- border: `6px solid ${getRiskColor(pred.risk_category)}`,
+ border: `${isMobile ? 5 : 6}px solid ${getRiskColor(pred.risk_category)}`,
  display: 'flex',
  alignItems: 'center',
  justifyContent: 'center',
  flexDirection: 'column'
  }}>
  <span style={{ 
- fontSize: '1.5rem',
+ fontSize: isMobile ? '1.25rem' : '1.5rem',
  fontWeight: '900',
  color: getRiskColor(pred.risk_category)
  }}>
  {pred.risk_score}
  </span>
- <span style={{ fontSize: '0.75rem', color: '#64748b' }}>RISK</span>
+ <span style={{ fontSize: isMobile ? '0.68rem' : '0.75rem', color: '#64748b' }}>RISK</span>
  </div>
  </div>
 
  {/* Risk Badge */}
- <div style={getRiskBadgeStyle(pred.risk_category)}>
+ <div style={{ ...getRiskBadgeStyle(pred.risk_category), marginLeft: isMobile ? 'auto' : 0 }}>
  {pred.risk_category}
  </div>
  </div>
@@ -319,7 +327,7 @@ const AIInsights = () => {
  style={{
  padding: '0.75rem 1.25rem',
  background: count === patterns.peak_late_day.count 
- ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+ ? 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)'
  : '#f1f5f9',
  color: count === patterns.peak_late_day.count ? 'white' : '#64748b',
  borderRadius: '8px',
@@ -346,7 +354,7 @@ const AIInsights = () => {
  <div key={branch}>
  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
  <span style={{ fontWeight: '700' }}>{branch}</span>
- <span style={{ color: '#667eea', fontWeight: '700' }}>{percentage}%</span>
+ <span style={{ color: '#f97316', fontWeight: '700' }}>{percentage}%</span>
  </div>
  <div style={{
  height: '12px',
@@ -357,7 +365,7 @@ const AIInsights = () => {
  <div style={{
  height: '100%',
  width: `${percentage}%`,
- background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+ background: 'linear-gradient(90deg, #f97316 0%, #0d9488 100%)',
  transition: 'width 0.5s ease'
  }} />
  </div>
@@ -386,7 +394,7 @@ const AIInsights = () => {
  textAlign: 'center'
  }}
  >
- <div style={{ fontSize: '2rem', fontWeight: '900', color: '#667eea' }}>
+ <div style={{ fontSize: '2rem', fontWeight: '900', color: '#f97316' }}>
  {avg}
  </div>
  <div style={{ color: '#64748b', fontWeight: '600' }}>
@@ -476,3 +484,4 @@ const AIInsights = () => {
 };
 
 export default AIInsights;
+

@@ -79,31 +79,31 @@ function Login({ onLogin }) {
           position: 'absolute',
           top: '1.5rem',
           right: '1.5rem',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #f97316 0%, #f59e0b 100%)',
           color: 'white',
           border: 'none',
           padding: '0.75rem 1.5rem',
           borderRadius: '12px',
-          fontSize: '0.95rem',
+          fontSize: '0.9rem',
           fontWeight: 700,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          boxShadow: '0 6px 20px rgba(102, 126, 234, 0.35)',
-          transition: 'all 0.3s',
+          boxShadow: '0 4px 16px rgba(249, 115, 22, 0.3)',
+          transition: 'all 0.25s',
           zIndex: 100
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.45)';
+          e.currentTarget.style.boxShadow = '0 8px 24px rgba(249, 115, 22, 0.4)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.35)';
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(249, 115, 22, 0.3)';
         }}
       >
-        <FiUsers size={20} />
+        <FiUsers size={18} />
         Late Students Today
       </button>
 
@@ -114,31 +114,31 @@ function Login({ onLogin }) {
           position: 'absolute',
           top: '5rem',
           right: '1.5rem',
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
           color: 'white',
           border: 'none',
           padding: '0.75rem 1.5rem',
           borderRadius: '12px',
-          fontSize: '0.95rem',
+          fontSize: '0.9rem',
           fontWeight: 700,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          boxShadow: '0 6px 20px rgba(16, 185, 129, 0.35)',
-          transition: 'all 0.3s',
+          boxShadow: '0 4px 16px rgba(13, 148, 136, 0.3)',
+          transition: 'all 0.25s',
           zIndex: 100
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.45)';
+          e.currentTarget.style.boxShadow = '0 8px 24px rgba(13, 148, 136, 0.4)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.35)';
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(13, 148, 136, 0.3)';
         }}
       >
-        <FiLogIn size={20} />
+        <FiLogIn size={18} />
         Student Portal
       </button>
 
@@ -151,6 +151,41 @@ function Login({ onLogin }) {
         <div className="particle particle-5"></div>
       </div>
 
+      {/* Flowing Wave — bottom decoration */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '180px',
+        zIndex: 0,
+        pointerEvents: 'none',
+        overflow: 'hidden'
+      }}>
+        <svg 
+          viewBox="0 0 1440 180" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            width: '200%',
+            height: '100%',
+            animation: 'waveSlide 18s linear infinite'
+          }}
+          preserveAspectRatio="none"
+        >
+          <path d="M0,120 C240,60 480,180 720,120 C960,60 1200,180 1440,120 C1680,60 1920,180 2160,120 C2400,60 2640,180 2880,120 L2880,180 L0,180 Z" fill="rgba(249,115,22,0.06)" />
+          <path d="M0,140 C200,90 400,170 720,130 C1040,90 1240,170 1440,140 C1640,110 1840,175 2160,130 C2480,85 2680,170 2880,140 L2880,180 L0,180 Z" fill="rgba(13,148,136,0.04)" />
+        </svg>
+        <style>{`
+          @keyframes waveSlide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
+      </div>
+
       <div className="login-box">
         {/* Logo/Header Section */}
         <div className="login-header">
@@ -159,10 +194,11 @@ function Login({ onLogin }) {
               src="/logo.png" 
               alt="ANITS Logo" 
               style={{
-                width: "120px",
-                height: "120px",
+                width: "100%",
+                height: "100%",
                 objectFit: "contain",
-                filter: "drop-shadow(0 4px 12px rgba(102, 126, 234, 0.3))"
+                padding: "6px"
+                /* NO filter — show real logo colors */
               }}
             />
           </div>

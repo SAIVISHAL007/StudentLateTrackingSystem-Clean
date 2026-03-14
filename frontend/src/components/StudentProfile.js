@@ -50,7 +50,7 @@ const StudentProfileComponent = () => {
       case 'normal': return '#10b981'; // green
       case 'approaching_limit': return '#f59e0b'; // amber
       case 'fined': return '#ef4444'; // red
-      case 'excused': return '#3b82f6'; // blue
+      case 'excused': return '#0d9488'; // blue
       default: return '#6366f1';
     }
   };
@@ -110,9 +110,9 @@ const StudentProfileComponent = () => {
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <FiUser size={32} style={{ color: '#667eea' }} />
+        <FiUser size={32} style={{ color: '#f97316' }} />
         <div>
-          <h2 style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2rem', fontWeight: 800, margin: 0 }}>
+          <h2 style={{ background: 'linear-gradient(135deg,#f97316,#0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2rem', fontWeight: 800, margin: 0 }}>
             Student Profile Search
           </h2>
           <p style={{ fontSize: '.85rem', color: '#64748b', fontWeight: 500, margin: '4px 0 0 0' }}>
@@ -186,11 +186,11 @@ const StudentProfileComponent = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
           {/* Header Card */}
           <div style={{
-            background: 'linear-gradient(135deg,#667eea,#764ba2)',
+            background: 'linear-gradient(135deg,#f97316,#0d9488)',
             color: 'white',
             padding: '2rem',
             borderRadius: '16px',
-            boxShadow: '0 4px 16px rgba(102,126,234,0.3)'
+            boxShadow: '0 4px 16px rgba(249,115,22,0.3)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
               <div>
@@ -294,7 +294,7 @@ const StudentProfileComponent = () => {
               textAlign: 'center'
             }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                <FiUser size={24} style={{ color: '#3b82f6' }} />
+                <FiUser size={24} style={{ color: '#0d9488' }} />
               </div>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a' }}>
                 {studentDetails.excuseDaysUsed || 0}
@@ -349,8 +349,8 @@ const StudentProfileComponent = () => {
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    border: dateFilter === 'all' ? '2px solid #667eea' : '2px solid #e2e8f0',
-                    background: dateFilter === 'all' ? '#667eea' : 'white',
+                    border: dateFilter === 'all' ? '2px solid #f97316' : '2px solid #e2e8f0',
+                    background: dateFilter === 'all' ? '#f97316' : 'white',
                     color: dateFilter === 'all' ? 'white' : '#64748b',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -365,8 +365,8 @@ const StudentProfileComponent = () => {
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    border: dateFilter === 'today' ? '2px solid #667eea' : '2px solid #e2e8f0',
-                    background: dateFilter === 'today' ? '#667eea' : 'white',
+                    border: dateFilter === 'today' ? '2px solid #f97316' : '2px solid #e2e8f0',
+                    background: dateFilter === 'today' ? '#f97316' : 'white',
                     color: dateFilter === 'today' ? 'white' : '#64748b',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -381,8 +381,8 @@ const StudentProfileComponent = () => {
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    border: dateFilter === 'week' ? '2px solid #667eea' : '2px solid #e2e8f0',
-                    background: dateFilter === 'week' ? '#667eea' : 'white',
+                    border: dateFilter === 'week' ? '2px solid #f97316' : '2px solid #e2e8f0',
+                    background: dateFilter === 'week' ? '#f97316' : 'white',
                     color: dateFilter === 'week' ? 'white' : '#64748b',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -397,8 +397,8 @@ const StudentProfileComponent = () => {
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    border: dateFilter === 'month' ? '2px solid #667eea' : '2px solid #e2e8f0',
-                    background: dateFilter === 'month' ? '#667eea' : 'white',
+                    border: dateFilter === 'month' ? '2px solid #f97316' : '2px solid #e2e8f0',
+                    background: dateFilter === 'month' ? '#f97316' : 'white',
                     color: dateFilter === 'month' ? 'white' : '#64748b',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -420,7 +420,7 @@ const StudentProfileComponent = () => {
                   style={{
                     padding: '8px 12px',
                     borderRadius: '8px',
-                    border: dateFilter === 'custom' ? '2px solid #667eea' : '2px solid #e2e8f0',
+                    border: dateFilter === 'custom' ? '2px solid #f97316' : '2px solid #e2e8f0',
                     fontSize: '0.9rem',
                     cursor: 'pointer',
                     fontWeight: 600
@@ -585,14 +585,14 @@ const StudentProfileComponent = () => {
       {/* Empty State */}
       {!selectedStudent && (
         <div style={{
-          background: 'linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1))',
-          border: '2px dashed #667eea',
+          background: 'linear-gradient(135deg, rgba(249,115,22,0.1), rgba(118,75,162,0.1))',
+          border: '2px dashed #f97316',
           padding: '3rem 2rem',
           borderRadius: '12px',
           textAlign: 'center',
           color: '#475569'
         }}>
-          <FiSearch size={48} style={{ color: '#667eea', marginBottom: '1rem', opacity: 0.5 }} />
+          <FiSearch size={48} style={{ color: '#f97316', marginBottom: '1rem', opacity: 0.5 }} />
           <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 500 }}>
             Search for a student to view their complete attendance and fine history
           </p>
@@ -604,3 +604,4 @@ const StudentProfileComponent = () => {
 
 // PERFORMANCE: Wrap with React.memo
 export default React.memo(StudentProfileComponent);
+

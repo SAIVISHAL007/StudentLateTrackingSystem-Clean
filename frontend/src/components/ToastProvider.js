@@ -112,8 +112,8 @@ const Toast = ({ toast: toastItem, onClose }) => {
       text: '#92400e'
     },
     info: {
-      bg: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-      border: '#93c5fd',
+      bg: 'linear-gradient(135deg, #f0fdfa 0%, #bfdbfe 100%)',
+      border: '#99f6e4',
       text: '#1e40af'
     }
   };
@@ -191,3 +191,4 @@ const Toast = ({ toast: toastItem, onClose }) => {
     </div>
   );
 };
+

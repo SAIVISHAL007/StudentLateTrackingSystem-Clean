@@ -2,7 +2,7 @@
 
 /* Main Sidebar Container */
 .professional-sidebar {
-  background: linear-gradient(180deg, #667eea 0%, #5568d3 100%);
+  background: linear-gradient(180deg, #f97316 0%, #0d9488 100%);
   transition: width 0.3s ease;
   display: flex;
   flex-direction: column;

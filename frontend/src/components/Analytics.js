@@ -163,7 +163,7 @@ function Analytics() {
       }}>
         <div>
           <h2 style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
@@ -174,7 +174,7 @@ function Analytics() {
             alignItems: "center",
             gap: "0.75rem"
           }}>
-            <FiBarChart2 size={32} color="#667eea" /> Live Analytics
+            <FiBarChart2 size={32} color="#f97316" /> Live Analytics
           </h2>
           <p style={{ color: "#64748b", fontSize: "0.95rem" }}>
             Real-time insights and performance metrics
@@ -333,7 +333,7 @@ function Analytics() {
             <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "500", marginBottom: "0.5rem" }}>
               Projected Revenue
             </div>
-            <div style={{ fontSize: "2rem", fontWeight: "800", color: "#667eea" }}>
+            <div style={{ fontSize: "2rem", fontWeight: "800", color: "#f97316" }}>
               ₹{(financialData?.projectedRevenue || 0).toLocaleString()}
             </div>
           </div>
@@ -469,7 +469,7 @@ function Analytics() {
                         labelStyle={{ fontSize: '0.75rem', fontWeight: '600' }}
                       >
                         {departmentStats.map((entry, index) => {
-                          const colors = ['#dc2626', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
+                          const colors = ['#dc2626', '#f59e0b', '#10b981', '#0d9488', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
                           return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                         })}
                       </Pie>
@@ -788,7 +788,7 @@ function Analytics() {
                   width: "36px",
                   height: "36px",
                   borderRadius: "50%",
-                  background: index === 0 ? "#fbbf24" : "#667eea",
+                  background: index === 0 ? "#fbbf24" : "#f97316",
                   color: "white",
                   display: "flex",
                   alignItems: "center",
@@ -827,3 +827,4 @@ function Analytics() {
 }
 
 export default Analytics;
+

@@ -479,7 +479,7 @@ router.get("/late-today", checkDbConnection, async (req, res) => {
 });
 
 // Get all students (for admin management) - optimized with mandatory pagination
-router.get("/all", checkDbConnection, async (req, res) => {
+router.get("/all", authMiddleware, checkDbConnection, async (req, res) => {
   try {
     const { year, page, limit, search } = req.query;
     let query = {};
@@ -537,7 +537,7 @@ router.get("/all", checkDbConnection, async (req, res) => {
 });
 
 // Get all students with pending fines
-router.get("/with-fines", checkDbConnection, async (req, res) => {
+router.get("/with-fines", authMiddleware, checkDbConnection, async (req, res) => {
   try {
     // PERFORMANCE: Add pagination
     const page = Math.max(parseInt(req.query.page) || 1, 1);
@@ -583,7 +583,7 @@ router.get("/with-fines", checkDbConnection, async (req, res) => {
 });
 
 // Pay/Clear fine for a student
-router.post("/pay-fine", checkDbConnection, async (req, res) => {
+router.post("/pay-fine", authMiddleware, checkDbConnection, async (req, res) => {
   try {
     const { rollNo, amount, paidBy } = req.body;
 
@@ -667,7 +667,7 @@ router.post("/pay-fine", checkDbConnection, async (req, res) => {
 });
 
 // Get records by custom date ranges (calendar mode optimization)
-router.post("/records/custom-range", async (req, res) => {
+router.post("/records/custom-range", authMiddleware, async (req, res) => {
   try {
     const { ranges } = req.body || {};
 
@@ -802,7 +802,7 @@ router.post("/records/custom-range", async (req, res) => {
 });
 
 // Get records by time period (weekly, monthly, semester)
-router.get("/records/:period", async (req, res) => {
+router.get("/records/:period", authMiddleware, async (req, res) => {
   try {
     const { period } = req.params;
     const { page, limit } = req.query;

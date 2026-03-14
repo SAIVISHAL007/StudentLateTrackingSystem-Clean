@@ -82,12 +82,12 @@ const calculateRiskScore = (student) => {
   else if (latePerSemester > 3) score += 10;
   else if (latePerSemester > 2) score += 5;
   
-  // Grace period used (10 points)
-  if (student.gracePeriodUsed) score += 10;
+  // Grace/excuse days used (use correct field name from schema)
+  if (student.excuseDaysUsed && student.excuseDaysUsed > 0) score += 10;
   
-  // Status factor (0-15 points)
-  if (student.status === 'Being Fined') score += 15;
-  else if (student.status === 'Warning') score += 10;
+  // Status factor (0-15 points) — uses actual schema enum values
+  if (student.status === 'fined') score += 15;
+  else if (student.status === 'alert') score += 10;
   else if (lateDays >= 7) score += 5;
   
   // Ensure score is between 0-100

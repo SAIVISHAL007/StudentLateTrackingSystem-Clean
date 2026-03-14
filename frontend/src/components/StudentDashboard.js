@@ -124,7 +124,7 @@ function StudentDashboard({ onClose }) {
     <button
       onClick={() => handleSort(field)}
       style={{
-        background: sortBy === field ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f3f4f6',
+        background: sortBy === field ? 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)' : '#f3f4f6',
         color: sortBy === field ? 'white' : '#374151',
         border: 'none',
         padding: '0.5rem 1rem',
@@ -169,7 +169,7 @@ function StudentDashboard({ onClose }) {
       }}>
         {/* Header */}
         <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
           padding: '1.5rem 2rem',
           display: 'flex',
           justifyContent: 'space-between',
@@ -444,3 +444,4 @@ function StudentDashboard({ onClose }) {
 }
 
 export default StudentDashboard;
+

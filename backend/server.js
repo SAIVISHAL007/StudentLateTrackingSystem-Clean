@@ -269,7 +269,7 @@ app.get("/", async (req, res) => {
           <td>${student.lateDays}</td>
           <td style="color: ${statusColor}; font-weight: bold;">${student.status}</td>
           <td>${student.fines}</td>
-          <td>${student.gracePeriodUsed}/4</td>
+          <td>${student.excuseDaysUsed || 0}/2</td>
           <td>${lastLateDate}</td>
         </tr>
       `;

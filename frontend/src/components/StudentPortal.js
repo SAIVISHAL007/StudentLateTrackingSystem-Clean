@@ -139,20 +139,20 @@ please contact the administration office.
             <div style={{
               width: '80px',
               height: '80px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1.5rem',
-              boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)'
+              boxShadow: '0 10px 30px rgba(249, 115, 22, 0.3)'
             }}>
               <FiUser size={40} color="white" />
             </div>
             <h2 style={{
               fontSize: '2rem',
               fontWeight: 800,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               marginBottom: '0.5rem'
@@ -193,14 +193,14 @@ please contact the administration office.
               disabled={logging}
               style={{
                 padding: '14px 20px',
-                background: logging ? '#94a3b8' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: logging ? '#94a3b8' : 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '14px',
                 fontSize: '1.05rem',
                 fontWeight: 700,
                 cursor: logging ? 'not-allowed' : 'pointer',
-                boxShadow: '0 6px 20px rgba(102, 126, 234, 0.35)',
+                boxShadow: '0 6px 20px rgba(249, 115, 22, 0.35)',
                 transition: 'all 0.3s'
               }}
             >
@@ -241,7 +241,7 @@ please contact the administration office.
           <h2 style={{
             fontSize: '2.2rem',
             fontWeight: 800,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             marginBottom: '0.5rem'
@@ -281,11 +281,11 @@ please contact the administration office.
         marginBottom: '2.5rem'
       }}>
         <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #f97316 0%, #0d9488 100%)',
           padding: '1.5rem',
           borderRadius: '16px',
           color: 'white',
-          boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)'
+          boxShadow: '0 8px 24px rgba(249, 115, 22, 0.3)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '0.75rem' }}>
             <FiClock size={24} />
@@ -451,3 +451,4 @@ please contact the administration office.
 }
 
 export default StudentPortal;
+

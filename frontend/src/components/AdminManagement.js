@@ -5,6 +5,7 @@ import { getCurrentUser } from "../utils/auth";
 import AuditTrail from "./AuditTrail";
 import FineManagement from "./FineManagement";
 import { toast } from "./Toast";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 function AdminManagement() {
  const [stats,setStats]=useState(null);
@@ -44,6 +45,7 @@ function AdminManagement() {
 
  // State for tab navigation
  const [activeTab, setActiveTab] = useState("management"); // "management", "audit", or "fines"
+ const isMobile = useMediaQuery('(max-width: 768px)');
 
  // State for semester demotion
  const [showDemotionForm, setShowDemotionForm] = useState(false);
@@ -668,18 +670,18 @@ function AdminManagement() {
  <div style={{
  width: "70px",
  height: "70px",
- background: "linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
+ background: "linear-gradient(135deg,#f97316 0%,#0d9488 100%)",
  borderRadius: "18px",
  display: "flex",
  alignItems: "center",
  justifyContent: "center",
  fontSize: "2.5rem",
- boxShadow: "0 10px 30px rgba(102,126,234,0.4)",
+ boxShadow: "0 10px 30px rgba(249,115,22,0.4)",
  animation: "float 3s ease-in-out infinite"
  }}><FiSettings size={40} color="white" /></div>
  <div>
  <h2 style={{
- background: "linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
+ background: "linear-gradient(135deg,#f97316 0%,#0d9488 100%)",
  WebkitBackgroundClip: "text",
  WebkitTextFillColor: "transparent",
  backgroundClip: "text",
@@ -696,22 +698,31 @@ function AdminManagement() {
  <div style={{
  display: "flex",
  gap: "0.5rem",
+ flexWrap: isMobile ? "wrap" : "nowrap",
  marginBottom: "2rem",
  borderBottom: "2px solid #e5e7eb",
- paddingBottom: "1rem"
+ paddingBottom: "1rem",
+ overflowX: isMobile ? "visible" : "auto"
  }}>
  <button
  onClick={() => setActiveTab("management")}
  style={{
- padding: "0.8rem 1.5rem",
- background: activeTab === "management" ? "linear-gradient(135deg,#667eea 0%,#764ba2 100%)" : "transparent",
+ padding: isMobile ? "0.65rem 0.9rem" : "0.8rem 1.5rem",
+ background: activeTab === "management" ? "linear-gradient(135deg,#f97316 0%,#0d9488 100%)" : "transparent",
  color: activeTab === "management" ? "white" : "#999",
  border: "none",
  borderRadius: "8px 8px 0 0",
  cursor: "pointer",
  fontWeight: activeTab === "management" ? "700" : "500",
- fontSize: "0.95rem",
- transition: "all 0.3s"
+ fontSize: isMobile ? "0.86rem" : "0.95rem",
+ transition: "all 0.3s",
+ display: "flex",
+ alignItems: "center",
+ gap: "0.35rem",
+ whiteSpace: "nowrap",
+ flex: isMobile ? "1 1 31%" : "0 0 auto",
+ minWidth: isMobile ? "110px" : "auto",
+ justifyContent: "center"
  }}
  >
  <FiBarChart2 /> Management
@@ -719,15 +730,22 @@ function AdminManagement() {
  <button
  onClick={() => setActiveTab("audit")}
  style={{
- padding: "0.8rem 1.5rem",
- background: activeTab === "audit" ? "linear-gradient(135deg,#667eea 0%,#764ba2 100%)" : "transparent",
+ padding: isMobile ? "0.65rem 0.9rem" : "0.8rem 1.5rem",
+ background: activeTab === "audit" ? "linear-gradient(135deg,#f97316 0%,#0d9488 100%)" : "transparent",
  color: activeTab === "audit" ? "white" : "#999",
  border: "none",
  borderRadius: "8px 8px 0 0",
  cursor: "pointer",
  fontWeight: activeTab === "audit" ? "700" : "500",
- fontSize: "0.95rem",
- transition: "all 0.3s"
+ fontSize: isMobile ? "0.86rem" : "0.95rem",
+ transition: "all 0.3s",
+ display: "flex",
+ alignItems: "center",
+ gap: "0.35rem",
+ whiteSpace: "nowrap",
+ flex: isMobile ? "1 1 31%" : "0 0 auto",
+ minWidth: isMobile ? "110px" : "auto",
+ justifyContent: "center"
  }}
  >
  <FiClipboard /> Audit Trail
@@ -735,15 +753,22 @@ function AdminManagement() {
  <button
  onClick={() => setActiveTab("fines")}
  style={{
- padding: "0.8rem 1.5rem",
- background: activeTab === "fines" ? "linear-gradient(135deg,#667eea 0%,#764ba2 100%)" : "transparent",
+ padding: isMobile ? "0.65rem 0.9rem" : "0.8rem 1.5rem",
+ background: activeTab === "fines" ? "linear-gradient(135deg,#f97316 0%,#0d9488 100%)" : "transparent",
  color: activeTab === "fines" ? "white" : "#999",
  border: "none",
  borderRadius: "8px 8px 0 0",
  cursor: "pointer",
  fontWeight: activeTab === "fines" ? "700" : "500",
- fontSize: "0.95rem",
- transition: "all 0.3s"
+ fontSize: isMobile ? "0.86rem" : "0.95rem",
+ transition: "all 0.3s",
+ display: "flex",
+ alignItems: "center",
+ gap: "0.35rem",
+ whiteSpace: "nowrap",
+ flex: isMobile ? "1 1 31%" : "0 0 auto",
+ minWidth: isMobile ? "110px" : "auto",
+ justifyContent: "center"
  }}
  >
  <FiDollarSign /> Fine Management
@@ -756,20 +781,20 @@ function AdminManagement() {
 
  {/* System Statistics */}
  <div style={{
- background: "linear-gradient(135deg,#dbeafe 0%,#e0e7ff 100%)",
+ background: "linear-gradient(135deg,#f0fdfa 0%,#e0e7ff 100%)",
  padding: "2rem",
  borderRadius: "20px",
  marginBottom: "2.5rem",
  border: "2px solid #bfdbfe",
- boxShadow: "0 8px 20px rgba(102,126,234,0.1)"
+ boxShadow: "0 8px 20px rgba(249,115,22,0.1)"
  }}>
  <h3 style={{ color: "#1e40af", fontSize: "1.5rem", fontWeight: 700, marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: ".5rem" }}>
- <span style={{ fontSize: "1.75rem" }}><FiBarChart2 size={32} color="#667eea" /></span>System Statistics
+ <span style={{ fontSize: "1.75rem" }}><FiBarChart2 size={32} color="#f97316" /></span>System Statistics
  </h3>
  {stats ? (
  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: "1.25rem", marginBottom: "1.5rem" }}>
  <div style={{ padding: "1.25rem", background: "rgba(255,255,255,0.7)", borderRadius: "16px", boxShadow: "0 4px 12px rgba(59,130,246,0.15)" }}>
- <div style={{ fontSize: ".85rem", color: "#3b82f6", fontWeight: 500, marginBottom: ".5rem" }}>Total Students</div>
+ <div style={{ fontSize: ".85rem", color: "#0d9488", fontWeight: 500, marginBottom: ".5rem" }}>Total Students</div>
  <div style={{ fontSize: "2rem", fontWeight: 800, color: "#1e40af" }}>{stats.totalStudents}</div>
  </div>
  <div style={{ padding: "1.25rem", background: "rgba(255,255,255,0.7)", borderRadius: "16px", boxShadow: "0 4px 12px rgba(251,191,36,0.15)" }}>
@@ -804,7 +829,7 @@ function AdminManagement() {
  )}
  </div>
  ) : (
- <p style={{ color: "#3b82f6", fontSize: "1rem", fontWeight: 500 }}>Loading statistics...</p>
+ <p style={{ color: "#0d9488", fontSize: "1rem", fontWeight: 500 }}>Loading statistics...</p>
  )}
  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
  <button
@@ -812,7 +837,7 @@ function AdminManagement() {
  disabled={loading}
  style={{
  padding: "12px 24px",
- background: "linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
+ background: "linear-gradient(135deg,#f97316 0%,#0d9488 100%)",
  color: "white",
  border: "none",
  borderRadius: "12px",
@@ -820,7 +845,7 @@ function AdminManagement() {
  fontSize: ".95rem",
  fontWeight: 600,
  transition: "all .3s",
- boxShadow: "0 4px 15px rgba(102,126,234,0.3)",
+ boxShadow: "0 4px 15px rgba(249,115,22,0.3)",
  opacity: loading ? .6 : 1
  }}
  >🔄 Refresh Stats</button>
@@ -1475,7 +1500,7 @@ function AdminManagement() {
  backdropFilter: "blur(8px)"
  }}>
  <div style={{
- background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+ background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
  padding: "2.5rem 3rem",
  borderRadius: "20px",
  boxShadow: "0 20px 60px rgba(0,0,0,0.5)",

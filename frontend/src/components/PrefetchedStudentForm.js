@@ -27,15 +27,15 @@ function PrefetchedStudentForm() {
   const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Build params dynamically based on what's selected
       const params = { year };
       if (branch) params.branch = branch;
       if (section) params.section = section;
-      
+
       const response = await API.get("/students/filter", { params });
       const fetched = response.data.students || [];
-      
+
       // Late counts are already included in the response (lateDays field)
       setStudents(fetched);
       setSelectedStudent(null);
@@ -64,34 +64,34 @@ function PrefetchedStudentForm() {
       setStatsLoading(true);
       const response = await API.get(`/students/student/${rollNo}`);
       const records = response.data.lateLogs || [];
-      
+
       // Calculate statistics
       const totalCount = records.length;
       const now = new Date();
-      
+
       const thisMonth = records.filter(r => {
         const recordDate = new Date(r.date);
         return recordDate.getMonth() === now.getMonth() && recordDate.getFullYear() === now.getFullYear();
       }).length;
-      
+
       const thisWeek = records.filter(r => {
         const recordDate = new Date(r.date);
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         return recordDate >= weekAgo && recordDate <= now;
       }).length;
-      
+
       // Group by date for chart
       const chartData = {};
       records.forEach(r => {
         const date = new Date(r.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
         chartData[date] = (chartData[date] || 0) + 1;
       });
-      
+
       const lineData = Object.entries(chartData).slice(-10).map(([date, count]) => ({
         date,
         count
       }));
-      
+
       setStudentStats({
         rollNo,
         totalCount,
@@ -118,7 +118,7 @@ function PrefetchedStudentForm() {
 
     try {
       setMarking(true);
-      
+
       const payload = {
         rollNo: selectedStudent.rollNo,
         name: selectedStudent.name,
@@ -308,7 +308,7 @@ function PrefetchedStudentForm() {
             backgroundColor: !year ? "#f3f4f6" : "#ffffff",
             cursor: !year ? "not-allowed" : "text"
           }}
-          onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+          onFocus={(e) => e.target.style.borderColor = "#f97316"}
           onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
         />
         {searchQuery && (
@@ -326,11 +326,11 @@ function PrefetchedStudentForm() {
       ) : students.length > 0 ? (
         <div style={{
           display: "grid",
-          gridTemplateColumns: window.innerWidth <= 480 
-            ? "1fr" 
-            : window.innerWidth <= 768 
-            ? "repeat(2, 1fr)" 
-            : "repeat(auto-fill, minmax(250px, 1fr))",
+          gridTemplateColumns: window.innerWidth <= 480
+            ? "1fr"
+            : window.innerWidth <= 768
+              ? "repeat(2, 1fr)"
+              : "repeat(auto-fill, minmax(250px, 1fr))",
           gap: window.innerWidth <= 768 ? "0.75rem" : "1rem",
           marginBottom: "2rem"
         }}>
@@ -344,106 +344,106 @@ function PrefetchedStudentForm() {
               );
             })
             .map(student => (
-            <div
-              key={student._id}
-              onClick={() => handleStudentSelect(student)}
-              style={{
-                padding: "1.5rem",
-                border: "2px solid #e5e7eb",
-                borderRadius: "0.75rem",
-                cursor: "pointer",
-                transition: "all 0.3s",
-                backgroundColor: selectedStudent?._id === student._id ? "#dbeafe" : "#ffffff",
-                borderColor: selectedStudent?._id === student._id ? "#3b82f6" : "#e5e7eb",
-                boxShadow: selectedStudent?._id === student._id
-                  ? "0 4px 12px rgba(59, 130, 246, 0.2)"
-                  : "0 1px 3px rgba(0, 0, 0, 0.1)"
-              }}
-              onMouseEnter={(e) => {
-                if (selectedStudent?._id !== student._id) {
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
-                  e.currentTarget.style.borderColor = "#3b82f6";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selectedStudent?._id !== student._id) {
-                  e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.1)";
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                }
-              }}
-            >
-              <div style={{ marginBottom: "0.5rem" }}>
-                <p style={{ margin: 0, fontSize: window.innerWidth <= 768 ? "1.1rem" : "1.25rem", fontWeight: "700", color: "#1f2937" }}>
-                  {student.rollNo}
-                </p>
-                <p style={{ margin: "0.25rem 0 0 0", fontSize: window.innerWidth <= 768 ? "1rem" : "0.9rem", color: "#6b7280" }}>
-                  {student.name}
-                </p>
-              </div>
-              <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontSize: window.innerWidth <= 768 ? "0.95rem" : "0.85rem",
-                color: "#6b7280",
-                marginTop: "1rem",
-                paddingTop: "1rem",
-                borderTop: "1px solid #e5e7eb"
-              }}>
-                <div>
-                  <span>Branch: {student.branch}</span>
-                  <span style={{ marginLeft: "1rem" }}>Sem: {student.semester}</span>
+              <div
+                key={student._id}
+                onClick={() => handleStudentSelect(student)}
+                style={{
+                  padding: "1.5rem",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "0.75rem",
+                  cursor: "pointer",
+                  transition: "all 0.3s",
+                  backgroundColor: selectedStudent?._id === student._id ? "#fff7ed" : "#ffffff",
+                  borderColor: selectedStudent?._id === student._id ? "#f97316" : "#e5e7eb",
+                  boxShadow: selectedStudent?._id === student._id
+                    ? "0 4px 12px rgba(249, 115, 22, 0.2)"
+                    : "0 1px 3px rgba(0, 0, 0, 0.1)"
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedStudent?._id !== student._id) {
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
+                    e.currentTarget.style.borderColor = "#f97316";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedStudent?._id !== student._id) {
+                    e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.1)";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                  }
+                }}
+              >
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <p style={{ margin: 0, fontSize: window.innerWidth <= 768 ? "1.1rem" : "1.25rem", fontWeight: "700", color: "#1f2937" }}>
+                    {student.rollNo}
+                  </p>
+                  <p style={{ margin: "0.25rem 0 0 0", fontSize: window.innerWidth <= 768 ? "1rem" : "0.9rem", color: "#6b7280" }}>
+                    {student.name}
+                  </p>
+                </div>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  fontSize: window.innerWidth <= 768 ? "0.95rem" : "0.85rem",
+                  color: "#6b7280",
+                  marginTop: "1rem",
+                  paddingTop: "1rem",
+                  borderTop: "1px solid #e5e7eb"
+                }}>
+                  <div>
+                    <span>Branch: {student.branch}</span>
+                    <span style={{ marginLeft: "1rem" }}>Sem: {student.semester}</span>
+                  </div>
+                </div>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: "0.75rem"
+                }}>
+                  <span style={{
+                    fontSize: window.innerWidth <= 768 ? "0.85rem" : "0.75rem",
+                    color: "#9ca3af"
+                  }}>
+                    Year: {student.year} | Sec: {student.section || "A"}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setStatsStudent(student);
+                      setShowStatsModal(true);
+                      fetchStudentStats(student.rollNo);
+                    }}
+                    style={{
+                      padding: "0.375rem 0.75rem",
+                      borderRadius: "0.375rem",
+                      border: "none",
+                      backgroundColor: (student.lateDays || 0) > 0 ? "#fca5a5" : "#d1d5db",
+                      color: (student.lateDays || 0) > 0 ? "#7f1d1d" : "#4b5563",
+                      cursor: "pointer",
+                      fontSize: window.innerWidth <= 768 ? "0.85rem" : "0.75rem",
+                      fontWeight: "600",
+                      transition: "all 0.2s",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.25rem"
+                    }}
+                    onMouseEnter={(e) => {
+                      if ((student.lateDays || 0) > 0) {
+                        e.currentTarget.style.backgroundColor = "#f87171";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if ((student.lateDays || 0) > 0) {
+                        e.currentTarget.style.backgroundColor = "#fca5a5";
+                      }
+                    }}
+                  >
+                    <FiBell size={12} /> Late: {student.lateDays || 0}
+                  </button>
                 </div>
               </div>
-              <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: "0.75rem"
-              }}>
-                <span style={{
-                  fontSize: window.innerWidth <= 768 ? "0.85rem" : "0.75rem",
-                  color: "#9ca3af"
-                }}>
-                  Year: {student.year} | Sec: {student.section || "A"}
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setStatsStudent(student);
-                    setShowStatsModal(true);
-                    fetchStudentStats(student.rollNo);
-                  }}
-                  style={{
-                    padding: "0.375rem 0.75rem",
-                    borderRadius: "0.375rem",
-                    border: "none",
-                    backgroundColor: (student.lateDays || 0) > 0 ? "#fca5a5" : "#d1d5db",
-                    color: (student.lateDays || 0) > 0 ? "#7f1d1d" : "#4b5563",
-                    cursor: "pointer",
-                    fontSize: window.innerWidth <= 768 ? "0.85rem" : "0.75rem",
-                    fontWeight: "600",
-                    transition: "all 0.2s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.25rem"
-                  }}
-                  onMouseEnter={(e) => {
-                    if ((student.lateDays || 0) > 0) {
-                      e.currentTarget.style.backgroundColor = "#f87171";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if ((student.lateDays || 0) > 0) {
-                      e.currentTarget.style.backgroundColor = "#fca5a5";
-                    }
-                  }}
-                >
-                  <FiBell size={12} /> Late: {student.lateDays || 0}
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       ) : year ? (
         <div style={{
@@ -497,7 +497,7 @@ function PrefetchedStudentForm() {
             boxShadow: "0 20px 25px rgba(0, 0, 0, 0.15)"
           }}>
             <h2 style={{ marginTop: 0, color: "#1f2937", fontSize: window.innerWidth <= 768 ? "1.25rem" : "1.5rem" }}>Confirm Mark Late</h2>
-            
+
             <div style={{
               backgroundColor: "#f9fafb",
               padding: "1.5rem",
@@ -677,7 +677,7 @@ function PrefetchedStudentForm() {
                   width: "40px",
                   height: "40px",
                   border: "4px solid #e5e7eb",
-                  borderTop: "4px solid #3b82f6",
+                  borderTop: "4px solid #f97316",
                   borderRadius: "50%",
                   animation: "spin 1s linear infinite",
                   marginBottom: "1rem"
@@ -724,8 +724,8 @@ function PrefetchedStudentForm() {
                   </div>
 
                   <div style={{
-                    backgroundColor: "#dbeafe",
-                    border: "2px solid #93c5fd",
+                    backgroundColor: "#f0fdfa",
+                    border: "2px solid #99f6e4",
                     borderRadius: "0.75rem",
                     padding: window.innerWidth <= 768 ? "1rem" : "1.5rem",
                     textAlign: "center"
@@ -733,7 +733,7 @@ function PrefetchedStudentForm() {
                     <p style={{ margin: "0 0 0.5rem 0", color: "#6b7280", fontSize: window.innerWidth <= 768 ? "0.8rem" : "0.9rem" }}>
                       This Week
                     </p>
-                    <p style={{ margin: 0, fontSize: window.innerWidth <= 768 ? "2rem" : "2.5rem", fontWeight: "700", color: "#3b82f6" }}>
+                    <p style={{ margin: 0, fontSize: window.innerWidth <= 768 ? "2rem" : "2.5rem", fontWeight: "700", color: "#0d9488" }}>
                       {studentStats.thisWeek}
                     </p>
                   </div>
@@ -744,11 +744,11 @@ function PrefetchedStudentForm() {
                   <div style={{
                     marginBottom: window.innerWidth <= 768 ? "1rem" : "2rem"
                   }}>
-                    <h3 style={{ 
-                      color: "#1f2937", 
-                      marginBottom: "1rem", 
-                      display: "flex", 
-                      alignItems: "center", 
+                    <h3 style={{
+                      color: "#1f2937",
+                      marginBottom: "1rem",
+                      display: "flex",
+                      alignItems: "center",
                       gap: "0.5rem",
                       fontSize: window.innerWidth <= 768 ? "1rem" : "1.25rem"
                     }}>
@@ -768,10 +768,10 @@ function PrefetchedStudentForm() {
                           <YAxis />
                           <Tooltip />
                           <Legend />
-                          <Line 
-                            type="monotone" 
-                            dataKey="count" 
-                            stroke="#dc2626" 
+                          <Line
+                            type="monotone"
+                            dataKey="count"
+                            stroke="#dc2626"
                             strokeWidth={2}
                             dot={{ fill: '#dc2626', r: 4 }}
                             activeDot={{ r: 6 }}
@@ -788,8 +788,8 @@ function PrefetchedStudentForm() {
                   <div style={{
                     marginBottom: "1rem"
                   }}>
-                    <h3 style={{ 
-                      color: "#1f2937", 
+                    <h3 style={{
+                      color: "#1f2937",
                       marginBottom: "1rem",
                       fontSize: window.innerWidth <= 768 ? "1rem" : "1.25rem"
                     }}>
@@ -861,7 +861,7 @@ function PrefetchedStudentForm() {
               </div>
             )}
           </div>
-          
+
           {/* Add CSS animation for spinner */}
           <style>{`
             @keyframes spin {

@@ -37,7 +37,7 @@
 
 .stats-toggle-btn {
   padding: 0.8rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #0d9488 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -74,10 +74,10 @@
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background: linear-gradient(135deg, #f9731615 0%, #0d948815 100%);
   padding: 1.2rem;
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #f97316;
 }
 
 .stat-name {
@@ -100,7 +100,7 @@
 }
 
 .stat-value {
-  color: #667eea;
+  color: #f97316;
   font-weight: 700;
 }
 
@@ -136,6 +136,7 @@
 
 .search-bar input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   padding: 0.6rem;
@@ -157,6 +158,7 @@
   font-weight: 600;
   font-size: 0.9rem;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-search {
@@ -212,7 +214,7 @@
 
 .spinner {
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #f97316;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -276,7 +278,7 @@
 }
 
 .timestamp {
-  color: #667eea;
+  color: #f97316;
   font-weight: 600;
   font-size: 0.85rem;
 }
@@ -391,7 +393,7 @@
   background: white;
   padding: 1rem;
   border-radius: 6px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #f97316;
 }
 
 .detail-section h5 {
@@ -422,7 +424,7 @@
 .detail-item .value.mono {
   font-family: 'Courier New', monospace;
   font-size: 0.85rem;
-  color: #667eea;
+  color: #f97316;
 }
 
 .dates-list {
@@ -507,6 +509,25 @@
   .search-bar {
     min-width: auto;
     width: 100%;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+    padding: 0.6rem;
+  }
+
+  .search-icon {
+    margin-left: 0.25rem;
+  }
+
+  .search-bar input {
+    flex: 1 1 calc(100% - 36px);
+    padding: 0.55rem;
+  }
+
+  .btn-search,
+  .btn-clear {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 0;
+    text-align: center;
   }
 
   .btn-download {
@@ -516,6 +537,36 @@
 
   .audit-table {
     font-size: 0.85rem;
+    min-width: 620px;
+  }
+
+  .audit-table th,
+  .audit-table td {
+    padding: 0.75rem;
+  }
+
+  .audit-table th:nth-child(4),
+  .audit-table td:nth-child(4),
+  .audit-table th:nth-child(6),
+  .audit-table td:nth-child(6),
+  .audit-table th:nth-child(7),
+  .audit-table td:nth-child(7) {
+    display: none;
+  }
+
+  .audit-table td.roll-no {
+    font-size: 0.8rem;
+    word-break: break-all;
+  }
+
+  .audit-pagination {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .page-info {
+    width: 100%;
+    text-align: center;
   }
 
   .audit-table th,

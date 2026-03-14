@@ -26,9 +26,17 @@ function App() {
   });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  
+
   // PERFORMANCE: Use custom useMediaQuery hook instead of resize listener
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Sync sidebar state with mobile/desktop
+  useEffect(() => {
+    if (isMobile) setSidebarCollapsed(true);
+    else setSidebarCollapsed(false);
+  }, [isMobile]);
+
+  // eslint-disable-next-line no-unused-vars
   const { isDarkMode } = useDarkMode();
 
   // PERFORMANCE: useCallback for stable function reference
@@ -158,29 +166,32 @@ function App() {
       case "admin":
         return (
           <div>
-            <div style={{
-              textAlign: "center",
-              marginBottom: "3rem"
+          <div style={{
+            textAlign: "center",
+            marginBottom: "2rem"
+          }}>
+            <h1 style={{
+              background: "linear-gradient(135deg, #f97316, #0d9488)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontSize: "2.2rem",
+              fontWeight: "900",
+              marginBottom: "0.375rem",
+              fontFamily: "'Space Grotesk', sans-serif"
             }}>
-              <h1 style={{
-                color: "#dc3545",
-                fontSize: "2.5rem",
-                fontWeight: "700",
-                marginBottom: "0.5rem",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)"
-              }}>
-                <FiSettings style={{ marginRight: '0.5rem', display: 'inline' }} /> Management
-              </h1>
-              <p style={{
-                color: "#6c757d",
-                fontSize: "1.1rem",
-                margin: "0"
-              }}>
-                Semester promotion, data management & system operations
-              </p>
-            </div>
-            <AdminManagement />
+              <FiSettings style={{ marginRight: '0.5rem', display: 'inline', WebkitTextFillColor: '#f97316' }} /> Management
+            </h1>
+            <p style={{
+              color: "#6b7280",
+              fontSize: "0.9rem",
+              margin: "0"
+            }}>
+              Semester promotion, data management &amp; system operations
+            </p>
           </div>
+          <AdminManagement />
+        </div>
         );
 
       default:
@@ -196,11 +207,11 @@ function App() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: isDarkMode ? "#0f172a" : "#f8f9fa",
+      backgroundColor: "#f5f5f0",
       display: "flex",
       position: "relative"
     }}>
-      {/* Mobile Sidebar Overlay Backdrop - ONLY show if sidebar is open */}
+      {/* Mobile Sidebar Overlay Backdrop */}
       {!sidebarCollapsed && isMobile && (
         <div
           onClick={() => window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { shouldOpen: false } }))}
@@ -210,9 +221,10 @@ function App() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(2px)",
             zIndex: 1500,
-            animation: "fadeIn 0.3s ease-out"
+            animation: "fadeIn 0.25s ease-out"
           }}
         />
       )}
@@ -222,13 +234,14 @@ function App() {
       
       {/* Main Content */}
       <div style={{
-        marginLeft: isMobile ? 0 : (sidebarCollapsed ? "80px" : "300px"),
+        marginLeft: isMobile ? 0 : (sidebarCollapsed ? "72px" : "260px"),
         flex: 1,
-        transition: "margin-left 0.3s ease",
-        width: isMobile ? "100%" : "calc(100% - " + (sidebarCollapsed ? "80px" : "300px") + ")",
-        overflow: "hidden",
+        transition: "margin-left 0.32s cubic-bezier(0.4, 0, 0.2, 1)",
+        width: isMobile ? "100%" : "calc(100% - " + (sidebarCollapsed ? "72px" : "260px") + ")",
+        overflow: "visible",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        background: "#f5f5f0"
       }}>
         <Navbar onLogout={handleLogout} />
         
@@ -239,19 +252,23 @@ function App() {
           width: "100%",
           boxSizing: "border-box",
           flex: 1,
-          overflow: "auto"
+          overflowX: "hidden",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch", /* smooth momentum scroll on iOS */
         }}>
           {renderCurrentPage()}
 
           <footer style={{
             textAlign: "center",
-            marginTop: isMobile ? "2rem" : "4rem",
-            padding: isMobile ? "1rem" : "2rem",
-            color: isDarkMode ? "#94a3b8" : "#6c757d",
-            fontSize: "0.9rem"
+            marginTop: isMobile ? "2rem" : "3rem",
+            padding: isMobile ? "1rem" : "1.5rem",
+            color: "#9ca3af",
+            fontSize: "0.75rem",
+            fontWeight: "500",
+            borderTop: "1px solid #e8e5df"
           }}>
             <p style={{ margin: "0" }}>
-              Prototype project built by C.S.V - CSE(AI&ML) dept
+              Prototype built by C.S.V · CSE(AI&ML) Dept · ANITS
             </p>
           </footer>
         </div>

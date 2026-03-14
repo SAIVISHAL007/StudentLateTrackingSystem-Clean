@@ -13,6 +13,7 @@ const auditLogSchema = new mongoose.Schema({
       'ADMIN_PASSWORD_RESET',
       'PASSWORD_RESET_REQUEST',
       'PASSWORD_RESET_SUCCESS',
+      'STUDENT_LOGIN',
       'STUDENT_MARKED_LATE',
       'LATE_MARKING_UNDONE',
       'LATE_RECORD_REMOVED',

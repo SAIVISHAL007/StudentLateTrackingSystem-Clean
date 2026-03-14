@@ -490,9 +490,9 @@ function CombinedLateView() {
           style={{
             padding: "12px 24px",
             border: "none",
-            borderBottom: activeTab === "today" ? "3px solid #667eea" : "none",
+            borderBottom: activeTab === "today" ? "3px solid #f97316" : "none",
             background: activeTab === "today" ? "transparent" : "transparent",
-            color: activeTab === "today" ? "#667eea" : "#94a3b8",
+            color: activeTab === "today" ? "#f97316" : "#94a3b8",
             cursor: "pointer",
             fontSize: "1.05rem",
             fontWeight: activeTab === "today" ? "700" : "600",
@@ -503,7 +503,7 @@ function CombinedLateView() {
           }}
           onMouseOver={(e) => {
             if (activeTab !== "today") {
-              e.target.style.color = "#667eea";
+              e.target.style.color = "#f97316";
             }
           }}
           onMouseOut={(e) => {
@@ -519,9 +519,9 @@ function CombinedLateView() {
           style={{
             padding: "12px 24px",
             border: "none",
-            borderBottom: activeTab === "records" ? "3px solid #667eea" : "none",
+            borderBottom: activeTab === "records" ? "3px solid #f97316" : "none",
             background: activeTab === "records" ? "transparent" : "transparent",
-            color: activeTab === "records" ? "#667eea" : "#94a3b8",
+            color: activeTab === "records" ? "#f97316" : "#94a3b8",
             cursor: "pointer",
             fontSize: "1.05rem",
             fontWeight: activeTab === "records" ? "700" : "600",
@@ -532,7 +532,7 @@ function CombinedLateView() {
           }}
           onMouseOver={(e) => {
             if (activeTab !== "records") {
-              e.target.style.color = "#667eea";
+              e.target.style.color = "#f97316";
             }
           }}
           onMouseOut={(e) => {
@@ -564,13 +564,13 @@ function CombinedLateView() {
                 style={{
                   width: "60px",
                   height: "60px",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                   borderRadius: "16px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: "2rem",
-                  boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
+                  boxShadow: "0 10px 30px rgba(249, 115, 22, 0.4)",
                   animation: "float 3s ease-in-out infinite",
                 }}
               >
@@ -578,7 +578,7 @@ function CombinedLateView() {
               </div>
               <h2
                 style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -627,7 +627,7 @@ function CombinedLateView() {
                   onClick={handleExportReportToday}
                   style={{
                     padding: "10px 18px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                     color: "#ffffff",
                     border: "none",
                     borderRadius: "12px",
@@ -635,18 +635,18 @@ function CombinedLateView() {
                     cursor: "pointer",
                     fontWeight: "600",
                     transition: "all 0.3s ease",
-                    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+                    boxShadow: "0 4px 15px rgba(249, 115, 22, 0.3)",
                     display: "flex",
                     alignItems: "center",
                     gap: "0.5rem",
                   }}
                   onMouseOver={(e) => {
                     e.target.style.transform = "translateY(-2px)";
-                    e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
+                    e.target.style.boxShadow = "0 8px 25px rgba(249, 115, 22, 0.4)";
                   }}
                   onMouseOut={(e) => {
                     e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(249, 115, 22, 0.3)";
                   }}
                 >
                   <FiFileText /> TXT Table
@@ -685,8 +685,8 @@ function CombinedLateView() {
                     boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#667eea";
-                    e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.1)";
+                    e.target.style.borderColor = "#f97316";
+                    e.target.style.boxShadow = "0 0 0 4px rgba(249, 115, 22, 0.1)";
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = "#e2e8f0";
@@ -775,7 +775,7 @@ function CombinedLateView() {
               <div
                 style={{
                   padding: "12px 20px",
-                  background: "linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)",
+                  background: "linear-gradient(135deg, #f0fdfa 0%, #e0e7ff 100%)",
                   borderRadius: "12px",
                   fontSize: "0.9rem",
                   fontWeight: "600",
@@ -917,7 +917,7 @@ function CombinedLateView() {
                   style={{
                     marginBottom: "1.25rem",
                     padding: "2rem",
-                    border: "2px solid rgba(102, 126, 234, 0.1)",
+                    border: "2px solid rgba(249, 115, 22, 0.1)",
                     borderRadius: "20px",
                     backgroundColor: "rgba(255, 255, 255, 0.95)",
                     boxShadow: "0 8px 20px rgba(0, 0, 0, 0.08)",
@@ -928,13 +928,13 @@ function CombinedLateView() {
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow = "0 12px 30px rgba(102, 126, 234, 0.15)";
-                    e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                    e.currentTarget.style.boxShadow = "0 12px 30px rgba(249, 115, 22, 0.15)";
+                    e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.3)";
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
                     e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.08)";
-                    e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.1)";
+                    e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.1)";
                   }}
                 >
                   <div
@@ -1075,10 +1075,10 @@ function CombinedLateView() {
                       style={{
                         background:
                           expandedStudent === s._id
-                            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                            : "rgba(102, 126, 234, 0.1)",
-                        color: expandedStudent === s._id ? "white" : "#667eea",
-                        border: "2px solid #667eea",
+                            ? "linear-gradient(135deg, #f97316 0%, #0d9488 100%)"
+                            : "rgba(249, 115, 22, 0.1)",
+                        color: expandedStudent === s._id ? "white" : "#f97316",
+                        border: "2px solid #f97316",
                         padding: "10px 20px",
                         borderRadius: "12px",
                         cursor: "pointer",
@@ -1090,20 +1090,20 @@ function CombinedLateView() {
                         gap: "0.5rem",
                         boxShadow:
                           expandedStudent === s._id
-                            ? "0 4px 12px rgba(102, 126, 234, 0.3)"
+                            ? "0 4px 12px rgba(249, 115, 22, 0.3)"
                             : "none",
                       }}
                       onMouseOver={(e) => {
                         if (expandedStudent !== s._id) {
-                          e.target.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+                          e.target.style.background = "linear-gradient(135deg, #f97316 0%, #0d9488 100%)";
                           e.target.style.color = "white";
-                          e.target.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                          e.target.style.boxShadow = "0 4px 12px rgba(249, 115, 22, 0.3)";
                         }
                       }}
                       onMouseOut={(e) => {
                         if (expandedStudent !== s._id) {
-                          e.target.style.background = "rgba(102, 126, 234, 0.1)";
-                          e.target.style.color = "#667eea";
+                          e.target.style.background = "rgba(249, 115, 22, 0.1)";
+                          e.target.style.color = "#f97316";
                           e.target.style.boxShadow = "none";
                         }
                       }}
@@ -1118,7 +1118,7 @@ function CombinedLateView() {
                       style={{
                         marginTop: "2rem",
                         paddingTop: "2rem",
-                        borderTop: "2px solid rgba(102, 126, 234, 0.15)",
+                        borderTop: "2px solid rgba(249, 115, 22, 0.15)",
                         animation: "fadeIn 0.4s ease-out",
                       }}
                     >
@@ -1133,7 +1133,7 @@ function CombinedLateView() {
                                 background: "linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%)",
                                 borderRadius: "16px",
                                 border: "2px solid #c7d2fe",
-                                boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)",
+                                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.15)",
                               }}
                             >
                               <h4
@@ -1434,13 +1434,13 @@ function CombinedLateView() {
                 style={{
                   width: "70px",
                   height: "70px",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                   borderRadius: "18px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: "2.5rem",
-                  boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
+                  boxShadow: "0 10px 30px rgba(249, 115, 22, 0.4)",
                   animation: "float 3s ease-in-out infinite",
                 }}
               >
@@ -1449,7 +1449,7 @@ function CombinedLateView() {
               <div>
                 <h2
                   style={{
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -1509,7 +1509,7 @@ function CombinedLateView() {
                   onClick={handleExportReportRecords}
                   style={{
                     padding: "10px 18px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                     color: "#ffffff",
                     border: "none",
                     borderRadius: "12px",
@@ -1517,18 +1517,18 @@ function CombinedLateView() {
                     cursor: "pointer",
                     fontWeight: "600",
                     transition: "all 0.3s ease",
-                    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+                    boxShadow: "0 4px 15px rgba(249, 115, 22, 0.3)",
                     display: "flex",
                     alignItems: "center",
                     gap: "0.5rem",
                   }}
                   onMouseOver={(e) => {
                     e.target.style.transform = "translateY(-2px)";
-                    e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
+                    e.target.style.boxShadow = "0 8px 25px rgba(249, 115, 22, 0.4)";
                   }}
                   onMouseOut={(e) => {
                     e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(249, 115, 22, 0.3)";
                   }}
                 >
                   <FiFileText /> Export TXT
@@ -1540,10 +1540,10 @@ function CombinedLateView() {
           {/* Date Range Picker - Multiple Ranges */}
           <div
             style={{
-              background: "linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)",
+              background: "linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)",
               padding: "1.5rem",
               borderRadius: "16px",
-              border: "1px solid rgba(102, 126, 234, 0.2)",
+              border: "1px solid rgba(249, 115, 22, 0.2)",
               marginBottom: "2rem",
             }}
           >
@@ -1556,7 +1556,7 @@ function CombinedLateView() {
                 flexWrap: "wrap",
               }}
             >
-              <FiCalendar size={20} style={{ color: "#667eea" }} />
+              <FiCalendar size={20} style={{ color: "#f97316" }} />
               <label style={{ fontWeight: "600", color: "#495057" }}>
                 Filter by Custom Date Range(s) - <span style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: "400" }}>Alternative to Period buttons</span>
               </label>
@@ -1668,7 +1668,7 @@ function CombinedLateView() {
                     disabled={loading}
                     style={{
                       padding: "10px 20px",
-                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                       color: "white",
                       border: "none",
                       borderRadius: "8px",
@@ -1714,10 +1714,10 @@ function CombinedLateView() {
               <div
                 style={{
                   padding: "10px 20px",
-                  background: "rgba(102, 126, 234, 0.1)",
-                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  background: "rgba(249, 115, 22, 0.1)",
+                  border: "1px solid rgba(249, 115, 22, 0.3)",
                   borderRadius: "8px",
-                  color: "#667eea",
+                  color: "#f97316",
                   fontSize: "0.85rem",
                   fontWeight: "500",
                   textAlign: "center",
@@ -1751,9 +1751,9 @@ function CombinedLateView() {
                     borderRadius: "16px",
                     background:
                       selectedPeriod === period.key
-                        ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                        : "rgba(102, 126, 234, 0.08)",
-                    color: selectedPeriod === period.key ? "white" : "#667eea",
+                        ? "linear-gradient(135deg, #f97316 0%, #0d9488 100%)"
+                        : "rgba(249, 115, 22, 0.08)",
+                    color: selectedPeriod === period.key ? "white" : "#f97316",
                     cursor: useCustomDateRange ? "not-allowed" : "pointer",
                     fontSize: "0.95rem",
                     fontWeight: "600",
@@ -1762,7 +1762,7 @@ function CombinedLateView() {
                     minWidth: "150px",
                     boxShadow:
                       selectedPeriod === period.key
-                        ? "0 8px 20px rgba(102, 126, 234, 0.35)"
+                        ? "0 8px 20px rgba(249, 115, 22, 0.35)"
                         : "none",
                     display: "flex",
                     flexDirection: "column",
@@ -1771,13 +1771,13 @@ function CombinedLateView() {
                   }}
                   onMouseOver={(e) => {
                     if (selectedPeriod !== period.key && !useCustomDateRange) {
-                      e.target.style.background = "rgba(102, 126, 234, 0.15)";
+                      e.target.style.background = "rgba(249, 115, 22, 0.15)";
                       e.target.style.transform = "translateY(-2px)";
                     }
                   }}
                   onMouseOut={(e) => {
                     if (selectedPeriod !== period.key && !useCustomDateRange) {
-                      e.target.style.background = "rgba(102, 126, 234, 0.08)";
+                      e.target.style.background = "rgba(249, 115, 22, 0.08)";
                       e.target.style.transform = "translateY(0)";
                     }
                   }}
@@ -1924,7 +1924,7 @@ function CombinedLateView() {
             <div
               style={{
                 padding: "8px 16px",
-                background: "linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)",
+                background: "linear-gradient(135deg, #f0fdfa 0%, #e0e7ff 100%)",
                 borderRadius: "8px",
                 fontSize: "0.85rem",
                 fontWeight: "600",
@@ -2235,7 +2235,7 @@ function CombinedLateView() {
                       background:
                         currentPage === 1
                           ? "#e2e8f0"
-                          : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          : "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                       color: currentPage === 1 ? "#94a3b8" : "white",
                       border: "none",
                       borderRadius: "8px",
@@ -2271,7 +2271,7 @@ function CombinedLateView() {
                       background:
                         currentPage === totalPages
                           ? "#e2e8f0"
-                          : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          : "linear-gradient(135deg, #f97316 0%, #0d9488 100%)",
                       color: currentPage === totalPages ? "#94a3b8" : "white",
                       border: "none",
                       borderRadius: "8px",
@@ -2309,3 +2309,4 @@ function CombinedLateView() {
 }
 
 export default CombinedLateView;
+

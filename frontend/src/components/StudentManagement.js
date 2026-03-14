@@ -260,7 +260,7 @@ function StudentManagement() {
   // Access control check
   if (!hasAdminAccess) {
     return (
-      <div style={{ padding: "2rem", minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
+      <div style={{ padding: "2rem", minHeight: "100vh", background: "linear-gradient(135deg, #f97316 0%, #0d9488 100%)" }}>
         <div style={{ maxWidth: "600px", margin: "0 auto", marginTop: "10rem" }}>
           <div style={{
             background: "white",
@@ -270,7 +270,7 @@ function StudentManagement() {
             boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
           }}>
             <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>🔒</div>
-            <h2 style={{ color: "#667eea", marginBottom: "1rem" }}>Access Restricted</h2>
+            <h2 style={{ color: "#f97316", marginBottom: "1rem" }}>Access Restricted</h2>
             <p style={{ color: "#666", fontSize: "1.1rem", marginBottom: "0.5rem" }}>
               This page is only accessible to Admins and Super Admins.
             </p>
@@ -739,3 +739,4 @@ function StudentManagement() {
 }
 
 export default StudentManagement;
+

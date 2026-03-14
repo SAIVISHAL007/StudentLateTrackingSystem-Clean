@@ -155,13 +155,13 @@ function FacultyDirectory({ onNavigate }) {
  <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
- <FiUsers size={32} style={{ color: '#667eea' }} />
+ <FiUsers size={32} style={{ color: '#f97316' }} />
  <div>
- <h2 style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2.1rem', fontWeight: 800, margin: 0 }}>Faculty Directory</h2>
+ <h2 style={{ background: 'linear-gradient(135deg,#f97316,#0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2.1rem', fontWeight: 800, margin: 0 }}>Faculty Directory</h2>
  <p style={{ fontSize: '.85rem', color: '#64748b', fontWeight: 500, margin: '4px 0 0 0' }}>Manage and review existing faculty accounts.</p>
  </div>
  </div>
- <button onClick={() => setShowCreate(!showCreate)} style={{ padding: '12px 20px', background: 'linear-gradient(135deg,#667eea,#764ba2)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)', display: 'flex', alignItems: 'center', gap: '8px' }}><FiPlus size={18} /> New Faculty</button>
+ <button onClick={() => setShowCreate(!showCreate)} style={{ padding: '12px 20px', background: 'linear-gradient(135deg,#f97316,#0d9488)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 20px rgba(249,115,22,0.35)', display: 'flex', alignItems: 'center', gap: '8px' }}><FiPlus size={18} /> New Faculty</button>
  </div>
 
  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -205,7 +205,7 @@ function FacultyDirectory({ onNavigate }) {
  {selected && (
  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '1rem' }}>
  <div style={{ width: '100%', maxWidth: '520px', background: 'white', padding: '2rem', borderRadius: '20px', boxShadow: '0 20px 50px rgba(0,0,0,0.35)', animation: 'scaleIn .3s ease-out', display: 'flex', flexDirection: 'column', gap: '1.1rem', maxHeight: '90vh', overflowY: 'auto' }}>
- <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg,#667eea,#764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}> Edit Faculty</h3>
+ <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg,#f97316,#0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}> Edit Faculty</h3>
  <div style={{ fontSize: '.7rem', color: '#64748b', wordBreak: 'break-all' }}>Editing: {selected.email}</div>
  {selected.plaintextPassword && (
  <div style={{ background: '#fef3c7', border: '2px solid #fbbf24', padding: '10px 14px', borderRadius: '10px', fontSize: '.7rem', color: '#92400e', fontWeight: 600 }}>
@@ -270,7 +270,7 @@ function FacultyDirectory({ onNavigate }) {
  {showCreate && (
  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '1rem' }} onClick={() => setShowCreate(false)}>
  <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '560px', background: 'white', padding: '2rem', borderRadius: '20px', boxShadow: '0 20px 50px rgba(0,0,0,0.35)', animation: 'scaleIn .3s ease-out', maxHeight: '90vh', overflowY: 'auto' }}>
- <h3 style={{ margin: '0 0 .5rem 0', fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg,#667eea,#764ba2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Register New Faculty</h3>
+ <h3 style={{ margin: '0 0 .5rem 0', fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg,#f97316,#0d9488)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Register New Faculty</h3>
  <p style={{ fontSize: '.8rem', color: '#64748b', marginBottom: '1.5rem' }}>Create a new faculty account. Only admins can perform this action.</p>
 
  <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
@@ -312,7 +312,7 @@ function FacultyDirectory({ onNavigate }) {
 
  <div style={{ display: 'flex', gap: '.75rem', marginTop: '.5rem' }}>
  <button type='button' onClick={() => setShowCreate(false)} style={{ flex: 1, padding: '12px 16px', background: '#64748b', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
- <button type='submit' disabled={registering} style={{ flex: 1, padding: '12px 16px', background: registering? '#94a3b8':'linear-gradient(135deg,#667eea,#764ba2)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: registering? 'not-allowed':'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)' }}>{registering? 'Creating...' : 'Create Account'}</button>
+ <button type='submit' disabled={registering} style={{ flex: 1, padding: '12px 16px', background: registering? '#94a3b8':'linear-gradient(135deg,#f97316,#0d9488)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: registering? 'not-allowed':'pointer', boxShadow: '0 6px 20px rgba(249,115,22,0.35)' }}>{registering? 'Creating...' : 'Create Account'}</button>
  </div>
  </form>
  </div>
@@ -323,3 +323,4 @@ function FacultyDirectory({ onNavigate }) {
 }
 
 export default FacultyDirectory;
+
