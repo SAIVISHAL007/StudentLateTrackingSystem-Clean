@@ -13,7 +13,6 @@ import Login from "./components/Login";
 import FacultyDirectory from "./components/FacultyDirectory";
 import StudentPortal from "./components/StudentPortal";
 import { isAuthenticated } from "./utils/auth";
-import { useDarkMode } from "./context/DarkModeContext";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { flushQueue, getQueue } from "./utils/offlineQueue";
 import API from "./services/api";
@@ -35,9 +34,6 @@ function App() {
     if (isMobile) setSidebarCollapsed(true);
     else setSidebarCollapsed(false);
   }, [isMobile]);
-
-  // eslint-disable-next-line no-unused-vars
-  const { isDarkMode } = useDarkMode();
 
   // PERFORMANCE: useCallback for stable function reference
   const handlePageChange = useCallback((pageId) => {

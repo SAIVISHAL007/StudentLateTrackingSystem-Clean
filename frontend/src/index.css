@@ -124,6 +124,60 @@ input::placeholder, textarea::placeholder { color: #9ca3af; }
   to { opacity: 1; transform: translateX(0); }
 }
 
+/* ===== APPLE-STYLE FLUID ANIMATIONS ===== */
+@keyframes appleSlideUp {
+  0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes appleFade {
+  0% { opacity: 0; filter: blur(4px); }
+  100% { opacity: 1; filter: blur(0); }
+}
+
+.apple-slide-up {
+  animation: appleSlideUp 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  will-change: transform, opacity;
+}
+
+@media (max-width: 768px) {
+  @keyframes appleSlideUp {
+    0% { opacity: 0; transform: translateY(15px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-slide-up, .apple-fade {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.apple-fade {
+  animation: appleFade 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  will-change: filter, opacity;
+}
+
+.apple-card-hover {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .apple-card-hover:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.06), 0 6px 14px rgba(0,0,0,0.04);
+  }
+}
+
+.apple-stagger-1 { animation-delay: 0.05s; }
+.apple-stagger-2 { animation-delay: 0.1s; }
+.apple-stagger-3 { animation-delay: 0.15s; }
+.apple-stagger-4 { animation-delay: 0.2s; }
+.apple-stagger-5 { animation-delay: 0.25s; }
+
 .fade-in { animation: fadeIn 0.4s ease-out; }
 .slide-in-left { animation: slideInLeft 0.4s ease-out; }
 .slide-in-right { animation: slideInRight 0.4s ease-out; }
@@ -174,29 +228,6 @@ input::placeholder, textarea::placeholder { color: #9ca3af; }
 .hover-lift:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-}
-
-/* Dark mode toggle — light version */
-.dark-mode-toggle {
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #f97316;
-  padding: 9px 11px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.22s ease;
-  min-width: 42px;
-  min-height: 42px;
-}
-
-.dark-mode-toggle:hover {
-  background: #ffedd5;
-  border-color: #f97316;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(249,115,22,0.2);
 }
 
 /* Utility */

@@ -172,7 +172,7 @@ function PrefetchedStudentForm() {
       margin: "0 auto"
     }}>
       {/* BETA Badge */}
-      <div style={{
+      <div className="apple-slide-up apple-stagger-1 apple-card-hover" style={{
         display: "flex",
         alignItems: "center",
         gap: "1rem",
@@ -205,7 +205,7 @@ function PrefetchedStudentForm() {
       </div>
 
       {/* Filter Section */}
-      <div style={{
+      <div className="apple-slide-up apple-stagger-2" style={{
         display: "grid",
         gridTemplateColumns: window.innerWidth <= 768 ? "1fr" : "repeat(3, 1fr)",
         gap: "1.5rem",
@@ -288,7 +288,7 @@ function PrefetchedStudentForm() {
       </div>
 
       {/* Search Bar */}
-      <div style={{ marginBottom: "1.5rem" }}>
+      <div className="apple-slide-up apple-stagger-3" style={{ marginBottom: "1.5rem" }}>
         <label style={{ display: "flex", marginBottom: "0.5rem", fontWeight: "600", alignItems: "center", gap: "0.5rem" }}>
           <FiSearch size={16} /> Search Students
         </label>
@@ -320,11 +320,11 @@ function PrefetchedStudentForm() {
 
       {/* Students List */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: "2rem" }}>
+        <div className="apple-fade" style={{ textAlign: "center", padding: "2rem" }}>
           <p>Loading students...</p>
         </div>
       ) : students.length > 0 ? (
-        <div style={{
+        <div className="apple-slide-up apple-stagger-4" style={{
           display: "grid",
           gridTemplateColumns: window.innerWidth <= 480
             ? "1fr"
@@ -347,12 +347,12 @@ function PrefetchedStudentForm() {
               <div
                 key={student._id}
                 onClick={() => handleStudentSelect(student)}
+                className="apple-card-hover"
                 style={{
                   padding: "1.5rem",
                   border: "2px solid #e5e7eb",
                   borderRadius: "0.75rem",
                   cursor: "pointer",
-                  transition: "all 0.3s",
                   backgroundColor: selectedStudent?._id === student._id ? "#fff7ed" : "#ffffff",
                   borderColor: selectedStudent?._id === student._id ? "#f97316" : "#e5e7eb",
                   boxShadow: selectedStudent?._id === student._id

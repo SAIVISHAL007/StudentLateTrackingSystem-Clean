@@ -284,9 +284,9 @@ function StudentManagement() {
   }
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="apple-slide-up" style={{ maxWidth: "1200px", margin: "0 auto" }}>
       {/* Header */}
-      <div className="page-header">
+      <div className="page-header apple-fade apple-stagger-1">
         <div className="page-header-icon">
           <FiUsers size={28} />
         </div>
@@ -299,7 +299,7 @@ function StudentManagement() {
       </div>
 
       {/* Search Bar */}
-      <div style={{ marginBottom: "2rem" }}>
+      <div className="apple-slide-up apple-stagger-2" style={{ marginBottom: "2rem" }}>
         <div style={{ position: "relative", maxWidth: "500px" }}>
           <FiSearch 
             style={{ 
@@ -365,7 +365,7 @@ function StudentManagement() {
       </div>
 
       {/* Action Buttons */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem", flexWrap: "wrap", alignItems: "center" }}>
+      <div className="apple-slide-up apple-stagger-3" style={{ display: "flex", gap: "1rem", marginBottom: "2rem", flexWrap: "wrap", alignItems: "center" }}>
         <button
           onClick={() => {
             if (showAddForm) {
@@ -401,7 +401,7 @@ function StudentManagement() {
 
       {/* Add/Edit Student Form */}
       {showAddForm && (
-        <form onSubmit={handleAddStudent} className="pro-card" style={{
+        <form onSubmit={handleAddStudent} className="pro-card apple-slide-up apple-stagger-4" style={{
           padding: "2rem",
           marginBottom: "2rem",
           border: editingStudent ? "3px solid #007bff" : "1px solid #dee2e6",
@@ -607,7 +607,7 @@ function StudentManagement() {
           </p>
         </div>
       ) : (
-        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div className="apple-slide-up apple-stagger-4" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <table className="pro-table" style={{ minWidth: "100%", width: "max-content" }}>
             <thead>
               <tr style={{ background: "#f8f9fa" }}>

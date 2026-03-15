@@ -17,7 +17,9 @@ const configuredBase = getBackendURL();
 
 const API = axios.create({
   baseURL: configuredBase,
-  timeout: 10000 // 10 second timeout
+  // 20 s gives enough headroom for Vercel cold starts (3-5 s) + MongoDB
+  // connection warm-up + query execution without false timeouts.
+  timeout: 20000
 });
 
 // Add JWT token to all requests (skip only public auth endpoints: login/register)

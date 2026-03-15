@@ -263,8 +263,11 @@ const getEarlyWarnings = (students) => {
  */
 const generateInsights = async () => {
   try {
-    // Fetch all students with late logs
-    const students = await Student.find({}).lean();
+    // Fetch only the fields needed for risk scoring and pattern analysis.
+    // Omitting fineHistory, barcodeId, fineHistory etc. cuts document size significantly.
+    const students = await Student.find({})
+      .select('rollNo name branch year semester lateDays status excuseDaysUsed lateLogs')
+      .lean();
     
     // Predict risk scores for students with late history
     const predictions = [];

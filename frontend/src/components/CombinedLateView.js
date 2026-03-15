@@ -462,6 +462,7 @@ function CombinedLateView() {
   // ============ RENDER ============
   return (
     <div
+      className="apple-slide-up"
       style={{
         backgroundColor: "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(20px)",
@@ -469,11 +470,11 @@ function CombinedLateView() {
         borderRadius: "24px",
         boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
         border: "1px solid rgba(255, 255, 255, 0.5)",
-        animation: "scaleIn 0.5s ease-out",
       }}
     >
       {/* ============ TAB NAVIGATION ============ */}
       <div
+        className="apple-fade apple-stagger-1"
         style={{
           display: "flex",
           gap: "0.5rem",
@@ -547,7 +548,7 @@ function CombinedLateView() {
 
       {/* ============ TAB CONTENT: TODAY ============ */}
       {activeTab === "today" && (
-        <div>
+        <div className="apple-fade apple-stagger-2">
           {/* Header */}
           <div
             style={{
@@ -664,7 +665,6 @@ function CombinedLateView() {
                 marginBottom: "2rem",
                 flexWrap: "wrap",
                 alignItems: "center",
-                animation: "fadeIn 0.6s ease-out",
               }}
             >
               <div style={{ flex: 1, minWidth: "250px" }}>

@@ -1381,23 +1381,33 @@ router.get("/health", checkDbConnection, async (req, res) => {
 // Get system statistics  
 router.get("/system-stats", checkDbConnection, async (req, res) => {
   try {
-    const totalStudents = await Student.countDocuments();
-    const studentsWithLateRecords = await Student.countDocuments({ lateDays: { $gt: 0 } });
-    const studentsWithExcuses = await Student.countDocuments({ status: 'excused' });
-    const studentsBeingFined = await Student.countDocuments({ status: 'fined' });
-    const studentsWithAlerts = await Student.countDocuments({ alertFaculty: true });
-    const totalFinesCollected = await Student.aggregate([
-      { $group: { _id: null, total: { $sum: "$fines" } } }
-    ]);
-
-    const yearDistribution = await Student.aggregate([
-      { $group: { _id: "$year", count: { $sum: 1 } } },
-      { $sort: { _id: 1 } }
-    ]);
-    
-    const branchDistribution = await Student.aggregate([
-      { $group: { _id: "$branch", count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
+    // PERFORMANCE: run all 8 queries in parallel instead of sequentially
+    const [
+      totalStudents,
+      studentsWithLateRecords,
+      studentsWithExcuses,
+      studentsBeingFined,
+      studentsWithAlerts,
+      totalFinesCollected,
+      yearDistribution,
+      branchDistribution
+    ] = await Promise.all([
+      Student.countDocuments(),
+      Student.countDocuments({ lateDays: { $gt: 0 } }),
+      Student.countDocuments({ status: 'excused' }),
+      Student.countDocuments({ status: 'fined' }),
+      Student.countDocuments({ alertFaculty: true }),
+      Student.aggregate([
+        { $group: { _id: null, total: { $sum: "$fines" } } }
+      ]),
+      Student.aggregate([
+        { $group: { _id: "$year", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      Student.aggregate([
+        { $group: { _id: "$branch", count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ])
     ]);
 
     res.json({
@@ -1562,32 +1572,27 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
   // Analytics - Leaderboard
   router.get("/analytics/leaderboard", checkDbConnection, async (req, res) => {
     try {
-      // Most Late Students (top 10)
-      // PERFORMANCE: Use indexed queries with limits
-      const mostLate = await Student.find({ lateDays: { $gt: 0 } })
-        .sort({ lateDays: -1 })
-        .limit(10)
-        .select('rollNo name year branch lateDays')
-        .lean();
-
-      // Least Late Students (top 10 with lowest late days, excluding 0)
-      const leastLate = await Student.find({ lateDays: { $gt: 0 } })
-        .sort({ lateDays: 1 })
-        .limit(10)
-        .select('rollNo name year branch lateDays')
-        .lean();
-
-      // PERFORMANCE OPTIMIZATION: Use aggregation pipeline for most improved
-      // ALGORITHM: Compare recent attendance (past 7 days) vs overall pattern
-      // Students are "improved" if they have few recent late days but higher total late days
-      // This identifies students changing their behavior positively
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const mostImproved = await Student.aggregate([
+
+      // PERFORMANCE: run all three queries in parallel
+      const [mostLate, leastLate, mostImproved] = await Promise.all([
+        Student.find({ lateDays: { $gt: 0 } })
+          .sort({ lateDays: -1 })
+          .limit(10)
+          .select('rollNo name year branch lateDays')
+          .lean(),
+
+        Student.find({ lateDays: { $gt: 0 } })
+          .sort({ lateDays: 1 })
+          .limit(10)
+          .select('rollNo name year branch lateDays')
+          .lean(),
+
+        Student.aggregate([
         // Only students with lates
         { $match: { lateDays: { $gt: 0 } } },
         // Add fields for recent and past month late counts
@@ -1644,10 +1649,12 @@ router.post('/bulk-remove-late-records', checkDbConnection, async (req, res) => 
             recentLates: 1
           } 
         }
-      ]);
+      ])
+      ]); // end Promise.all
 
-      // Add cache headers
-      res.set('Cache-Control', 'private, max-age=300'); // Cache for 5 minutes
+      // Cache for 5 minutes; stale-while-revalidate lets the browser serve the
+      // old value instantly while refreshing in the background.
+      res.set('Cache-Control', 'private, max-age=300, stale-while-revalidate=600');
 
       res.json({
         mostLate,
@@ -1779,11 +1786,17 @@ router.get("/filter", async (req, res) => {
     }
     
     // Filter students with dynamic query (including lateDays for frontend)
+    // Limit to 500 to prevent unbounded result sets on large deployments.
     const students = await Student.find(query)
     .select("rollNo name year semester branch section lateDays fines status")
     .sort({ branch: 1, rollNo: 1 })
+    .limit(500)
     .lean();
-    
+
+    // Cache for 30 s — student list changes infrequently and this endpoint
+    // is hit on every filter interaction.
+    res.set('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
+
     res.json({
       success: true,
       count: students.length,

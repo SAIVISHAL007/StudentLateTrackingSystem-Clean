@@ -152,7 +152,7 @@ function Analytics() {
       minHeight: "100vh"
     }}>
       {/* Header */}
-      <div style={{
+      <div className="apple-fade apple-stagger-1" style={{
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -212,7 +212,7 @@ function Analytics() {
       </div>
 
       {/* Today's Counter - Big Hero Card */}
-      <div style={{
+      <div className="apple-slide-up apple-stagger-2 apple-card-hover" style={{
         background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
         padding: "2.5rem 2rem",
         borderRadius: "24px",
@@ -222,7 +222,6 @@ function Analytics() {
         marginBottom: "2rem",
         position: "relative",
         overflow: "hidden",
-        animation: "pulse 3s ease-in-out infinite",
         width: "100%",
         boxSizing: "border-box"
       }}>
@@ -258,7 +257,7 @@ function Analytics() {
       </div>
 
       {/* Financial Analytics */}
-      <div style={{
+      <div className="apple-slide-up apple-stagger-3" style={{
         background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
         padding: "2rem",
         borderRadius: "20px",
@@ -372,7 +371,7 @@ function Analytics() {
 
       {/* Department Breakdown */}
       {departmentStats.length > 0 && (
-        <div style={{
+        <div className="apple-slide-up apple-stagger-4" style={{
           background: "linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)",
           padding: "2rem",
           borderRadius: "20px",
@@ -586,7 +585,7 @@ function Analytics() {
       )}
 
       {/* Leaderboards */}
-      <div style={{
+      <div className="apple-slide-up apple-stagger-5" style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
         gap: "2rem"

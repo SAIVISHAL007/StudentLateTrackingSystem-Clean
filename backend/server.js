@@ -86,36 +86,41 @@ app.use(sanitizeErrors);
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/studentLateTracking';
 
 // Serverless-friendly MongoDB connection
-let isConnecting = false;
+// connectionPromise is shared so concurrent cold-start requests all await the
+// same single connect() call rather than each returning immediately (race fix).
 let isConnected = false;
+let connectionPromise = null;
 
 const connectDB = async () => {
   if (isConnected) return;
-  if (isConnecting) return;
-  
-  isConnecting = true;
-  try {
-    await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      minPoolSize: 1,
-      maxIdleTimeMS: 30000,
-      retryWrites: true,
-      retryReads: true
-    });
+
+  // If a connection attempt is already in flight, wait for it instead of
+  // returning undefined (the previous isConnecting=true early-return bug).
+  if (connectionPromise) return connectionPromise;
+
+  connectionPromise = mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    maxPoolSize: 10,
+    minPoolSize: 1,
+    maxIdleTimeMS: 30000,
+    retryWrites: true,
+    retryReads: true
+  }).then(() => {
     isConnected = true;
-    isConnecting = false;
+    connectionPromise = null;
     console.log("[MongoDB] Connected successfully");
     console.log(`[Database] Connected to: ${mongoose.connection.name}`);
-  } catch (err) {
-    isConnecting = false;
+  }).catch(err => {
+    connectionPromise = null;
     console.error("[Database Error]", err);
     if (process.env.NODE_ENV !== 'production') {
       process.exit(1);
     }
     throw err;
-  }
+  });
+
+  return connectionPromise;
 };
 
 // Connect immediately for local development

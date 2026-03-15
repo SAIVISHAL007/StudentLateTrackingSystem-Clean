@@ -3,9 +3,6 @@ import { FiUser, FiClock, FiLogOut, FiMenu, FiShield, FiWifiOff } from 'react-ic
 import { getCurrentUser, logout, getUserDisplayName, getLoginDuration } from "../utils/auth";
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
-// eslint-disable-next-line no-unused-vars
-import { useDarkMode } from '../context/DarkModeContext';
-
 const NavbarComponent = ({ onLogout }) => {
   const user = getCurrentUser();
   const [isOnline, setIsOnline] = useState(navigator.onLine);

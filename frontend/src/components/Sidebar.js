@@ -132,9 +132,9 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
     }
   }, [isMobileProp, onPageChange]);
 
-  /* ========== LIGHT WARM SIDEBAR ========== */
+  /* ========== ELEGANT LIGHT SIDEBAR ========== */
   const sidebarStyle = {
-    background: "linear-gradient(180deg, #fefcfa 0%, #faf7f2 100%)",
+    background: "linear-gradient(180deg, #f1f5f8 0%, #e2e8f0 100%)",
     display: "flex",
     flexDirection: "column",
     height: "100vh",
@@ -143,8 +143,8 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
     top: 0,
     zIndex: 1000,
     overflow: "hidden",
-    boxShadow: "3px 0 20px rgba(0,0,0,0.06), 1px 0 0 #ebe7e0",
-    borderRight: "1px solid #e8e3db",
+    boxShadow: "3px 0 20px rgba(0,0,0,0.05), 1px 0 0 #cbd5e1",
+    borderRight: "1px solid #cbd5e1",
     ...(isMobileProp ? {
       width: "270px",
       maxWidth: "85vw",
@@ -170,8 +170,8 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
         gap: isOpen ? "0.875rem" : "0",
         justifyContent: isOpen ? "flex-start" : "center",
         padding: isOpen ? "1.25rem 1.125rem 1.125rem" : "1.25rem 0.75rem 1.125rem",
-        borderBottom: "1px solid #ebe7e0",
-        background: "rgba(249,115,22,0.03)",
+        borderBottom: "1px solid #cbd5e1",
+        background: "rgba(15, 23, 42, 0.02)",
         flexShrink: 0,
         overflow: "hidden",
         transition: "all 0.3s ease",
@@ -273,8 +273,8 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.background = "#f5f2ed";
-                  e.currentTarget.style.borderColor = "#e8e3db";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.5)";
+                  e.currentTarget.style.borderColor = "#cbd5e1";
                   e.currentTarget.style.transform = "translateX(3px)";
                 }
               }}
@@ -366,7 +366,7 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
           padding: "0.625rem",
           display: "flex",
           justifyContent: isOpen ? "flex-end" : "center",
-          borderTop: "1px solid #ebe7e0"
+          borderTop: "1px solid #cbd5e1"
         }}>
           <button
             onClick={toggleSidebar}
@@ -376,23 +376,23 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "#f5f2ed",
-              border: "1px solid #e8e3db",
+              background: "rgba(255, 255, 255, 0.5)",
+              border: "1px solid #cbd5e1",
               borderRadius: "9px",
-              color: "#8c8578",
+              color: "#64748b",
               cursor: "pointer",
               transition: "all 0.2s ease"
             }}
             title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#fff7ed";
-              e.currentTarget.style.borderColor = "#fed7aa";
-              e.currentTarget.style.color = "#f97316";
+              e.currentTarget.style.background = "#ffffff";
+              e.currentTarget.style.borderColor = "#94a3b8";
+              e.currentTarget.style.color = "#0f172a";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#f5f2ed";
-              e.currentTarget.style.borderColor = "#e8e3db";
-              e.currentTarget.style.color = "#8c8578";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.5)";
+              e.currentTarget.style.borderColor = "#cbd5e1";
+              e.currentTarget.style.color = "#64748b";
             }}
           >
             {isOpen ? <FiChevronLeft size={15} /> : <FiChevronRight size={15} />}
@@ -403,9 +403,9 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
       {/* ===== FOOTER ===== */}
       <div style={{
         padding: "0.75rem 0.875rem",
-        borderTop: "1px solid #ebe7e0",
+        borderTop: "1px solid #cbd5e1",
         textAlign: "center",
-        background: "rgba(249,115,22,0.02)",
+        background: "rgba(15, 23, 42, 0.02)",
         flexShrink: 0
       }}>
         {isOpen ? (
