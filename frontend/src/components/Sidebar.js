@@ -420,7 +420,7 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
               letterSpacing: "0.6px"
             }}>© 2026 ANITS</p>
             <p style={{ margin: 0, color: "#b0a99f", fontSize: "0.62rem", fontWeight: "500" }}>
-              v3.1.0 · Production
+              v4.0.0-beta.0
             </p>
           </div>
         ) : (

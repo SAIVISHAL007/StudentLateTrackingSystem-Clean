@@ -1,18 +1,26 @@
 # Student Late Tracking System
 
-> A comprehensive, production-ready full-stack web application for educational institutions to track student attendance, automate fine calculations, generate real-time analytics, and manage role-based access control with enterprise-grade security.
+> A full-stack role-based workflow platform for late attendance operations in educational institutions.
 
 Recent updates: server-side search implementation, graduation export system, student master data validation enhancements, and critical bug fixes.
 
 **Latest Version: v3.1.0** | [Release Notes](#-whats-new-in-v310) | [Changelog](#-changelog)
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://your-frontend-app.vercel.app/)
-[![Backend API](https://img.shields.io/badge/API-live-blue?style=for-the-badge)](https://your-backend-api.vercel.app)
-[![Version](https://img.shields.io/badge/version-3.1.0-orange?style=for-the-badge)](https://github.com/yourusername/StudentLateTrackingSystem/releases/tag/v3.1.0)
+[![Live Demo](https://img.shields.io/badge/demo-configure%20your%20URL-success?style=for-the-badge)](#deployment)
+[![Backend API](https://img.shields.io/badge/API-configure%20your%20URL-blue?style=for-the-badge)](#deployment)
+[![Version](https://img.shields.io/badge/version-3.1.0-orange?style=for-the-badge)](https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean/releases)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/cloud/atlas)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-**🔗 Live Application:** Deploy to your own Vercel account (see [Deployment](#deployment) section)
+**Live application:** Deploy to your own Vercel account (see [Deployment](#deployment) section).
+
+## Why This Project Matters
+
+- Built for real institutional late-entry workflow, not a demo-only CRUD app
+- MERN stack with JWT auth and role hierarchy (Faculty, Admin, SuperAdmin)
+- 20+ APIs with server-side pagination/search and analytics endpoints
+- Aggregation pipelines and targeted MongoDB indexing for performance
+- Deployed on Vercel with MongoDB Atlas
 
 ---
 
@@ -35,7 +43,7 @@ Recent updates: server-side search implementation, graduation export system, stu
 
 ##  Overview
 
-The **Student Late Tracking System** is a modern, enterprise-grade solution designed to digitize and automate attendance management for educational institutions. Built with the MERN stack and deployed on Vercel with MongoDB Atlas, this system handles real-time attendance tracking, automated fine calculations, role-based access control, comprehensive analytics, and provides secure, scalable infrastructure for multiple user roles.
+The **Student Late Tracking System** digitizes attendance and late-entry operations for educational institutions. Built with the MERN stack and deployed on Vercel with MongoDB Atlas, it combines real-time late marking, fine automation, analytics, and role-based workflows for multiple user roles.
 
 ###  Problem Statement
 Traditional manual attendance tracking systems are:
@@ -55,109 +63,21 @@ This system provides:
 - **Offline-first architecture** with service worker support and automatic sync
 - **Comprehensive audit logging** for accountability and compliance
 - **Bulk operations** for semester promotions and record management
-- **Professional UI** with responsive design and modern glassmorphism effects
+- **Responsive interface** for desktop and mobile usage
 
 ---
 
 ## 🎉 What's New in v3.1.0
 
-**Released: February 22, 2026 - Bug Fixes & Search Optimization**
+**Released: February 22, 2026 - Bug Fixes and Search Optimization**
 
-### 🐛 Critical Bug Fixes
+- Reintroduced `/students/search` endpoint and restored student profile lookup flow.
+- Fixed graduation export flow to preserve data before status update and improved export safety checks.
+- Added register-only path (`isLate: false`) so new student creation does not create late entries.
+- Moved student listing search from client-side filtering to server-side query with pagination support.
+- Added year-semester validation and controlled semester options in Student Master Data.
 
-- **Student Profile Search Fixed** 🔍
-  - Re-added `/students/search` endpoint (accidentally removed during cleanup)
-  - Search by roll number or name with limit of 20 results
-  - Excludes graduated students from search results
-  - StudentProfile component now functional again
-
-- **Graduation Export System Improved** 🎓
-  - Fixed data preservation: student data now fetched BEFORE status update
-  - Added comprehensive console logging (📊 Found, 💾 Saving, ✅ Success, 🗑️ Deleting)
-  - Export/deletion wrapped in try-catch with error handling
-  - Verification check: warns if deletedCount doesn't match expected count
-  - Creates `backend/exports/` directory if missing
-  - CSV format: 12 fields including late history, fines, graduation date
-  - Files saved as: `graduated_students_YYYY-MM-DDTHH-MM-SS.csv`
-
-- **New Student Registration Fixed** ✅
-  - Added `isLate: false` flag support to prevent marking new students late on entry
-  - Register-only mode when `isLate === false`
-  - Returns `registered: true` in response with success message
-  - Students can now be added to master data without late marking
-
-### ⚡ Search & Pagination Overhaul
-
-- **Server-Side Search Implementation** 🚀
-  - **Problem Fixed**: Search results appearing on wrong pages (empty pages 1-4, results on page 5)
-  - Moved from client-side filtering to server-side MongoDB queries
-  - Search parameter added to `/students/all` endpoint
-  - MongoDB `$or` query searches across 4 fields: rollNo, name, branch, section
-  - Case-insensitive regex matching for better UX
-  - Automatically resets to page 1 when search query changes
-  - Returns `searchQuery` in response for UI feedback
-
-- **Visual Search Enhancements** 🎨
-  - Search icon turns blue when actively searching
-  - Input border highlights (2px blue) during active search
-  - Shows "🔍 Searching for: 'query'" indicator below search box
-  - Clear button (X) properly resets pagination to page 1
-  - Pagination footer displays: `Showing X of Y students (search: "query")`
-  - Count display: "Found: X students" vs "Total: X students"
-
-### 📊 Student Master Data Enhancements
-
-- **Year-Semester Validation** ✓
-  - Prevents invalid semester-year combinations (e.g., Year 1 with Semester 8)
-  - Validation logic: `Year 1 → Sem 1-2`, `Year 2 → Sem 3-4`, `Year 3 → Sem 5-6`, `Year 4 → Sem 7-8`
-  - Error messages: "Invalid semester for Year X. Must be between Y and Z."
-  - Dynamic semester dropdown shows only valid semesters for selected year
-  - Helper text: "Year 1: Sem 1-2" for better UX
-
-- **Smart Semester Auto-Selection** 🧠
-  - Auto-adjusts semester when year changes
-  - `Year 1 → Semester 1`, `Year 2 → Semester 3`, `Year 3 → Semester 5`, `Year 4 → Semester 7`
-  - Prevents manual selection errors
-  - Smooth user experience with intelligent defaults
-
-- **Visual Edit Mode Indicators** 👁️
-  - Blue background and border when editing existing student
-  - Warning banner shows: "⚠️ Editing student: [ROLLNO]"
-  - Roll number change warning displayed prominently
-  - Clear distinction between "Add New" and "Edit" modes
-
-- **Section Input Improvement** 📝
-  - Changed from text input to dropdown (values: A-F)
-  - Prevents typos and invalid section entries
-  - Consistent data format in database
-
-### 🛠️ Technical Improvements
-
-- **Frontend Code Quality**
-  - Fixed `'sections' is not defined` ESLint warning
-  - Added `sections` constant: `["A", "B", "C", "D", "E", "F"]`
-  - Removed duplicate filtering logic (now handled server-side)
-  - Simplified `sortedStudents` memoization (only sorting, no filtering)
-  - Added `searchQuery` to `fetchAllStudents` dependencies
-
-- **Backend Enhancements**
-  - Search query sanitization (trim whitespace)
-  - Regex options set to case-insensitive (`options: 'i'`)
-  - Returns both `students` and `totalCount` for accurate pagination
-  - Maintains backward compatibility (search is optional parameter)
-
-### 📋 Files Modified (3 files)
-- `backend/routes/studentRoutes.js` - Search endpoint + graduation logic + mark-late flag
-- `frontend/src/components/StudentManagement.js` - Server-side search + validation + UI
-- `backend/utils/pdfGenerator.js` - CSV export function
-
-### 🎯 User-Requested Features Implemented
-- ✅ "When 4th years get promoted, export their data and remove from system" → Graduation CSV export
-- ✅ "Student profile search not returning data" → Re-added search endpoint
-- ✅ "Graduation logic didn't work" → Fixed with improved logging
-- ✅ "New students marked late during entry" → Added isLate flag
-- ✅ "Check Student Master Data logic" → Validation + smart defaults
-- ✅ "Search shows empty pages" → Server-side search implementation
+For full implementation details, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -484,7 +404,7 @@ backend/
 <img src="./screenshots/login_page.png" alt="Login Page" width="900"/>
 
 **Features:**
-- Clean and professional login interface
+- Clean login interface
 - Faculty authentication with email and password
 - Role-based access control (Admin, Faculty, Student)
 - Secure JWT token-based authentication
@@ -498,7 +418,7 @@ backend/
 ---
 
 ### 📝 Mark Student Late (Faculty & Admin)
-<img src="./screenshots/mark student late (2).png" alt="Mark Student Late - Prefetched Form" width="900"/>
+<img src="./screenshots/mark student late.png" alt="Mark Student Late - Prefetched Form" width="900"/>
 
 **Features:**
 - Enhanced student selection with cascading filters (Year → Branch → Section)
@@ -525,7 +445,7 @@ backend/
 - Column header sorting capabilities
 - Excel export button (green) and TXT table export (purple)
 - "View Details" button for individual student profiles
-- Professional card-based layout with status badges
+- Card-based layout with status badges
 
 ---
 
@@ -554,7 +474,7 @@ backend/
 
 **Features:**
 - Search students by roll number or name (e.g., A23120552001 or Adari Maheswari)
-- Professional profile card display with:
+- Profile card display with:
   - Student name, year, semester, branch, section
   - Faculty advisor information
   - Visual status badges (color-coded)
@@ -574,7 +494,7 @@ backend/
 <img src="./screenshots/AI insights.png" alt="AI Insights - Predictive Analytics" width="900"/>
 
 **Features:**
-- Machine Learning powered student risk assessment
+- Heuristic and rule-based student risk assessment
 - Three interactive analysis tabs:
   1. **Risk Predictions**: Students categorized as High/Medium/Low risk
      - Risk scoring on 0-100 scale
@@ -623,7 +543,7 @@ backend/
 **Features:**
 - Complete faculty listing with 9+ faculty cards displayed
 - Faculty cards showing:
-  - Faculty name with professional typography
+  - Faculty name and role details
   - Email address (clickable)
   - Branch assignment (CSM)
   - Role badge (Faculty, Admin, SuperAdmin)
@@ -677,7 +597,7 @@ backend/
 
 #### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/yourusername/StudentLateTrackingSystem.git
+git clone https://github.com/SAIVISHAL007/StudentLateTrackingSystem-Clean.git
 cd StudentLateTrackingSystem-Clean
 ```
 
@@ -857,7 +777,7 @@ npm start
 ## 📡 API Documentation
 
 ### Base URL
-- **Production:** `https://your-backend-api.vercel.app/api`
+- **Production:** Set via deployment environment (for example: `https://your-backend.vercel.app/api`)
 - **Local Development:** `http://localhost:5000/api`
 
 ### Authentication Endpoints
@@ -1053,42 +973,7 @@ Set environment variables:
 
 ## 📋 Changelog
 
-### Version 3.1.0 (February 22, 2026)
-**Production Release: Bug Fixes & Search Optimization**
-
-**Critical Bug Fixes:**
-- ✅ Re-added `/students/search` endpoint (accidentally removed during cleanup)
-- ✅ Fixed graduation export system with improved data preservation and logging
-- ✅ Fixed new student registration with `isLate` flag support
-
-**Search & Pagination Overhaul:**
-- ✅ Moved from client-side to server-side search implementation
-- ✅ Fixed empty pages 1-4 issue in search results
-- ✅ MongoDB `$or` query searches across 4 fields: rollNo, name, branch, section
-- ✅ Auto-reset pagination to page 1 when search query changes
-- ✅ Search icon visual indicators (blue highlighting during active search)
-
-**Student Master Data Enhancements:**
-- ✅ Year-Semester validation (prevents invalid combinations)
-- ✅ Smart semester auto-selection based on year
-- ✅ Visual edit mode indicators with warning banners
-- ✅ Section input changed from text to dropdown
-
-**Features:**
-- [x] Full student late tracking system
-- [x] Role-based access control (Faculty, Admin, SuperAdmin)
-- [x] Real-time analytics dashboard
-- [x] AI-powered risk predictions
-- [x] CSV bulk import tool
-- [x] Graduation export with auto-deletion
-- [x] Offline-first architecture with Service Worker
-- [x] Dark mode support
-- [x] Mobile responsiveness
-- [x] Comprehensive audit logging
-- [x] Academic year and semester management
-- [x] Fine calculation and management
-
-**Deployment Status:** ✅ Production-Ready (v3.1.0)
+Detailed release history is maintained in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

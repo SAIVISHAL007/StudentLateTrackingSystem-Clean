@@ -210,18 +210,18 @@ function Login({ onLogin }) {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} autoComplete="off" className="login-form">
+        <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label className="form-label">
               Email Address
             </label>
             <input
-              type="text"
+              type="email"
               name="email"
               value={credentials.email}
               onChange={handleInputChange}
               placeholder="faculty@anits.edu.in"
-              autoComplete="off"
+              autoComplete="email"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck="false"
@@ -239,7 +239,7 @@ function Login({ onLogin }) {
               value={credentials.password}
               onChange={handleInputChange}
               placeholder="Enter your password"
-              autoComplete="new-password"
+              autoComplete="current-password"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck="false"
