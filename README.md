@@ -1,4 +1,4 @@
-Student Late Tracking System
+#Student Late Tracking System
 
 > A comprehensive, production-ready full-stack web application for educational institutions to track student attendance, automate fine calculations, generate real-time analytics, and manage role-based access control with enterprise-grade security.
 
