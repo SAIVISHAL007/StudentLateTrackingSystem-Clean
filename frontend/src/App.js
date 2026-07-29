@@ -203,7 +203,7 @@ function App() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: "#f5f5f0",
+      background: "linear-gradient(180deg, #f4f0e8 0%, #efeadf 100%)",
       display: "flex",
       position: "relative"
     }}>
@@ -237,7 +237,7 @@ function App() {
         overflow: "visible",
         display: "flex",
         flexDirection: "column",
-        background: "#f5f5f0"
+        background: "transparent"
       }}>
         <Navbar onLogout={handleLogout} />
         

@@ -38,10 +38,10 @@ const NavbarComponent = ({ onLogout }) => {
 
   return (
     <nav className="professional-navbar" style={{
-      background: "rgba(255, 255, 255, 0.98)",
+      background: "rgba(252, 250, 245, 0.96)",
       backdropFilter: "blur(16px)",
       WebkitBackdropFilter: "blur(16px)",
-      border: "1px solid #e8e5df",
+      border: "1px solid #e7e1d7",
       borderRadius: isMobile ? "14px" : "16px",
       padding: isMobile ? "0.375rem 0.75rem" : "0.5rem 1.25rem",
       minHeight: isMobile ? "68px" : "88px",
@@ -62,8 +62,8 @@ const NavbarComponent = ({ onLogout }) => {
             <button
               onClick={toggleSidebar}
               style={{
-                background: "#fff7ed",
-                border: "1px solid #fed7aa",
+                background: "#faf3e8",
+                border: "1px solid #f2d6b8",
                 color: "#f97316",
                 cursor: "pointer",
                 padding: "0.5rem",
@@ -75,10 +75,10 @@ const NavbarComponent = ({ onLogout }) => {
                 borderRadius: "10px",
                 transition: "all 0.2s ease"
               }}
-              onMouseDown={(e) => { e.currentTarget.style.background = "#ffedd5"; }}
-              onMouseUp={(e) => { e.currentTarget.style.background = "#fff7ed"; }}
-              onTouchStart={(e) => { e.currentTarget.style.background = "#ffedd5"; }}
-              onTouchEnd={(e) => { e.currentTarget.style.background = "#fff7ed"; }}
+              onMouseDown={(e) => { e.currentTarget.style.background = "#ffecd2"; }}
+              onMouseUp={(e) => { e.currentTarget.style.background = "#faf3e8"; }}
+              onTouchStart={(e) => { e.currentTarget.style.background = "#ffecd2"; }}
+              onTouchEnd={(e) => { e.currentTarget.style.background = "#faf3e8"; }}
               title="Toggle sidebar"
             >
               <FiMenu size={21} />
@@ -161,9 +161,9 @@ const NavbarComponent = ({ onLogout }) => {
                   flexDirection: "column",
                   gap: "0.15rem",
                   padding: "0.5rem 0.9rem",
-                  background: "linear-gradient(145deg, #fafaf8, #fff7ed)",
+                  background: "linear-gradient(145deg, #fbf8f1, #f8f0e4)",
                   borderRadius: "11px",
-                  border: "1px solid #ebe9e4",
+                  border: "1px solid #e7e1d7",
                   minWidth: 0,
                   boxShadow: "0 1px 4px rgba(0,0,0,0.04)"
                 }}>
@@ -220,9 +220,9 @@ const NavbarComponent = ({ onLogout }) => {
               {isMobile && (
                 <div style={{
                   padding: "0.4rem 0.55rem",
-                  background: "#fff7ed",
+                  background: "#faf3e8",
                   borderRadius: "9px",
-                  border: "1px solid #fed7aa",
+                  border: "1px solid #f2d6b8",
                   display: "flex",
                   alignItems: "center",
                   gap: "0.3rem"

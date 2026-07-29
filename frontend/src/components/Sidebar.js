@@ -134,7 +134,7 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
 
   /* ========== ELEGANT LIGHT SIDEBAR ========== */
   const sidebarStyle = {
-    background: "linear-gradient(180deg, #f1f5f8 0%, #e2e8f0 100%)",
+    background: "linear-gradient(180deg, #f8f4ed 0%, #f1ebe2 100%)",
     display: "flex",
     flexDirection: "column",
     height: "100vh",
@@ -143,8 +143,8 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
     top: 0,
     zIndex: 1000,
     overflow: "hidden",
-    boxShadow: "3px 0 20px rgba(0,0,0,0.05), 1px 0 0 #cbd5e1",
-    borderRight: "1px solid #cbd5e1",
+    boxShadow: "3px 0 20px rgba(0,0,0,0.05), 1px 0 0 #e2dbcf",
+    borderRight: "1px solid #e2dbcf",
     ...(isMobileProp ? {
       width: "270px",
       maxWidth: "85vw",
@@ -170,8 +170,8 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
         gap: isOpen ? "0.875rem" : "0",
         justifyContent: isOpen ? "flex-start" : "center",
         padding: isOpen ? "1.25rem 1.125rem 1.125rem" : "1.25rem 0.75rem 1.125rem",
-        borderBottom: "1px solid #cbd5e1",
-        background: "rgba(15, 23, 42, 0.02)",
+        borderBottom: "1px solid #e2dbcf",
+        background: "rgba(249,115,22,0.025)",
         flexShrink: 0,
         overflow: "hidden",
         transition: "all 0.3s ease",
@@ -185,9 +185,9 @@ const SidebarComponent = ({ currentPage, onPageChange, isMobile: isMobileProp })
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #ffffff, #fef7ed)",
+          background: "linear-gradient(145deg, #fcfaf5, #f8f0e4)",
           borderRadius: "15px",
-          border: "2px solid #fed7aa",
+          border: "2px solid #f2d6b8",
           boxShadow: "0 3px 12px rgba(249,115,22,0.12), 0 0 0 3px rgba(249,115,22,0.05)",
           overflow: "hidden",
           transition: "all 0.3s ease"

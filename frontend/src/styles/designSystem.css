@@ -29,10 +29,10 @@
   --teal-border: #99f6e4;
 
   /* === SURFACES — Warm Light === */
-  --bg-app: #f5f5f0;            /* Warm off-white app bg */
-  --bg-card: #ffffff;           /* Pure white cards */
-  --bg-subtle: #fafaf8;         /* Slightly off-white */
-  --bg-hover: #f3f2ef;          /* Hover state bg */
+  --bg-app: #f2eee6;            /* Soft paper app bg */
+  --bg-card: #fcfaf5;           /* Gentle paper cards */
+  --bg-subtle: #f7f3eb;         /* Low-glare subtle surface */
+  --bg-hover: #efeadf;          /* Hover state bg */
 
   /* === BORDERS === */
   --border-light: #ebe9e4;      /* Very light border */
@@ -40,11 +40,11 @@
   --border-accent: #fed7aa;     /* Orange-tint border */
 
   /* === SIDEBAR (warm light cream) === */
-  --sidebar-bg: #fefcfa;
-  --sidebar-bg-2: #faf7f2;
+  --sidebar-bg: #f8f4ed;
+  --sidebar-bg-2: #f1ebe2;
   --sidebar-active: rgba(249,115,22,0.08);
   --sidebar-active-border: rgba(249,115,22,0.3);
-  --sidebar-hover: #f5f2ed;
+  --sidebar-hover: #efe8de;
   --sidebar-text: #5a544d;
   --sidebar-text-muted: #b0a99f;
 
@@ -88,7 +88,7 @@
   --teal-gradient: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
   --danger-gradient: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   --success-gradient: linear-gradient(135deg, #059669 0%, #047857 100%);
-  --sidebar-gradient: linear-gradient(180deg, #fefcfa 0%, #faf7f2 100%);
+  --sidebar-gradient: linear-gradient(180deg, #f8f4ed 0%, #f1ebe2 100%);
 
   /* === SHADOWS === */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);

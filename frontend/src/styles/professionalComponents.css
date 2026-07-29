@@ -9,7 +9,7 @@
    ======================================== */
 
 .professional-navbar {
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(252, 250, 245, 0.96);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 0.5rem 1.5rem;
@@ -18,7 +18,7 @@
     0 2px 16px rgba(0,0,0,0.06),
     0 1px 4px rgba(0,0,0,0.04);
   margin-bottom: 1.5rem;
-  border: 1px solid #ebe9e4;
+  border: 1px solid #e7e1d7;
   border-radius: 16px;
   animation: slideInDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   transition: box-shadow 0.25s ease;
@@ -116,20 +116,20 @@
   left: 0;
   top: 0;
   height: 100vh;
-  background: linear-gradient(180deg, #fefcfa 0%, #faf7f2 100%);
+  background: linear-gradient(180deg, #f8f4ed 0%, #f1ebe2 100%);
   color: #1a1a1a;
   transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  box-shadow: 3px 0 20px rgba(0,0,0,0.06), 1px 0 0 #ebe7e0;
-  border-right: 1px solid #e8e3db;
+  box-shadow: 3px 0 20px rgba(0,0,0,0.05), 1px 0 0 #e2dbcf;
+  border-right: 1px solid #e2dbcf;
 }
 
 .sidebar-header {
   padding: 1.25rem 1rem;
-  border-bottom: 1px solid #ebe7e0;
-  background: rgba(249,115,22,0.03);
+  border-bottom: 1px solid #e2dbcf;
+  background: rgba(249,115,22,0.025);
 }
 
 .sidebar-toggle-btn {
