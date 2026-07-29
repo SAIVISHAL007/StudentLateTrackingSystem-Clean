@@ -22,6 +22,8 @@ function StudentManagement() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [deletingRollNo, setDeletingRollNo] = useState(null); // tracks which student row is being deleted
+  const isDeleting = deletingRollNo !== null;
   
   // PERFORMANCE: Pagination state  
   const [currentPage, setCurrentPage] = useState(1);
@@ -248,12 +250,20 @@ function StudentManagement() {
       return;
     }
 
+    setDeletingRollNo(rollNo);
     try {
       await API.delete(`/students/student/${rollNo}`);
-      toast.success("Student deleted successfully");
+
+      // Optimistically remove row so the UI responds immediately.
+      setStudents(prev => prev.filter(student => student.rollNo !== rollNo));
+      setTotalCount(prev => Math.max(0, prev - 1));
+
+      toast.success(`Student ${rollNo} deleted successfully!`);
       fetchAllStudents();
     } catch (err) {
-      toast.error("Failed to delete student");
+      toast.error(err.response?.data?.error || "Failed to delete student");
+    } finally {
+      setDeletingRollNo(null);
     }
   };
 
@@ -284,7 +294,44 @@ function StudentManagement() {
   }
 
   return (
-    <div className="apple-slide-up" style={{ maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="apple-slide-up" style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
+      {isDeleting && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(15, 23, 42, 0.25)",
+          backdropFilter: "blur(3px)",
+          zIndex: 10000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <div style={{
+            background: "white",
+            border: "1px solid #e2e8f0",
+            borderRadius: "14px",
+            padding: "1rem 1.25rem",
+            boxShadow: "0 18px 40px rgba(0,0,0,0.18)",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            color: "#495057",
+            fontWeight: "600"
+          }}>
+            <span style={{
+              display: "inline-block",
+              width: "16px",
+              height: "16px",
+              border: "2px solid #ced4da",
+              borderTopColor: "#dc3545",
+              borderRadius: "50%",
+              animation: "spin 0.7s linear infinite"
+            }} />
+            Deleting student {deletingRollNo}...
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="page-header apple-fade apple-stagger-1">
         <div className="page-header-icon">
@@ -368,13 +415,16 @@ function StudentManagement() {
       <div className="apple-slide-up apple-stagger-3" style={{ display: "flex", gap: "1rem", marginBottom: "2rem", flexWrap: "wrap", alignItems: "center" }}>
         <button
           onClick={() => {
+            if (isDeleting) return;
             if (showAddForm) {
               handleCancelEdit();
             } else {
               setShowAddForm(true);
             }
           }}
+          disabled={isDeleting}
           className={showAddForm ? "pro-btn pro-btn-danger" : "pro-btn pro-btn-success"}
+          style={{ opacity: isDeleting ? 0.6 : 1, cursor: isDeleting ? "not-allowed" : "pointer" }}
         >
           {showAddForm ? (
             <><FiX size={18} style={{ marginRight: "8px" }} /> Cancel</>
@@ -384,9 +434,9 @@ function StudentManagement() {
         </button>
         <button
           onClick={fetchAllStudents}
-          disabled={loading}
+          disabled={loading || isDeleting}
           className="pro-btn pro-btn-primary"
-          style={{ opacity: loading ? 0.6 : 1 }}
+          style={{ opacity: (loading || isDeleting) ? 0.6 : 1 }}
         >
           <FiRefreshCw size={18} style={{ marginRight: "8px" }} /> Refresh
         </button>
@@ -397,6 +447,19 @@ function StudentManagement() {
             <>Total: {totalCount} student{totalCount !== 1 ? 's' : ''}</>
           )}
         </div>
+        {isDeleting && (
+          <div style={{
+            fontSize: "0.9rem",
+            color: "#dc2626",
+            fontWeight: "700",
+            background: "#fee2e2",
+            border: "1px solid #fecaca",
+            borderRadius: "8px",
+            padding: "0.4rem 0.75rem"
+          }}>
+            Delete in progress...
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Student Form */}
@@ -654,17 +717,51 @@ function StudentManagement() {
                     <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "nowrap" }}>
                       <button
                         onClick={() => handleEditStudent(student)}
+                        disabled={isDeleting}
                         className="pro-btn pro-btn-primary"
-                        style={{ padding: "6px 12px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: "0.85rem",
+                          whiteSpace: "nowrap",
+                          opacity: isDeleting ? 0.6 : 1,
+                          cursor: isDeleting ? "not-allowed" : "pointer"
+                        }}
                       >
                         <FiEdit2 size={14} style={{ marginRight: "6px" }} /> Edit
                       </button>
                       <button
                         onClick={() => handleDeleteStudent(student.rollNo)}
+                        disabled={isDeleting}
                         className="pro-btn pro-btn-danger"
-                        style={{ padding: "6px 12px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                        style={{ 
+                          padding: "6px 12px", 
+                          fontSize: "0.85rem", 
+                          whiteSpace: "nowrap",
+                          opacity: isDeleting ? 0.7 : 1,
+                          cursor: isDeleting ? "not-allowed" : "pointer",
+                          minWidth: "80px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          justifyContent: "center"
+                        }}
                       >
-                        <FiTrash2 size={14} style={{ marginRight: "6px" }} /> Delete
+                        {deletingRollNo === student.rollNo ? (
+                          <>
+                            <span style={{
+                              display: "inline-block",
+                              width: "12px",
+                              height: "12px",
+                              border: "2px solid rgba(255,255,255,0.4)",
+                              borderTopColor: "white",
+                              borderRadius: "50%",
+                              animation: "spin 0.7s linear infinite"
+                            }} />
+                            Deleting...
+                          </>
+                        ) : (
+                          <><FiTrash2 size={14} /> Delete</>
+                        )}
                       </button>
                     </div>
                   </td>

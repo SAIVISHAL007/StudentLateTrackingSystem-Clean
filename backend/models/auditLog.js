@@ -24,7 +24,8 @@ const auditLogSchema = new mongoose.Schema({
       'DATA_EXPORT',
       'FINE_APPLIED',
       'FINE_PAID',
-      'SYSTEM_CONFIG_CHANGE'
+      'SYSTEM_CONFIG_CHANGE',
+      'BULK_IMPORT'
     ]
   },
   performedBy: {

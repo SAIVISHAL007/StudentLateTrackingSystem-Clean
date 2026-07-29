@@ -1,9 +1,10 @@
 import React, {useState,useEffect, useRef } from "react";
-import { FiBarChart2, FiSettings, FiClipboard, FiDollarSign, FiDownload } from "react-icons/fi";
+import { FiBarChart2, FiSettings, FiClipboard, FiDollarSign, FiDownload, FiUploadCloud } from "react-icons/fi";
 import API from "../services/api";
 import { getCurrentUser } from "../utils/auth";
 import AuditTrail from "./AuditTrail";
 import FineManagement from "./FineManagement";
+import AdminImport from "./AdminImport";
 import { toast } from "./Toast";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 
@@ -698,11 +699,11 @@ function AdminManagement() {
  <div style={{
  display: "flex",
  gap: "0.5rem",
- flexWrap: isMobile ? "wrap" : "nowrap",
+ flexWrap: "wrap",
  marginBottom: "2rem",
  borderBottom: "2px solid #e5e7eb",
  paddingBottom: "1rem",
- overflowX: isMobile ? "visible" : "auto"
+ overflowX: "visible"
  }}>
  <button
  onClick={() => setActiveTab("management")}
@@ -773,7 +774,30 @@ function AdminManagement() {
  >
  <FiDollarSign /> Fine Management
  </button>
- </div>
+  <button
+    onClick={() => setActiveTab("import")}
+    style={{
+      padding: isMobile ? "0.65rem 0.9rem" : "0.8rem 1.5rem",
+      background: activeTab === "import" ? "linear-gradient(135deg,#f97316 0%,#0d9488 100%)" : "transparent",
+      color: activeTab === "import" ? "white" : "#999",
+      border: "none",
+      borderRadius: "8px 8px 0 0",
+      cursor: "pointer",
+      fontWeight: activeTab === "import" ? "700" : "500",
+      fontSize: isMobile ? "0.86rem" : "0.95rem",
+      transition: "all 0.3s",
+      display: "flex",
+      alignItems: "center",
+      gap: "0.35rem",
+      whiteSpace: "nowrap",
+      flex: isMobile ? "1 1 31%" : "0 0 auto",
+      minWidth: isMobile ? "110px" : "auto",
+      justifyContent: "center"
+    }}
+  >
+    <FiUploadCloud /> Import Students
+  </button>
+  </div>
 
  {/* Tab Content - Management */}
  {activeTab === "management" && (
@@ -1726,6 +1750,13 @@ function AdminManagement() {
  {activeTab === "fines" && (
  <div>
  <FineManagement />
+ </div>
+ )}
+
+ {/* Tab Content - Import Students */}
+ {activeTab === "import" && (
+ <div>
+ <AdminImport />
  </div>
  )}
  </div>

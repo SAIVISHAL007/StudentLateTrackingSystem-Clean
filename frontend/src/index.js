@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { ToastProvider } from './components/ToastProvider';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Register service worker for offline queueing
@@ -16,7 +17,9 @@ if ('serviceWorker' in navigator) {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <ToastProvider>
+      <App />
+    </ToastProvider>
     <SpeedInsights />
   </React.StrictMode>
 );

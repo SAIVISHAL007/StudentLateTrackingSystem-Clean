@@ -7,9 +7,12 @@ import { authMiddleware } from "./authRoutes.js";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
+import * as xlsx from 'xlsx';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -2064,6 +2067,183 @@ router.get("/export-backup", async (req, res) => {
   }
 });
 
+// Bulk import students from Excel/CSV
+router.post("/import", authMiddleware, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // Read the file from buffer
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    
+    // Parse to JSON
+    const data = xlsx.utils.sheet_to_json(sheet);
+    
+    if (data.length === 0) {
+      return res.status(400).json({ error: "Uploaded file is empty" });
+    }
+
+    const importedStudents = [];
+    const errors = [];
+    let updatedCount = 0;
+    let createdCount = 0;
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      // Map columns (handling variations in column names)
+      const rollNo = (row['Roll No'] || row['RollNo'] || row['rollNo'] || row['rollno'] || '').toString().trim().toUpperCase();
+      const name = (row['Name'] || row['name'] || '').toString().trim();
+      const year = parseInt(row['Year'] || row['year']);
+      const branch = (row['Branch'] || row['branch'] || '').toString().trim().toUpperCase();
+      const section = (row['Section'] || row['section'] || '').toString().trim().toUpperCase();
+      let semester = parseInt(row['Semester'] || row['semester']);
+
+      if (!rollNo || !name || isNaN(year) || !branch || !section) {
+        errors.push(`Row ${i + 2}: Missing required fields. Row data: ${JSON.stringify(row)}`);
+        continue;
+      }
+
+      if (!semester) {
+        semester = (year * 2) - 1; // Default to first semester of that year
+      }
+
+      // Check if student exists
+      const existingStudent = await Student.findOne({ rollNo });
+
+      if (existingStudent) {
+        // Update existing student
+        existingStudent.name = name;
+        existingStudent.year = year;
+        existingStudent.semester = semester;
+        existingStudent.branch = branch;
+        existingStudent.section = section;
+        await existingStudent.save();
+        updatedCount++;
+      } else {
+        // Create new student
+        const newStudent = new Student({
+          rollNo,
+          name,
+          year,
+          semester,
+          branch,
+          section,
+          status: 'normal'
+        });
+        await newStudent.save();
+        createdCount++;
+      }
+    }
+
+    // Create audit log
+    await AuditLog.create({
+      action: 'BULK_IMPORT',
+      performedBy: {
+        facultyId: req.faculty._id,
+        facultyName: req.faculty.name,
+        facultyEmail: req.faculty.email
+      },
+      details: {
+        totalRows: data.length,
+        created: createdCount,
+        updated: updatedCount,
+        errors: errors.length
+      },
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    res.json({
+      message: `Successfully processed ${data.length} records. Created ${createdCount}, Updated ${updatedCount}.`,
+      stats: { total: data.length, created: createdCount, updated: updatedCount, errorCount: errors.length },
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    console.error('Import error:', error);
+    res.status(500).json({ error: "Failed to process the uploaded file", details: error.message });
+  }
+});
+
+
+// Update a single student by rollNo
+router.put("/student/:rollNo", authMiddleware, async (req, res) => {
+  try {
+    const { rollNo } = req.params;
+    const { name, year, semester, branch, section } = req.body;
+
+    const student = await Student.findOne({ rollNo: rollNo.toUpperCase() });
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    if (name) student.name = name;
+    if (year) student.year = parseInt(year);
+    if (semester) student.semester = parseInt(semester);
+    if (branch) student.branch = branch.toUpperCase();
+    if (section) student.section = section.toUpperCase();
+
+    await student.save();
+
+    // Respond immediately — don't wait for audit log
+    res.json({ message: "Student updated successfully", student });
+
+    // Fire-and-forget audit log
+    AuditLog.create({
+      action: 'STUDENT_UPDATED',
+      performedBy: {
+        facultyId: req.faculty._id,
+        facultyName: req.faculty.name,
+        facultyEmail: req.faculty.email
+      },
+      targetStudent: { rollNo: student.rollNo, name: student.name, branch: student.branch },
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    }).catch(err => console.error('Audit log error (update):', err.message));
+
+  } catch (error) {
+    console.error("Update student error:", error);
+    res.status(500).json({ error: "Failed to update student", details: error.message });
+  }
+});
+
+// Delete a single student by rollNo
+router.delete("/student/:rollNo", authMiddleware, async (req, res) => {
+  try {
+    if (!['admin', 'superadmin'].includes(req.faculty.role)) {
+      return res.status(403).json({ error: "Only admins can delete students" });
+    }
+
+    const { rollNo } = req.params;
+    const student = await Student.findOneAndDelete({ rollNo: rollNo.toUpperCase() });
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    // Respond immediately — don't wait for audit log
+    res.json({ message: `Student ${rollNo} deleted successfully` });
+
+    // Fire-and-forget audit log
+    AuditLog.create({
+      action: 'STUDENT_DELETED',
+      performedBy: {
+        facultyId: req.faculty._id,
+        facultyName: req.faculty.name,
+        facultyEmail: req.faculty.email
+      },
+      targetStudent: { rollNo: student.rollNo, name: student.name, branch: student.branch },
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    }).catch(err => console.error('Audit log error (delete):', err.message));
+
+  } catch (error) {
+    console.error("Delete student error:", error);
+    res.status(500).json({ error: "Failed to delete student", details: error.message });
+  }
+});
+
 export default router;
-
-

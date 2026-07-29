@@ -204,11 +204,26 @@ router.post("/login", authLimiter, async (req, res) => {
       return res.status(403).json({ error: "Account is deactivated. Contact administrator." });
     }
     
+    // Check if account is locked
+    if (faculty.lockUntil && faculty.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((faculty.lockUntil - Date.now()) / 60000);
+      return res.status(403).json({ error: `Account locked due to multiple failed attempts. Try again in ${remainingMinutes} minutes.` });
+    }
+    
     // Verify password
     const isPasswordValid = await faculty.comparePassword(password);
     if (!isPasswordValid) {
+      faculty.failedLoginAttempts = (faculty.failedLoginAttempts || 0) + 1;
+      if (faculty.failedLoginAttempts >= 10) {
+        faculty.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 mins lock
+      }
+      await faculty.save();
       return res.status(401).json({ error: "Invalid email or password" });
     }
+    
+    // Reset failed attempts on successful login
+    faculty.failedLoginAttempts = 0;
+    faculty.lockUntil = undefined;
     
     // Update last login and login history
     faculty.lastLogin = new Date();
@@ -370,7 +385,7 @@ router.get('/faculty', authMiddleware, async (req, res) => {
     if (!['admin','superadmin'].includes(req.faculty.role)) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    const { search = '', role = 'all', page = 1, limit = 50 } = req.query;
+    const { search = '', role = 'all', branch = 'all', page = 1, limit = 50 } = req.query;
     const q = {};
     if (search.trim()) {
       q.$or = [
@@ -379,7 +394,9 @@ router.get('/faculty', authMiddleware, async (req, res) => {
       ];
     }
     if (role !== 'all') q.role = role;
+    if (branch !== 'all') q.branch = branch;
 
+    console.log("DEBUG Faculty query:", JSON.stringify(q));
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [items, total] = await Promise.all([
       Faculty.find(q).select('name email branch role isActive createdAt lastLogin').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),

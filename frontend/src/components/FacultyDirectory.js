@@ -9,6 +9,7 @@ function FacultyDirectory({ onNavigate }) {
  const [error, setError] = useState('');
  const [search, setSearch] = useState('');
  const [roleFilter, setRoleFilter] = useState('all');
+ const [branchFilter, setBranchFilter] = useState('all');
  const [showCreate, setShowCreate] = useState(false);
  const [selected, setSelected] = useState(null);
  const [editForm, setEditForm] = useState({ name: '', branch: '', role: '', isActive: true, email: '', newPassword: '' });
@@ -27,14 +28,14 @@ function FacultyDirectory({ onNavigate }) {
  try {
  const token = localStorage.getItem('jwt_token');
  if (!token) { setError('Login as admin'); setLoading(false); return; }
- const res = await API.get(`/auth/faculty?search=${encodeURIComponent(search)}&role=${roleFilter}`, {
+ const res = await API.get(`/auth/faculty?search=${encodeURIComponent(search)}&role=${roleFilter}&branch=${branchFilter}`, {
  headers: { Authorization: `Bearer ${token}` }
  });
  setFaculties(res.data.items || []);
  } catch (err) {
  setError(err.response?.data?.error || 'Failed to load faculty');
  } finally { setLoading(false); }
- }, [search, roleFilter]);
+ }, [search, roleFilter, branchFilter]);
 
  useEffect(() => { fetchFaculties(); }, [fetchFaculties]);
 
@@ -171,6 +172,10 @@ function FacultyDirectory({ onNavigate }) {
  <option value='faculty'>Faculty</option>
  <option value='admin'>Admin</option>
  <option value='superadmin'>Superadmin</option>
+ </select>
+ <select value={branchFilter} onChange={e => setBranchFilter(e.target.value)} style={{ padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '.9rem' }}>
+ <option value='all'>All Branches</option>
+ {['CSE','CSM','CSD','CSC','ECE','EEE','MECH','CIVIL','IT','ADMIN'].map(b => <option key={b} value={b}>{b}</option>)}
  </select>
  <button onClick={fetchFaculties} style={{ padding: '12px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
  </div>

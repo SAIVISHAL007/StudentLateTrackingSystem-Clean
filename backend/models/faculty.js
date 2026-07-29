@@ -55,7 +55,14 @@ const facultySchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now },
     ipAddress: String,
     userAgent: String
-  }]
+  }],
+  failedLoginAttempts: {
+    type: Number,
+    default: 0
+  },
+  lockUntil: {
+    type: Date
+  }
 }, {
   timestamps: true
 });
